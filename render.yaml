@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: trio-devotional-astro-bot
+    name: furlis-aura-telegram-bot
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
@@ -15,6 +15,10 @@ services:
         sync: false
       - key: FOUNDER_ACTION_EMAIL
         sync: false
+      - key: FOUNDER_TELEGRAM_ID
+        sync: false
+      - key: SUPPORT_WEBHOOK_SECRET
+        sync: false
       - key: SMTP_HOST
         value: smtp.gmail.com
       - key: SMTP_PORT
@@ -25,5 +29,7 @@ services:
         sync: false
       - key: UPI_GATEWAY_CHECKOUT_URL
         sync: false
-      - key: SUPPORT_WEBAPP_URL
+      - key: SUPPORT_FORM_URL
+        sync: false
+      - key: SUPPORT_FORM_URLS_JSON
         sync: false
