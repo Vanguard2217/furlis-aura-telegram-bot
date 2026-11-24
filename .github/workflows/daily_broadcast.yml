@@ -1,0 +1,31 @@
+name: Daily Devotional & Telemetry Broadcast
+
+on:
+  schedule:
+    # Runs daily at 00:30 UTC (06:00 AM IST)
+    - cron: "30 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  broadcast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Daily Bucketed Broadcast
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          UPI_GATEWAY_CHECKOUT_URL: ${{ secrets.UPI_GATEWAY_CHECKOUT_URL }}
+          SUPPORT_WEBAPP_URL: ${{ secrets.SUPPORT_WEBAPP_URL }}
+        run: python broadcast_daily.py
