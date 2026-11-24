@@ -1,4 +1,4 @@
-name: Daily Devotional & Telemetry Broadcast
+name: FURLIS AURA Daily Devotional & Telemetry Broadcast
 
 on:
   schedule:
@@ -22,10 +22,17 @@ jobs:
       - name: Install Dependencies
         run: pip install -r requirements.txt
 
+      - name: Build Daily Shared Cache
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GOOGLE_SHEET_CSV_BASE_URL: ${{ secrets.GOOGLE_SHEET_CSV_BASE_URL }}
+        run: python build_daily_cache.py
+
       - name: Run Daily Bucketed Broadcast
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           UPI_GATEWAY_CHECKOUT_URL: ${{ secrets.UPI_GATEWAY_CHECKOUT_URL }}
-          SUPPORT_WEBAPP_URL: ${{ secrets.SUPPORT_WEBAPP_URL }}
+          SUPPORT_FORM_URL: ${{ secrets.SUPPORT_FORM_URL }}
+          SUPPORT_FORM_URLS_JSON: ${{ secrets.SUPPORT_FORM_URLS_JSON }}
         run: python broadcast_daily.py
