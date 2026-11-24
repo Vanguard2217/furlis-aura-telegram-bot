@@ -89,12 +89,13 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         [InlineKeyboardButton("हिन्दी (Hindi)", callback_data="lang:hi"), InlineKeyboardButton("తెలుగు (Telugu)", callback_data="lang:te")],
         [InlineKeyboardButton("ಕನ್ನಡ (Kannada)", callback_data="lang:kn"), InlineKeyboardButton("മലയാളം (Malayalam)", callback_data="lang:ml")]
     ]
+    first_name = user.first_name or "there"
     notice = (
-        f"Welcome to FURLIS AURA, {user.first_name}! 🙏\n\n🔒 *Privacy & Data Notice (DPDPA 2023):*\n"
+        f"Welcome to FURLIS AURA, {first_name}! 🙏\n\n🔒 Privacy & Data Notice (DPDPA 2023):\n"
         "We collect your preferred language, city, and Zodiac sign solely to deliver tailored daily telemetry, auspicious windows, weather, and devotional blessings.\n\n"
-        "You can erase your data anytime using /delete_data.\n\n*Step 1:* Please select your preferred language:"
+        "You can erase your data anytime using /delete_data.\n\nStep 1: Please select your preferred language:"
     )
-    await update.message.reply_text(notice, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+    await update.message.reply_text(notice, reply_markup=InlineKeyboardMarkup(keyboard))
     return LANG
 
 async def set_language_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -103,8 +104,7 @@ async def set_language_callback(update: Update, context: ContextTypes.DEFAULT_TY
     lang_code = query.data.split(":")[1]
     context.user_data["preferred_language"] = lang_code
     await query.edit_message_text(
-        f"✅ Language set to *{LANG_NAMES[lang_code]}*.\n\n*Step 2:* Please type your *City* (e.g., Chennai, Mumbai, Bengaluru, Delhi):",
-        parse_mode="Markdown"
+        f"✅ Language set to {LANG_NAMES[lang_code]}.\n\nStep 2: Please type your City (e.g., Chennai, Mumbai, Bengaluru, Delhi):"
     )
     return LOCATION
 
@@ -120,8 +120,8 @@ async def set_location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     if row:
         keyboard.append(row)
     await update.message.reply_text(
-        f"✅ Location set to *{city_input}*.\n\n*Step 3:* Please select your Zodiac / Rasi:",
-        reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown"
+        f"✅ Location set to {city_input}.\n\nStep 3: Please select your Zodiac / Rasi:",
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
     return RASI
 
@@ -135,8 +135,8 @@ async def set_rasi_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         [InlineKeyboardButton("🛕 All Occasions & Temple Alerts", callback_data="deity:ALL_OCCASIONS")]
     ]
     await query.edit_message_text(
-        f"✅ Rasi set to *{rasi}*.\n\n*Step 4:* Choose your daily devotional preference:",
-        reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown"
+        f"✅ Rasi set to {rasi}.\n\nStep 4: Choose your daily devotional preference:",
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
     return DEITY
 
@@ -164,12 +164,12 @@ async def set_deity_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     reply_markup = build_daily_action_keyboard(today_str, uid, lang)
     summary = (
-        "🎉 *Welcome to FURLIS AURA!*\n\n"
-        f"• *Language:* {LANG_NAMES.get(lang, lang)}\n• *Location:* {city}\n"
-        f"• *Rasi:* {rasi}\n• *Deity Mode:* {deity_mode}\n\n"
+        "🎉 Welcome to FURLIS AURA!\n\n"
+        f"• Language: {LANG_NAMES.get(lang, lang)}\n• Location: {city}\n"
+        f"• Rasi: {rasi}\n• Deity Mode: {deity_mode}\n\n"
         "Your personalized daily telemetry card will be delivered every morning at 06:00 AM IST."
     )
-    await query.edit_message_text(summary, reply_markup=reply_markup, parse_mode="Markdown")
+    await query.edit_message_text(summary, reply_markup=reply_markup)
     return ConversationHandler.END
 
 async def cancel_onboarding(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -180,7 +180,7 @@ async def delete_data_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     uid = update.effective_user.id
     assert db_pool is not None
     await db_pool.execute("DELETE FROM subscribers WHERE telegram_id = $1;", uid)
-    await update.message.reply_text("🗑️ *Profile Erased:* Your user record and preferences have been permanently deleted per DPDPA guidelines.", parse_mode="Markdown")
+    await update.message.reply_text("🗑️ Profile Erased: Your user record and preferences have been permanently deleted per DPDPA guidelines.")
 
 async def admin_reply_ticket(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.effective_user or update.effective_user.id != FOUNDER_TELEGRAM_ID:
@@ -196,8 +196,8 @@ async def admin_reply_ticket(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await update.message.reply_text(f"Ticket {ticket_id} not found.")
         return
     await db_pool.execute("UPDATE support_tickets SET status = 'CLOSED', closed_at = NOW() WHERE ticket_id = $1;", ticket_id)
-    user_notice = f"📩 *FURLIS AURA Support Update — {ticket_id}* ({row['category']})\n\n{reply_body}\n\nStatus: *Closed* ✅"
-    await context.bot.send_message(chat_id=row["telegram_id"], text=user_notice, parse_mode="Markdown")
+    user_notice = f"📩 FURLIS AURA Support Update — {ticket_id} ({row['category']})\n\n{reply_body}\n\nStatus: Closed ✅"
+    await context.bot.send_message(chat_id=row["telegram_id"], text=user_notice)
     await update.message.reply_text(f"✅ Reply sent to user {row['telegram_id']} and {ticket_id} marked CLOSED.")
 
 async def handle_rating_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -261,10 +261,10 @@ async def handle_translate_callback(update: Update, context: ContextTypes.DEFAUL
     gold = cache.get("GOLD_INR", {})
     quote_block = cache.get("FAMOUS_QUOTE", {})
     translated_txt = (
-        f"🌐 *FURLIS AURA — English Translation ({edition_date_str})*\n\n🙏 *{deity.get('title', 'Daily Blessing')}*\n{deity.get('slogan', '')}\n\n"
-        f"🪙 *Gold Rates:* {gold.get('board_summary', '')}\n\n💡 \"{quote_block.get('quote', '')}\" — {quote_block.get('author', '')}"
+        f"🌐 FURLIS AURA — English Translation ({edition_date_str})\n\n🙏 {deity.get('title', 'Daily Blessing')}\n{deity.get('slogan', '')}\n\n"
+        f"🪙 Gold Rates: {gold.get('board_summary', '')}\n\n💡 \"{quote_block.get('quote', '')}\" — {quote_block.get('author', '')}"
     )
-    await context.bot.send_message(chat_id=query.from_user.id, text=translated_txt, parse_mode="Markdown")
+    await context.bot.send_message(chat_id=query.from_user.id, text=translated_txt)
 
 async def handle_health_check(request: web.Request) -> web.Response:
     return web.json_response({"status": "ok", "service": "FURLIS AURA Web Server", "utc": datetime.now(timezone.utc).isoformat()})
@@ -287,9 +287,9 @@ async def handle_google_form_support_webhook(request: web.Request) -> web.Respon
         lang = row["preferred_language"]
     await db_pool.execute("INSERT INTO support_tickets (ticket_id, telegram_id, preferred_language, category, message_text, status, email_dispatched, created_at) VALUES ($1, $2, $3, $4, $5, 'OPEN', TRUE, NOW());", ticket_id, telegram_id, lang, category, message_text)
     bot = request.app["tg_app"].bot
-    ack_text = f"✅ *FURLIS AURA Support Ticket Logged:* `{ticket_id}`\n\n• *Category:* {category}\nWe have received your request and will respond directly in this chat."
+    ack_text = f"✅ FURLIS AURA Support Ticket Logged: {ticket_id}\n\n• Category: {category}\nWe have received your request and will respond directly in this chat."
     try:
-        await bot.send_message(chat_id=telegram_id, text=ack_text, parse_mode="Markdown")
+        await bot.send_message(chat_id=telegram_id, text=ack_text)
     except Exception:
         pass
     await asyncio.to_thread(send_founder_support_email, ticket_id, telegram_id, lang, category, message_text)
