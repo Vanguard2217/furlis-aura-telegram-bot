@@ -6,8 +6,9 @@ import uuid
 import json
 import asyncio
 import smtplib
+from pathlib import Path
 from email.message import EmailMessage
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import asyncpg
 from aiohttp import web
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -32,13 +33,14 @@ PORT = int(os.environ.get("PORT", "10000"))
 SUPPORT_FORM_URLS = json.loads(os.environ.get("SUPPORT_FORM_URLS_JSON", "{}"))
 DEFAULT_SUPPORT_FORM_URL = os.environ.get("SUPPORT_FORM_URL", "")
 WELCOME_MEDIA_ID = os.environ.get("WELCOME_MEDIA_ID", "").strip()
+IST = timezone(timedelta(hours=5, minutes=30))
 
-AURA_HEADER = "ॐ  AURA  |  Morning Grace &amp; Daily Blessing  ॐ"
+AURA_HEADER = "ॐ  AURA  |  Daily Morning Grace &amp; Divine Blessings  ॐ"
 DIVIDER = "━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 SHORT_DISCLAIMER = (
-    "⚖️ <i>General info only; not financial, medical, legal, or safety advice. "
-    "Verify independently.</i>"
+    "⚖️ <i>General info only (incl. devotional, Rasi, indicative bullion &amp; weather); "
+    "not financial, medical, legal, or safety advice. Verify independently.</i>"
 )
 
 DPDPA_DETAIL_TEXT = (
@@ -68,56 +70,56 @@ LANG_NAMES = {
 WELCOME_COPY = {
     "en": {
         "greeting": "Namaskaram, <b>{name}</b> 🙏",
-        "schedule": "Every morning at <b>04:30 AM IST</b>, receive one calm and blessed message to start your day with <b>Ashirvad:</b>",
+        "schedule": "Every morning at <b>04:30 AM IST</b>, receive one calm and divine message to start your day with <b>Ashirvad:</b>",
         "b1": "• 🪔 <b>Daily Blessing</b> + 🛕 <b>Temple &amp; Occasion Alerts</b>",
         "b2": "• ⏳ <b>Auspicious Timing</b>",
         "b3": "• ✨ <b>WoW [Words of Wisdom]</b>",
-        "b4": "• 🪙 Gold &amp; ⚪ Silver Rates",
+        "b4": "• 🟡 Gold &amp; ⚪ Silver Rates",
         "b5": "• 🌦️ <b>Weather [Plan Your Day]</b>",
     },
     "ta": {
         "greeting": "நமஸ்காரம், <b>{name}</b> 🙏",
-        "schedule": "தினமும் காலை <b>04:30 AM IST</b> மணிக்கு, உங்கள் நாளை அமைதியுடனும் ஆசீர்வாதத்துடனும் தொடங்க <b>ஆசீர்வாதத்துடன்</b> ஒரு அமைதியான செய்தி:",
+        "schedule": "தினமும் காலை <b>04:30 AM IST</b> மணிக்கு, உங்கள் நாளை அமைதியுடனும் தெய்வீக அருளுடனும் தொடங்க <b>ஆசீர்வாதத்துடன்</b> ஒரு தெய்வீகச் செய்தி:",
         "b1": "• 🪔 <b>தினசரி ஆசீர்வாதம்</b> + 🛕 <b>கோவில் &amp; விசேஷ அறிவிப்புகள்</b>",
         "b2": "• ⏳ <b>நல்ல நேரம் / சுப நேரம்</b>",
         "b3": "• ✨ <b>WoW [Words of Wisdom]</b>",
-        "b4": "• 🪙 தங்கம் &amp; ⚪ வெள்ளி விலைகள்",
+        "b4": "• 🟡 தங்கம் &amp; ⚪ வெள்ளி விலைகள்",
         "b5": "• 🌦️ <b>வானிலை [நாளைய திட்டம்]</b>",
     },
     "hi": {
         "greeting": "नमस्कार, <b>{name}</b> 🙏",
-        "schedule": "हर सुबह <b>04:30 AM IST</b> पर, अपने दिन की शांत और शुभ शुरुआत के लिए <b>आशीर्वाद</b> के साथ एक संदेश प्राप्त करें:",
+        "schedule": "हर सुबह <b>04:30 AM IST</b> पर, अपने दिन की शांत और दिव्य शुरुआत के लिए <b>आशीर्वाद</b> के साथ एक पावन संदेश प्राप्त करें:",
         "b1": "• 🪔 <b>दैनिक आशीर्वाद</b> + 🛕 <b>मंदिर व विशेष पर्व अलर्ट</b>",
         "b2": "• ⏳ <b>शुभ समय</b>",
         "b3": "• ✨ <b>WoW [Words of Wisdom]</b>",
-        "b4": "• 🪙 सोना व ⚪ चांदी के भाव",
+        "b4": "• 🟡 सोना व ⚪ चांदी के भाव",
         "b5": "• 🌦️ <b>मौसम [दिन की योजना]</b>",
     },
     "te": {
         "greeting": "నమస్కారం, <b>{name}</b> 🙏",
-        "schedule": "ప్రతిరోజూ ఉదయం <b>04:30 AM IST</b> గంటలకు, మీ రోజును ప్రశాంతంగా మరియు <b>ఆశీర్వాదంతో</b> ప్రారంభించడానికి ఒక సందేశం:",
+        "schedule": "ప్రతిరోజూ ఉదయం <b>04:30 AM IST</b> గంటలకు, మీ రోజును ప్రశాంతంగా మరియు దైవికంగా ప్రారంభించడానికి <b>ఆశీర్వాదంతో</b> ఒక దివ్య సందేశం:",
         "b1": "• 🪔 <b>రోజువారీ ఆశీర్వాదం</b> + 🛕 <b>ఆలయ &amp; ప్రత్యేక విశేషాలు</b>",
         "b2": "• ⏳ <b>శుభ సమయం</b>",
         "b3": "• ✨ <b>WoW [Words of Wisdom]</b>",
-        "b4": "• 🪙 బంగారం &amp; ⚪ వెండి ధరలు",
+        "b4": "• 🟡 బంగారం &amp; ⚪ వెండి ధరలు",
         "b5": "• 🌦️ <b>వాతావరణం [రోజు ప్రణాళిక]</b>",
     },
     "kn": {
         "greeting": "ನಮಸ್ಕಾರ, <b>{name}</b> 🙏",
-        "schedule": "ಪ್ರತಿದಿನ ಬೆಳಿಗ್ಗೆ <b>04:30 AM IST</b> ಗಂಟೆಗೆ, ನಿಮ್ಮ ದಿನವನ್ನು ಶಾಂತವಾಗಿ ಮತ್ತು <b>ಆಶೀರ್ವಾದದೊಂದಿಗೆ</b> ಆರಂಭಿಸಲು ಒಂದು ಸಂದೇಶ:",
+        "schedule": "ಪ್ರತಿದಿನ ಬೆಳಿಗ್ಗೆ <b>04:30 AM IST</b> ಗಂಟೆಗೆ, ನಿಮ್ಮ ದಿನವನ್ನು ಶಾಂತವಾಗಿ ಮತ್ತು ದೈವಿಕವಾಗಿ ಆರಂಭಿಸಲು <b>ಆಶೀರ್ವಾದದೊಂದಿಗೆ</b> ಒಂದು ದಿವ್ಯ ಸಂದೇಶ:",
         "b1": "• 🪔 <b>ದೈನಂದಿನ ಆಶೀರ್ವಾದ</b> + 🛕 <b>ದೇವಾಲಯ &amp; ವಿಶೇಷ ಮಾಹಿತಿ</b>",
         "b2": "• ⏳ <b>ಶುಭ ಸಮಯ</b>",
         "b3": "• ✨ <b>WoW [Words of Wisdom]</b>",
-        "b4": "• 🪙 ಚಿನ್ನ &amp; ⚪ ಬೆಳ್ಳಿ ದರಗಳು",
+        "b4": "• 🟡 ಚಿನ್ನ &amp; ⚪ ಬೆಳ್ಳಿ ದರಗಳು",
         "b5": "• 🌦️ <b>ಹವಾಮಾನ [ದಿನದ ಯೋಜನೆ]</b>",
     },
     "ml": {
         "greeting": "നമസ്കാരം, <b>{name}</b> 🙏",
-        "schedule": "എല്ലാ ദിവസവും രാവിലെ <b>04:30 AM IST</b>-ന്, നിങ്ങളുടെ ദിവസം ശാന്തമായും <b>ആശീർവാദത്തോടെയും</b> ആരംഭിക്കാൻ ഒരു സന്ദേശം:",
+        "schedule": "എല്ലാ ദിവസവും രാവിലെ <b>04:30 AM IST</b>-ന്, നിങ്ങളുടെ ദിവസം ശാന്തമായും ദൈവികമായും ആരംഭിക്കാൻ <b>ആശീർവാദത്തോടെ</b> ഒരു ദിവ്യ സന്ദേശം:",
         "b1": "• 🪔 <b>ദൈനംദിന അനുഗ്രഹം</b> + 🛕 <b>ക്ഷേത്ര &amp; വിശേഷ അറിയിപ്പുകൾ</b>",
         "b2": "• ⏳ <b>ശുഭ സമയം</b>",
         "b3": "• ✨ <b>WoW [Words of Wisdom]</b>",
-        "b4": "• 🪙 സ്വർണ്ണം &amp; ⚪ വെള്ളി നിരക്കുകൾ",
+        "b4": "• 🟡 സ്വർണ്ണം &amp; ⚪ വെള്ളി നിരക്കുകൾ",
         "b5": "• 🌦️ <b>കാലാവസ്ഥ [ദിവസ ആസൂത്രണം]</b>",
     },
 }
@@ -287,6 +289,11 @@ def t(lang: str, key: str) -> str:
     return pack.get(key) or UI_STRINGS["en"][key]
 
 
+def normalize_location_key(raw_loc: str) -> str:
+    cleaned = re.sub(r"[^A-Z0-9]+", "_", raw_loc.upper()).strip("_")
+    return cleaned or "CHENNAI"
+
+
 def format_location_input(raw_text: str) -> str:
     parts = [re.sub(r"\s+", " ", p).strip() for p in raw_text.split(",", 1)]
     formatted = [p.title() for p in parts if p]
@@ -318,7 +325,7 @@ def build_language_intro_text() -> str:
         f"<b>{AURA_HEADER}</b>\n"
         f"{DIVIDER}\n\n"
         f"<b>Select</b> your <b>Preferred Language</b> to begin / உங்கள் மொழியைத் தேர்ந்தெடுக்கவும் / अपनी भाषा चुनें:\n"
-        f"<i>తెలుగు • ಕನ್ನಡ • മലയാളം — Tap your language button below to continue.</i>"
+        f"<i>తెలుగు • ಕನ್ನಡ • മലയാളം</i>"
     )
 
 
@@ -391,6 +398,93 @@ async def erase_subscriber_records(uid: int) -> None:
     await db_pool.execute("DELETE FROM message_ratings WHERE telegram_id = $1;", uid)
     await db_pool.execute("DELETE FROM support_tickets WHERE telegram_id = $1;", uid)
     await db_pool.execute("DELETE FROM subscribers WHERE telegram_id = $1;", uid)
+
+
+async def send_instant_edition_preview(bot, uid: int, lang: str, city_raw: str, rasi_name: str, edition_date: str) -> None:
+    """Delivers today's cached AURA card immediately after onboarding so the user sees the full end-to-end flow."""
+    assert db_pool is not None
+    rows = await db_pool.fetch(
+        "SELECT language, bucket_key, payload_json, telegram_file_id FROM daily_shared_cache WHERE edition_date = $1::date;",
+        edition_date,
+    )
+    if not rows:
+        return
+    cache_map = {
+        (r["language"], r["bucket_key"]): {
+            "payload": json.loads(r["payload_json"]) if isinstance(r["payload_json"], str) else r["payload_json"],
+            "file_id": r["telegram_file_id"],
+        }
+        for r in rows
+    }
+
+    def get_bucket(b_key: str) -> tuple[dict, str | None]:
+        item = cache_map.get((lang, b_key)) or cache_map.get(("en", b_key))
+        return (item["payload"], item["file_id"]) if item else ({}, None)
+
+    deity, file_id = get_bucket("DEITY_DAY_OF_WEEK")
+    if not file_id:
+        _, en_fid = get_bucket("DEITY_DAY_OF_WEEK")
+        file_id = en_fid
+    scripture, _ = get_bucket("SCRIPTURE_DAILY")
+    gold, _ = get_bucket("GOLD_INR")
+    rasi, _ = get_bucket(f"RASI_{rasi_name.upper()}")
+
+    loc_key = normalize_location_key(city_raw)
+    city_part = normalize_location_key(city_raw.split(",", 1)[-1])
+    city, _ = get_bucket(f"CITY_{loc_key}")
+    if not city:
+        city, _ = get_bucket(f"CITY_{city_part}")
+    if not city:
+        city, _ = get_bucket("CITY_CHENNAI")
+    display_loc = str(city.get("label") or city_raw or "Chennai")
+
+    title = html.escape(str(deity.get("title") or "Daily Blessing"))
+    deity_verse = html.escape(str(deity.get("deity_verse") or deity.get("slogan") or ""))
+    sc_source = html.escape(str(scripture.get("source") or ""))
+    sc_verse = html.escape(str(scripture.get("verse") or ""))
+    sc_meaning = html.escape(str(scripture.get("meaning") or ""))
+    sc_line = f"\n📜 <b>{sc_source}:</b> <i>{sc_verse}</i> — {sc_meaning}" if sc_verse else ""
+
+    rate_22k = html.escape(str(gold.get("rate_22k", "N/A")))
+    rate_24k = html.escape(str(gold.get("rate_24k", "N/A")))
+    rate_silver = html.escape(str(gold.get("rate_silver", "N/A")))
+    rasi_words = html.escape(str(rasi.get("three_words", "")))
+    auspicious = html.escape(str(city.get("auspicious_time", "")))
+    weather_raw = html.escape(str(city.get("weather", "Pleasant morning")))
+
+    body = (
+        f"<b>{AURA_HEADER}</b>\n"
+        f"{DIVIDER}\n\n"
+        f"🪔 <b>Daily Blessing — {title}</b>\n"
+        f"{deity_verse}{sc_line}\n\n"
+        f"🟡 Gold: 22K {rate_22k} | 24K {rate_24k} | ⚪ Silver: {rate_silver}\n\n"
+        f"✨ <b>WoW [Words of Wisdom] ({html.escape(rasi_name)}):</b> {rasi_words}\n\n"
+        f"⏳ <b>Auspicious Timing:</b> {auspicious}\n\n"
+        f"🌦️ <b>Weather [Plan Your Day] — {html.escape(display_loc)}:</b> {weather_raw}"
+    )
+    max_body = 1024 - len(SHORT_DISCLAIMER) - 4
+    if len(body) > max_body:
+        body = body[: max_body - 3].rsplit(" ", 1)[0] + "..."
+    caption = f"{body}\n\n{SHORT_DISCLAIMER}"
+    markup = build_daily_action_keyboard(edition_date, uid, lang)
+    asset_path = deity.get("asset_path", "")
+
+    try:
+        if file_id:
+            await bot.send_photo(chat_id=uid, photo=file_id, caption=caption, reply_markup=markup, parse_mode="HTML")
+        elif asset_path and Path(asset_path).is_file():
+            with open(asset_path, "rb") as img_f:
+                sent_msg = await bot.send_photo(chat_id=uid, photo=img_f, caption=caption, reply_markup=markup, parse_mode="HTML")
+            if sent_msg and sent_msg.photo:
+                await db_pool.execute(
+                    "UPDATE daily_shared_cache SET telegram_file_id = $1 WHERE edition_date = $2::date AND bucket_key = 'DEITY_DAY_OF_WEEK';",
+                    sent_msg.photo[-1].file_id,
+                    edition_date,
+                )
+        else:
+            await bot.send_message(chat_id=uid, text=caption, reply_markup=markup, parse_mode="HTML")
+    except Exception as e:
+        print(f"Instant preview send skipped for {uid}: {e}")
 
 
 async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -525,13 +619,18 @@ async def set_rasi_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
     user = update.effective_user
     uid = user.id
-    lang = context.user_data.get("preferred_language", "en")
-    dob_str = context.user_data.get("dob", "")
-    location_label = context.user_data.get("city", "Chennai")
+    assert db_pool is not None
+
+    existing = await db_pool.fetchrow(
+        "SELECT preferred_language, dob, city FROM subscribers WHERE telegram_id = $1;",
+        uid,
+    )
+    lang = context.user_data.get("preferred_language") or (existing["preferred_language"] if existing and existing["preferred_language"] else "en")
+    dob_str = context.user_data.get("dob") or (existing["dob"] if existing and existing["dob"] else "")
+    location_label = context.user_data.get("city") or (existing["city"] if existing and existing["city"] else "Chennai")
     deity_mode = "AUTO"
     freq = 1 if not FEATURE_FREQUENCY_ACTIVE else context.user_data.get("frequency", 1)
 
-    assert db_pool is not None
     await db_pool.execute(
         """
         INSERT INTO subscribers (
@@ -542,7 +641,7 @@ async def set_rasi_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         ON CONFLICT (telegram_id) DO UPDATE SET
             first_name = EXCLUDED.first_name,
             preferred_language = EXCLUDED.preferred_language,
-            dob = EXCLUDED.dob,
+            dob = COALESCE(NULLIF(EXCLUDED.dob, ''), subscribers.dob),
             city = EXCLUDED.city,
             rasi = EXCLUDED.rasi,
             deity_mode = EXCLUDED.deity_mode,
@@ -553,19 +652,21 @@ async def set_rasi_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         uid, user.first_name, lang, dob_str, location_label, rasi, deity_mode, freq,
     )
 
-    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    reply_markup = build_daily_action_keyboard(today_str, uid, lang)
+    today_ist = datetime.now(IST).strftime("%Y-%m-%d")
+    reply_markup = build_daily_action_keyboard(today_ist, uid, lang)
     summary = (
         f"<b>{AURA_HEADER}</b>\n"
         f"{DIVIDER}\n\n"
-        f"• <b>Language:</b> {html.escape(LANG_NAMES.get(lang, lang))}\n\n"
-        f"• <b>Date of Birth:</b> {html.escape(dob_str or 'Not set')}\n\n"
-        f"• <b>Locality / City:</b> {html.escape(location_label)}\n\n"
+        f"✅ <b>Registration Complete</b>\n\n"
+        f"• <b>Language:</b> {html.escape(LANG_NAMES.get(lang, lang))}\n"
+        f"• <b>Date of Birth:</b> {html.escape(dob_str or 'Not set')}\n"
+        f"• <b>Locality / City:</b> {html.escape(location_label)}\n"
         f"• <b>Rasi:</b> {html.escape(rasi)}\n\n"
-        f"Your daily blessing arrives every morning at <b>04:30 AM IST</b>.\n\n"
+        f"Your daily divine message arrives every morning at <b>04:30 AM IST</b>.\n\n"
         f"{SHORT_DISCLAIMER}"
     )
     await query.edit_message_text(summary, reply_markup=reply_markup, parse_mode="HTML")
+    await send_instant_edition_preview(context.bot, uid, lang, location_label, rasi, today_ist)
     context.user_data.clear()
     return ConversationHandler.END
 
@@ -717,7 +818,7 @@ async def save_edited_callback_value(update: Update, context: ContextTypes.DEFAU
     context.user_data.pop("editing_field", None)
     sub = await db_pool.fetchrow("SELECT preferred_language FROM subscribers WHERE telegram_id = $1;", uid)
     lang = (sub["preferred_language"] if sub and sub["preferred_language"] else "en")
-    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today_str = datetime.now(IST).strftime("%Y-%m-%d")
     await query.edit_message_text(
         f"✅ <b>Saved:</b> <code>{html.escape(val)}</code>",
         reply_markup=build_daily_action_keyboard(today_str, uid, lang),
@@ -754,7 +855,7 @@ async def save_edited_text_value(update: Update, context: ContextTypes.DEFAULT_T
     context.user_data.pop("editing_field", None)
     sub = await db_pool.fetchrow("SELECT preferred_language FROM subscribers WHERE telegram_id = $1;", uid)
     lang = (sub["preferred_language"] if sub and sub["preferred_language"] else "en")
-    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today_str = datetime.now(IST).strftime("%Y-%m-%d")
     await update.message.reply_text(
         f"✅ <b>Saved:</b> {html.escape(saved_label)}",
         reply_markup=build_daily_action_keyboard(today_str, uid, lang),
@@ -885,12 +986,21 @@ async def handle_translate_callback(update: Update, context: ContextTypes.DEFAUL
     }
     deity = cache.get("DEITY_DAY_OF_WEEK", {})
     gold = cache.get("GOLD_INR", {})
-    quote_block = cache.get("FAMOUS_QUOTE", {})
+    scripture = cache.get("SCRIPTURE_DAILY", {})
+
+    title = html.escape(str(deity.get("title", "Daily Blessing")))
+    deity_verse = html.escape(str(deity.get("deity_verse") or deity.get("slogan") or ""))
+    sc_source = html.escape(str(scripture.get("source", "")))
+    sc_verse = html.escape(str(scripture.get("verse", "")))
+    sc_meaning = html.escape(str(scripture.get("meaning", "")))
+    sc_line = f"\n📜 <b>{sc_source}:</b> <i>{sc_verse}</i> — {sc_meaning}" if sc_verse else ""
+
     translated_txt = (
         f"🌐 <b>AURA — English Translation ({html.escape(edition_date_str)})</b>\n\n"
-        f"🪔 <b>{html.escape(str(deity.get('title', 'Daily Blessing')))}</b>\n{html.escape(str(deity.get('slogan', '')))}\n\n"
-        f"🪙 Gold: {html.escape(str(gold.get('gold_summary', gold.get('board_summary', ''))))} | ⚪ Silver: {html.escape(str(gold.get('rate_silver', '')))}\n\n"
-        f"✨ <i>\"{html.escape(str(quote_block.get('quote', '')))}\"</i> — {html.escape(str(quote_block.get('author', '')))}\n\n"
+        f"🪔 <b>Daily Blessing — {title}</b>\n{deity_verse}{sc_line}\n\n"
+        f"🟡 Gold: 22K {html.escape(str(gold.get('rate_22k', 'N/A')))} | "
+        f"24K {html.escape(str(gold.get('rate_24k', 'N/A')))} | "
+        f"⚪ Silver: {html.escape(str(gold.get('rate_silver', 'N/A')))}\n\n"
         f"{SHORT_DISCLAIMER}"
     )
     await context.bot.send_message(chat_id=query.from_user.id, text=translated_txt, parse_mode="HTML")
