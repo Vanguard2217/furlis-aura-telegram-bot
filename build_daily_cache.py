@@ -23,8 +23,10 @@ CITY_COORDS = {
 }
 WEATHER_CODES = {
     0: "Clear Sky", 1: "Mainly Clear", 2: "Partly Cloudy", 3: "Overcast",
-    45: "Foggy", 51: "Light Drizzle", 61: "Light Rain", 63: "Moderate Rain",
-    80: "Rain Showers", 95: "Thunderstorm",
+    45: "Foggy", 48: "Dense Fog", 51: "Light Drizzle", 53: "Moderate Drizzle",
+    61: "Light Rain", 63: "Moderate Rain", 65: "Heavy Rain",
+    71: "Light Snow", 73: "Moderate Snow", 75: "Heavy Snow",
+    80: "Rain Showers", 82: "Heavy Rain Showers", 95: "Thunderstorm",
 }
 RAHUKALAM_SEGMENT = {0: 1, 1: 6, 2: 4, 3: 5, 4: 3, 5: 2, 6: 7}
 NALLA_NERAM_SLOTS = {
@@ -54,6 +56,7 @@ SCRIPTURE_QUOTES = [
 TROY_OUNCE_TO_GRAM = 31.1034768
 INDIA_BULLION_PREMIUM_FACTOR = 1.065
 
+
 async def fetch_sheet_tab_csv(session: aiohttp.ClientSession, tab_name: str) -> list[dict]:
     if not GOOGLE_SHEET_CSV_BASE_URL:
         return []
@@ -68,6 +71,7 @@ async def fetch_sheet_tab_csv(session: aiohttp.ClientSession, tab_name: str) -> 
         pass
     return []
 
+
 async def fetch_yahoo_price(session: aiohttp.ClientSession, symbol: str) -> float | None:
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=1d"
     try:
@@ -78,6 +82,7 @@ async def fetch_yahoo_price(session: aiohttp.ClientSession, symbol: str) -> floa
     except Exception:
         pass
     return None
+
 
 async def fetch_bullion_rates(session: aiohttp.ClientSession) -> dict:
     xau_usd, xag_usd, usd_inr = await asyncio.gather(
@@ -91,22 +96,58 @@ async def fetch_bullion_rates(session: aiohttp.ClientSession) -> dict:
         rate_18k = round(rate_24k * 0.750)
         silver_1g = round(((xag_usd or 31.0) * usd_inr / TROY_OUNCE_TO_GRAM) * INDIA_BULLION_PREMIUM_FACTOR, 1)
         return {
-            "rate_22k": f"₹{rate_22k:,}/g", "rate_24k": f"₹{rate_24k:,}/g", "rate_18k": f"₹{rate_18k:,}/g",
+            "rate_22k": f"₹{rate_22k:,}/g",
+            "rate_24k": f"₹{rate_24k:,}/g",
+            "rate_18k": f"₹{rate_18k:,}/g",
             "rate_silver": f"₹{silver_1g}/g",
             "board_summary": f"22K (916): ₹{rate_22k:,}/g | 24K (999): ₹{rate_24k:,}/g | 18K: ₹{rate_18k:,}/g | Silver: ₹{silver_1g}/g (Indicative)",
         }
-    return {"rate_22k": "Check showroom", "rate_24k": "Check showroom", "rate_18k": "Check showroom", "rate_silver": "Check showroom", "board_summary": "Indicative showroom rates"}
+    return {
+        "rate_22k": "Check showroom",
+        "rate_24k": "Check showroom",
+        "rate_18k": "Check showroom",
+        "rate_silver": "Check showroom",
+        "board_summary": "Indicative showroom rates",
+    }
 
-async def fetch_city_weather(session: aiohttp.ClientSession, lat: float, lon: float) -> str:
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FKolkata"
+
+async def fetch_city_weather(session: aiohttp.ClientSession, lat: float, lon: float) -> dict:
+    url = (
+        f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
+        "&current=temperature_2m,relative_humidity_2m,weather_code"
+        "&daily=precipitation_probability_max&forecast_days=1&timezone=Asia%2FKolkata"
+    )
     try:
         async with session.get(url, timeout=12) as resp:
             if resp.status == 200:
-                cur = (await resp.json())["current"]
-                return f"{round(cur['temperature_2m'])}°C, {WEATHER_CODES.get(int(cur['weather_code']), 'Pleasant')}, Humidity {round(cur['relative_humidity_2m'])}%"
+                payload = await resp.json()
+                cur = payload["current"]
+                w_code = int(cur["weather_code"])
+                cond = WEATHER_CODES.get(w_code, "Pleasant")
+                weather_str = f"{round(cur['temperature_2m'])}°C, {cond}, Humidity {round(cur['relative_humidity_2m'])}%"
+                probs = payload.get("daily", {}).get("precipitation_probability_max") or []
+                rain_prob = int(probs[0]) if probs and probs[0] is not None else 0
+
+                if w_code in {65, 82, 95}:
+                    severity = "CAUTION_HEAVY_RAIN"
+                elif w_code in {71, 73, 75}:
+                    severity = "CAUTION_SNOW"
+                elif w_code in {45, 48}:
+                    severity = "CAUTION_FOG"
+                elif rain_prob >= 40 or w_code in {51, 53, 61, 63, 80}:
+                    severity = "UMBRELLA"
+                else:
+                    severity = "NORMAL"
+
+                return {
+                    "weather": weather_str,
+                    "rain_chance_pct": rain_prob,
+                    "condition_severity": severity,
+                }
     except Exception:
         pass
-    return "29°C, Partly Cloudy"
+    return {"weather": "29°C, Partly Cloudy", "rain_chance_pct": 20, "condition_severity": "NORMAL"}
+
 
 async def fetch_auspicious_window(session: aiohttp.ClientSession, lat: float, lon: float, date_str: str, weekday: int) -> str:
     url = f"https://api.sunrise-sunset.org/json?lat={lat}&lng={lon}&date={date_str}&formatted=0"
@@ -126,6 +167,7 @@ async def fetch_auspicious_window(session: aiohttp.ClientSession, lat: float, lo
         pass
     return f"Nalla Neram: {nalla}"
 
+
 async def build_and_store_cache() -> None:
     now_ist = datetime.now(IST)
     edition_date = now_ist.strftime("%Y-%m-%d")
@@ -133,30 +175,51 @@ async def build_and_store_cache() -> None:
     day_of_year = now_ist.timetuple().tm_yday
     deity_title, deity_slogan, asset_path = DAY_DEITIES[weekday]
     quote_item = SCRIPTURE_QUOTES[(day_of_year - 1) % len(SCRIPTURE_QUOTES)]
+
     pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=3)
     try:
         db_cities = await pool.fetch("SELECT DISTINCT UPPER(TRIM(city)) AS c FROM subscribers WHERE is_active = TRUE AND city IS NOT NULL;")
         active_city_keys = set(CITY_COORDS.keys()) | {r["c"] for r in db_cities if r["c"] in CITY_COORDS}
+
         async with aiohttp.ClientSession() as session:
-            sheet_quotes = await fetch_sheet_tab_csv(session, "Quotes_Bank")
+            sheet_quotes, calendar_notes = await asyncio.gather(
+                fetch_sheet_tab_csv(session, "Quotes_Bank"),
+                fetch_sheet_tab_csv(session, "Calendar_Notes"),
+            )
             if sheet_quotes:
                 q_row = sheet_quotes[(day_of_year - 1) % len(sheet_quotes)]
                 q_text = q_row.get("quote_en") or q_row.get("quote")
                 q_auth = f"{q_row.get('scripture', '')} ({q_row.get('citation', '')})".strip() or q_row.get("author")
                 if q_text and q_auth:
                     quote_item = {"quote": q_text, "author": q_auth}
+
+            occasion_payload = {"occasion_title": "", "occasion_temple": "", "asset_path": asset_path}
+            for note in calendar_notes:
+                if str(note.get("event_date", "")).strip() == edition_date and str(note.get("language", "en")).strip().lower() in {"", "en"}:
+                    ev_name = str(note.get("event_name", "")).strip()
+                    temple_hl = str(note.get("temple_highlight", "")).strip()
+                    special_sl = str(note.get("special_slogan", "")).strip()
+                    combined = " — ".join(p for p in [temple_hl, special_sl] if p)
+                    occasion_payload = {
+                        "occasion_title": ev_name,
+                        "occasion_temple": combined,
+                        "asset_path": str(note.get("asset_path", "")).strip() or asset_path,
+                    }
+                    break
+
             gold_data = await fetch_bullion_rates(session)
             city_payloads = {}
             for c_key in active_city_keys:
                 meta = CITY_COORDS[c_key]
-                weather_str, ausp_str = await asyncio.gather(
+                weather_info, ausp_str = await asyncio.gather(
                     fetch_city_weather(session, meta["lat"], meta["lon"]),
                     fetch_auspicious_window(session, meta["lat"], meta["lon"], edition_date, weekday),
                 )
-                city_payloads[c_key] = {"weather": weather_str, "auspicious_time": ausp_str}
+                city_payloads[c_key] = {**weather_info, "auspicious_time": ausp_str}
+
         buckets = [
-            ("en", "DEITY_DAY_OF_WEEK", {"title": deity_title, "slogan": deity_slogan, "occasion_temple": "Daily Panchangam & local temple darshan observance.", "asset_path": asset_path}, None),
-            ("en", "DEITY_ALL_OCCASIONS", {"title": deity_title, "slogan": deity_slogan, "occasion_temple": "Special Panchangam observance & temple highlights.", "asset_path": asset_path}, None),
+            ("en", "DEITY_DAY_OF_WEEK", {"title": deity_title, "slogan": deity_slogan, "asset_path": asset_path}, None),
+            ("en", "DEITY_ALL_OCCASIONS", occasion_payload, None),
             ("en", "GOLD_INR", gold_data, None),
             ("en", "FAMOUS_QUOTE", quote_item, None),
         ]
@@ -164,18 +227,22 @@ async def build_and_store_cache() -> None:
             buckets.append(("en", f"CITY_{c_key}", c_data, None))
         for r in ["Mesham", "Rishabam", "Mithunam", "Kadagam", "Simmam", "Kanni", "Thulam", "Vrischikam", "Dhanusu", "Magaram", "Kumbam", "Meenam"]:
             buckets.append(("en", f"RASI_{r.upper()}", {"three_words": "Steady Focus • Helpful Partnership • Timely Resolution"}, None))
+
         for lang, bucket_key, payload, file_id in buckets:
             await pool.execute(
                 """
                 INSERT INTO daily_shared_cache (edition_date, language, bucket_key, payload_json, telegram_file_id)
                 VALUES ($1::date, $2, $3, $4::jsonb, $5)
                 ON CONFLICT (edition_date, language, bucket_key) DO UPDATE SET
-                    payload_json = EXCLUDED.payload_json, telegram_file_id = COALESCE(EXCLUDED.telegram_file_id, daily_shared_cache.telegram_file_id);
+                    payload_json = EXCLUDED.payload_json,
+                    telegram_file_id = COALESCE(EXCLUDED.telegram_file_id, daily_shared_cache.telegram_file_id);
                 """,
-                edition_date, lang, bucket_key, json.dumps(payload), file_id,
+                edition_date, lang, bucket_key, json.dumps(payload), file_id
             )
+        print(f"[{edition_date}] FURLIS AURA daily_shared_cache updated ({len(buckets)} buckets).")
     finally:
         await pool.close()
+
 
 if __name__ == "__main__":
     asyncio.run(build_and_store_cache())
