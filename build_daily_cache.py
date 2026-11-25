@@ -1,530 +1,328 @@
-# build_daily_cache.py — AURA Daily Cache Builder (Localized + Deity-Matched 2-Sentence Verse + Single Scripture Rotation)
 import os
-import re
 import csv
+import io
 import json
-import asyncio
-from io import StringIO
-from datetime import datetime, timezone, timedelta
-import aiohttp
-import asyncpg
+import logging
+from datetime import datetime, date, timezone, timedelta
+from typing import Dict, List, Any
+
+import requests
+import psycopg2
+from psycopg2.extras import Json
+
+logging.basicConfig(
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    level=logging.INFO,
+)
+logger = logging.getLogger("build_daily_cache")
 
 DATABASE_URL = os.environ["DATABASE_URL"]
-GOOGLE_SHEET_CSV_BASE_URL = os.environ.get("GOOGLE_SHEET_CSV_BASE_URL", "")
+# Optional for later: once Google Sheet is published as CSV, set this env var without changing code
+GOOGLE_SHEET_CSV_BASE_URL = os.environ.get("GOOGLE_SHEET_CSV_BASE_URL", "").strip()
+
 IST = timezone(timedelta(hours=5, minutes=30))
-SUPPORTED_LANGS = ("en", "ta", "hi", "te", "kn", "ml")
+EPOCH_ANCHOR_DATE = date(2026, 11, 25)
 
-CITY_COORDS = {
-    "CHENNAI": {"name": "Chennai", "lat": 13.0827, "lon": 80.2707},
-    "MUMBAI": {"name": "Mumbai", "lat": 19.0760, "lon": 72.8777},
-    "BENGALURU": {"name": "Bengaluru", "lat": 12.9716, "lon": 77.5946},
-    "DELHI": {"name": "Delhi", "lat": 28.6139, "lon": 77.2090},
-    "HYDERABAD": {"name": "Hyderabad", "lat": 17.3850, "lon": 78.4867},
-    "MADURAI": {"name": "Madurai", "lat": 9.9252, "lon": 78.1198},
-    "COIMBATORE": {"name": "Coimbatore", "lat": 11.0168, "lon": 76.9558},
-}
+LANGS = ["en", "ta", "hi", "te", "kn", "ml"]
 
-WEATHER_CODES = {
-    0: "Clear Sky", 1: "Mainly Clear", 2: "Partly Cloudy", 3: "Overcast",
-    45: "Foggy", 48: "Dense Fog", 51: "Light Drizzle", 53: "Moderate Drizzle",
-    61: "Light Rain", 63: "Moderate Rain", 65: "Heavy Rain",
-    71: "Light Snow", 73: "Moderate Snow", 75: "Heavy Snow",
-    80: "Rain Showers", 82: "Heavy Rain Showers", 95: "Thunderstorm",
-}
+# ---------------------------------------------------------------------------
+# 1. Built-in 7-Day Deity Mantra Cycle (Repeats Weekly MON -> SUN)
+# ---------------------------------------------------------------------------
+WEEKDAY_CODES = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
 
-RAHUKALAM_SEGMENT = {0: 1, 1: 6, 2: 4, 3: 5, 4: 3, 5: 2, 6: 7}
-
-NALLA_NERAM_SLOTS = {
-    0: "06:15 AM – 07:15 AM | 04:45 PM – 05:45 PM",
-    1: "07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM",
-    2: "09:15 AM – 10:15 AM | 04:45 PM – 05:45 PM",
-    3: "10:45 AM – 11:45 AM | 04:45 PM – 05:45 PM",
-    4: "09:15 AM – 10:15 AM | 04:45 PM – 05:45 PM",
-    5: "09:15 AM – 10:15 AM | 04:45 PM – 05:45 PM",
-    6: "07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM",
-}
-
-# Weekday Deity matched to asset_path + concise 2-sentence verse in all 6 languages
-DAY_DEITIES = {
-    0: {
-        "asset_path": "assets/deities/mon_shiva.png",
-        "title": {
-            "en": "Monday — Lord Shiva",
-            "ta": "திங்கள் — சிவபெருமான்",
-            "hi": "सोमवार — भगवान शिव",
-            "te": "సోమవారం — పరమశివుడు",
-            "kn": "ಸೋಮವಾರ — ಪರಮೇಶ್ವರ",
-            "ml": "തിങ്കൾ — പരമശിവൻ",
-        },
-        "deity_verse": {
-            "en": "Om Namah Shivaya, salutations to the serene Lord who stills the restless mind. May His grace shield your home and guide every step in peace.",
-            "ta": "ஓம் நம சிவாய — அமைதியின் வடிவான சிவபெருமானை வணங்குகிறோம். அவரின் திருவருள் உங்கள் இல்லத்தைக் காத்து மன அமைதியைத் தரட்டும்.",
-            "hi": "ॐ नमः शिवाय — शांत स्वरूप भगवान शिव को प्रणाम। उनकी कृपा आपके परिवार की रक्षा करे और हर कदम पर शांति दे।",
-            "te": "ఓం నమః శివాయ — ప్రశాంత స్వరూపుడైన పరమశివునికి వందనం. ఆయన కృప మీ ఇంటిని కాపాడి మనశ్శాంతిని ప్రసాదించుగాక.",
-            "kn": "ಓಂ ನಮಃ ಶಿವಾಯ — ಶಾಂತ ಸ್ವರೂಪ ಪರಮೇಶ್ವರನಿಗೆ ನಮನಗಳು. ಅವರ ಕೃಪೆ ನಿಮ್ಮ ಕುಟುಂಬವನ್ನು ರಕ್ಷಿಸಿ ನೆಮ್ಮದಿ ನೀಡಲಿ.",
-            "ml": "ഓം നമഃ ശിവായ — ശാന്തസ്വരൂപനായ പരമശിവന് പ്രണാമം. അവിടുത്തെ കൃപ നിങ്ങളുടെ കുടുംബത്തെ കാത്ത് സമാധാനം നൽകട്ടെ.",
-        },
+BUILT_IN_DEITY_7DAY: Dict[str, Dict[str, str]] = {
+    "MON": {
+        "en": "🪔 <b>Monday — Lord Shiva Blessing:</b>\n<i>Om Namah Shivaya</i> — May Lord Chandrashekhara bless your mind with stillness, clarity, and inner strength today.",
+        "ta": "🪔 <b>திங்கள் — சிவபெருமான் அருள்:</b>\n<i>ஓம் நம சிவாய</i> — இன்று உங்கள் மனதில் அமைதியும் தெளிவும் ஆற்றலும் பெருகட்டும்.",
+        "hi": "🪔 <b>सोमवार — भगवान शिव आशीर्वाद:</b>\n<i>ॐ नमः शिवाय</i> — आज आपका मन शांत, स्पष्ट और आत्मबल से परिपूर्ण रहे।",
+        "te": "🪔 <b>సోమవారం — పరమశివుని ఆశీస్సులు:</b>\n<i>ఓం నమః శివాయ</i> — నేడు మీ మనస్సుకు ప్రశాంతత, స్పష్టత మరియు ఆత్మబలం కలగాలి.",
+        "kn": "🪔 <b>ಸೋಮವಾರ — ಶಿವನ ಆಶೀರ್ವಾದ:</b>\n<i>ಓಂ ನಮಃ ಶಿವಾಯ</i> — ಇಂದು ನಿಮ್ಮ ಮನಸ್ಸಿಗೆ ಶಾಂತಿ, ಸ್ಪಷ್ಟತೆ ಮತ್ತು ಆತ್ಮಬಲ ದೊರೆಯಲಿ.",
+        "ml": "🪔 <b>തിങ്കൾ — പരമശിവന്റെ അനുഗ്രഹം:</b>\n<i>ഓം നമഃ ശിവായ</i> — ഇന്ന് നിങ്ങളുടെ മനസ്സിന് സമാധാനവും വ്യക്തതയും ശക്തിയും ലഭിക്കട്ടെ.",
     },
-    1: {
-        "asset_path": "assets/deities/tue_murugan.png",
-        "title": {
-            "en": "Tuesday — Lord Murugan & Hanuman",
-            "ta": "செவ்வாய் — முருகப்பெருமான் & அனுமன்",
-            "hi": "मंगलवार — भगवान मुरुगन व हनुमान",
-            "te": "మంగళవారం — సుబ్రహ్మణ్య స్వామి & హనుమాన్",
-            "kn": "ಮಂಗಳವಾರ — ಸುಬ್ರಹ್ಮಣ್ಯ & ಹನುಮಾನ್",
-            "ml": "ചൊവ്വ — സുബ്രഹ്മണ്യ സ്വാമി & ഹനുമാൻ",
-        },
-        "deity_verse": {
-            "en": "Om Saravanabhavaya Namah, we invoke divine courage and steadfast devotion. May every obstacle yield to clarity, strength, and righteous action.",
-            "ta": "ஓம் சரவணபவாய நம — வீரமும் ஞானமும் அருளும் கந்தனை வணங்குகிறோம். தடைகள் யாவும் நீங்கி இன்றைய செயல்கள் வெற்றியுடன் நிறைவேறட்டும்.",
-            "hi": "ॐ शरवणभवाय नमः — साहस और भक्ति के दाता को नमन। आपके मार्ग की हर बाधा दूर हो और कार्यों में सफलता मिले।",
-            "te": "ఓం శరవణభవాయ నమః — ధైర్యం, భక్తి ప్రసాదించే స్వామికి వందనం. అడ్డంకులన్నీ తొలగి మీ పనులు విజయవంతంగా సాగుగాక.",
-            "kn": "ಓಂ ಶರವಣಭವಾಯ ನಮಃ — ಧೈರ್ಯ ಮತ್ತು ಭಕ್ತಿ ನೀಡುವ ಸ್ವಾಮಿಗೆ ನಮನ. ಎಲ್ಲಾ ಅಡೆತಡೆಗಳು ನಿವಾರಣೆಯಾಗಿ ಕಾರ್ಯಗಳಲ್ಲಿ ಜಯ ಸಿಗಲಿ.",
-            "ml": "ഓം ശരവണഭവായ നമഃ — ധൈര്യവും ഭക്തിയും നൽകുന്ന സ്വാമിക്ക് പ്രണാമം. തടസ്സങ്ങളെല്ലാം നീങ്ങി കർമ്മങ്ങളിൽ വിജയം ഉണ്ടാകട്ടെ.",
-        },
+    "TUE": {
+        "en": "🪔 <b>Tuesday — Lord Murugan &amp; Hanuman Blessing:</b>\n<i>Om Saravanabhava • Om Hanumate Namaha</i> — May courage, protection, and decisive energy remove every obstacle in your path.",
+        "ta": "🪔 <b>செவ்வாய் — முருகப்பெருமான் &amp; அனுமன் அருள்:</b>\n<i>ஓம் சரவணபவ</i> — துணிச்சலும் பாதுகாப்பும் வெற்றியும் இன்று உங்களுடன் இருக்கட்டும்.",
+        "hi": "🪔 <b>मंगलवार — भगवान कार्तिकेय एवं हनुमान आशीर्वाद:</b>\n<i>ॐ हनुमते नमः</i> — साहस, सुरक्षा और सकारात्मक ऊर्जा आपके हर कार्य को सफल बनाए।",
+        "te": "🪔 <b>మంగళవారం — సుబ్రహ్మణ్య స్వామి &amp; హనుమాన్ ఆశీస్సులు:</b>\n<i>ఓం శరవణభవ</i> — ధైర్యం, రక్షణ మరియు విజయం నేడు మీకు తోడుగా ఉండాలి.",
+        "kn": "🪔 <b>ಮಂಗಳವಾರ — ಸುಬ್ರಹ್ಮಣ್ಯ &amp; ಹನುಮಾನ್ ಆಶೀರ್ವಾದ:</b>\n<i>ಓಂ ಶರವಣಭವ</i> — ಧೈರ್ಯ, ರಕ್ಷಣೆ ಮತ್ತು ಯಶಸ್ಸು ಇಂದು ನಿಮ್ಮದಾಗಲಿ.",
+        "ml": "🪔 <b>ചൊവ്വ — സുബ്രഹ്മണ്യ സ്വാമി &amp; ഹനുമാൻ അനുഗ്രഹം:</b>\n<i>ഓം ശരവണഭവ</i> — ധൈര്യവും സംരക്ഷണവും വിജയവും ഇന്ന് നിങ്ങളോടൊപ്പം ഉണ്ടാകട്ടെ.",
     },
-    2: {
-        "asset_path": "assets/deities/wed_vinayagar.png",
-        "title": {
-            "en": "Wednesday — Lord Vinayagar & Perumal",
-            "ta": "புதன் — விநாயகர் & பெருமாள்",
-            "hi": "बुधवार — भगवान गणेश व विष्णु",
-            "te": "బుధవారం — వినాయకుడు & శ్రీమన్నారాయణుడు",
-            "kn": "ಬುಧವಾರ — ವಿನಾಯಕ & ಶ್ರೀಮನ್ನಾರಾಯಣ",
-            "ml": "ബുധൻ — ഗണപതി & മഹാവിഷ്ണു",
-        },
-        "deity_verse": {
-            "en": "Om Gam Ganapataye Namah, remover of obstacles and lord of wisdom. May discernment and steady grace bless every undertaking today.",
-            "ta": "ஓம் கம் கணபதயே நம — விக்னங்களைத் தீர்க்கும் விநாயகரை வணங்குகிறோம். நல்லறிவும் திருவருளும் துணைநின்று இன்றைய நாள் இனிதாக அமையட்டும்.",
-            "hi": "ॐ गं गणपतये नमः — विघ्नहर्ता और बुद्धि के स्वामी को प्रणाम। विवेक और शुभ कृपा से आपके सभी कार्य मंगलमय हों।",
-            "te": "ఓం గం గణపతయే నమః — విఘ్నాలను తొలగించే గణనాథునికి వందనం. సద్బుద్ధి, శుభ కృపతో నేటి పనులు చక్కగా సాగుగాక.",
-            "kn": "ಓಂ ಗಂ ಗಣಪತಯೇ ನಮಃ — ವಿಘ್ನ ನಿವಾರಕ ಗಣಪತಿಗೆ ನಮನಗಳು. ಸದ್ಬುದ್ಧಿ ಮತ್ತು ಶುಭ ಕೃಪೆಯಿಂದ ಇಂದಿನ ಕಾರ್ಯಗಳು ಸಫಲವಾಗಲಿ.",
-            "ml": "ഓം ഗം ഗണപതയേ നമഃ — വിഘ്നങ്ങൾ അകറ്റുന്ന ഗണപതിക്ക് പ്രണാമം. സദ്ബുദ്ധിയും അനുഗ്രഹവും കൊണ്ട് ഇന്നത്തെ കർമ്മങ്ങൾ ശുഭമാകട്ടെ.",
-        },
+    "WED": {
+        "en": "🪔 <b>Wednesday — Lord Vishnu &amp; Krishna Blessing:</b>\n<i>Om Namo Bhagavate Vasudevaya</i> — May wisdom, harmony, and prosperous progress guide every decision today.",
+        "ta": "🪔 <b>புதன் — ஸ்ரீமன் நாராயணன் &amp; கிருஷ்ணர் அருள்:</b>\n<i>ஓம் நமோ பகவதே வாசுதேவாய</i> — விவேகமும் நல்லிணக்கமும் வளமும் இன்று உங்களை வழிநடத்தட்டும்.",
+        "hi": "🪔 <b>बुधवार — भगवान विष्णु एवं श्रीकृष्ण आशीर्वाद:</b>\n<i>ॐ नमो भगवते वासुदेवाय</i> — विवेक, सामंजस्य और समृद्धि आज आपके हर निर्णय का मार्गदर्शन करे।",
+        "te": "🪔 <b>బుధవారం — శ్రీ మహావిష్ణువు &amp; శ్రీకృష్ణుని ఆశీస్సులు:</b>\n<i>ఓం నమో భగవతే వాసుదేవాయ</i> — వివేకం, సామరస్యం మరియు శ్రేయస్సు నేడు మిమ్మల్ని నడిపించాలి.",
+        "kn": "🪔 <b>ಬುಧವಾರ — ಶ್ರೀ ಮಹಾವಿಷ್ಣು &amp; ಶ್ರೀಕೃಷ್ಣನ ಆಶೀರ್ವಾದ:</b>\n<i>ಓಂ ನಮೋ ಭಗವತೇ ವಾಸುದೇವಾಯ</i> — ವಿವೇಕ, ಸಾಮರಸ್ಯ ಮತ್ತು ಸಮೃದ್ಧಿ ಇಂದು ನಿಮ್ಮನ್ನು ಮುನ್ನಡೆಸಲಿ.",
+        "ml": "🪔 <b>ബുധൻ — മഹാവിഷ്ണു &amp; ശ്രീകൃഷ്ണ അനുഗ്രഹം:</b>\n<i>ഓം നമോ ഭഗവതേ വാസുദേവായ</i> — വിവേകവും ഐക്യവും ഐശ്വര്യവും ഇന്ന് നിങ്ങളെ നയിക്കട്ടെ.",
     },
-    3: {
-        "asset_path": "assets/deities/thu_guru.png",
-        "title": {
-            "en": "Thursday — Sri Dakshinamoorthy & Guru",
-            "ta": "வியாழன் — ஸ்ரீ தட்சிணாமூர்த்தி & குரு",
-            "hi": "गुरुवार — श्री दक्षिणामूर्ति व गुरु",
-            "te": "గురువారం — శ్రీ దక్షిణామూర్తి & గురువు",
-            "kn": "ಗುರುವಾರ — ಶ್ರೀ ದಕ್ಷಿಣಾಮೂರ್ತಿ & ಗುರು",
-            "ml": "വ്യാഴം — ശ്രീ ദക്ഷിണാമൂർത്തി & ഗുരു",
-        },
-        "deity_verse": {
-            "en": "Om Gurave Namah, salutations to the silent teacher who dispels ignorance. May wisdom, patience, and sound judgment guide your day.",
-            "ta": "ஓம் குரவே நம — அறியாமை இருளை அகற்றும் குருபகவானை வணங்குகிறோம். தெளிவான ஞானமும் பொறுமையும் உங்கள் முடிவுகளை வழிநடத்தட்டும்.",
-            "hi": "ॐ गुरवे नमः — अज्ञान के अंधकार को मिटाने वाले गुरु को प्रणाम। ज्ञान, धैर्य और विवेक आपके निर्णयों का मार्गदर्शन करें।",
-            "te": "ఓం గురవే నమః — అజ్ఞానాన్ని తొలగించే సద్గురువుకు వందనం. జ్ఞానం, సహనం, మంచి విచక్షణ మీ నిర్ణయాలకు తోడుగా ఉండుగాక.",
-            "kn": "ಓಂ ಗುರವೇ ನಮಃ — ಅಜ್ಞಾನವನ್ನು ಕಳೆಯುವ ಗುರುವಿಗೆ ನಮನಗಳು. ಜ್ಞಾನ, ತಾಳ್ಮೆ ಮತ್ತು ಸದ್ವಿಚಾರ ನಿಮ್ಮ ನಿರ್ಧಾರಗಳನ್ನು ಮುನ್ನಡೆಸಲಿ.",
-            "ml": "ഓം ഗുരവേ നമഃ — അജ്ഞാനം അകറ്റുന്ന ഗുരുവിന് പ്രണാമം. ജ്ഞാനവും ക്ഷമയും വിവേകവും നിങ്ങളുടെ തീരുമാനങ്ങൾക്ക് വഴികാട്ടട്ടെ.",
-        },
+    "THU": {
+        "en": "🪔 <b>Thursday — Sri Dakshinamurthy &amp; Guru Blessing:</b>\n<i>Om Gurave Namaha</i> — May divine grace illuminate your intellect and bring wise counsel into your day.",
+        "ta": "🪔 <b>வியாழன் — ஸ்ரீ தட்சிணாமூர்த்தி &amp; குரு அருள்:</b>\n<i>ஓம் குரவே நமஹ</i> — தெய்வீக அருள் உங்கள் அறிவையும் நல்வழியையும் ஒளிரச் செய்யட்டும்.",
+        "hi": "🪔 <b>गुरुवार — श्री दक्षिणामूर्ति एवं गुरु आशीर्वाद:</b>\n<i>ॐ गुरवे नमः</i> — गुरु कृपा से आपकी बुद्धि प्रकाशित हो और हर कार्य में शुभता आए।",
+        "te": "🪔 <b>గురువారం — శ్రీ దక్షిణామూర్తి &amp; గురు ఆశీస్సులు:</b>\n<i>ఓం గురవే నమః</i> — గురు కృపతో మీ బుద్ధి వికసించి శుభ ఫలితాలు కలగాలి.",
+        "kn": "🪔 <b>ಗುರುವಾರ — ಶ್ರೀ ದಕ್ಷಿಣಾಮೂರ್ತಿ &amp; ಗುರು ಆಶೀರ್ವಾದ:</b>\n<i>ಓಂ ಗುರವೇ ನಮಃ</i> — ಗುರು ಕೃಪೆಯಿಂದ ನಿಮ್ಮ ಬುದ್ಧಿ ಪ್ರಕಾಶಿಸಿ ಶುಭವಾಗಲಿ.",
+        "ml": "🪔 <b>വ്യാഴം — ശ്രീ ദക്ഷിണാമൂർത്തി &amp; ഗുരു അനുഗ്രഹം:</b>\n<i>ഓം ഗുരവേ നമഃ</i> — ഗുരു കൃപയാൽ നിങ്ങളുടെ ബുദ്ധി പ്രകാശിക്കട്ടെ.",
     },
-    4: {
-        "asset_path": "assets/deities/fri_amman.png",
-        "title": {
-            "en": "Friday — Goddess Mahalakshmi & Amman",
-            "ta": "வெள்ளி — மகாலட்சுமி & அம்மன்",
-            "hi": "शुक्रवार — देवी महालक्ष्मी व अम्मान",
-            "te": "శుక్రవారం — మహాలక్ష్మీ దేవి & అమ్మవారు",
-            "kn": "ಶುಕ್ರವಾರ — ಮಹಾಲಕ್ಷ್ಮಿ & ಅಮ್ಮನವರು",
-            "ml": "വെള്ളി — മഹാലക്ഷ്മി & ദേവി",
-        },
-        "deity_verse": {
-            "en": "Om Shreem Mahalakshmyai Namah, we bow to the Divine Mother of grace and harmony. May prosperity, kindness, and auspiciousness fill your home.",
-            "ta": "ஓம் ஸ்ரீம் மகாலட்சுமியை நம — மங்களமும் ஐஸ்வர்யமும் அருளும் அன்னையை வணங்குகிறோம். உங்கள் இல்லத்தில் அமைதியும் வளமும் நிறைந்திருக்கட்டும்.",
-            "hi": "ॐ श्रीं महालक्ष्म्यै नमः — करुणा और सौभाग्य की देवी को नमन। आपके घर में सुख, शांति और समृद्धि का वास हो।",
-            "te": "ఓం శ్రీం మహాలక్ష్మ్యై నమః — శుభం, ఐశ్వర్యం ప్రసాదించే జగన్మాతకు వందనం. మీ ఇంట సుఖశాంతులు, సంపదలు వెల్లివిరియుగాక.",
-            "kn": "ಓಂ ಶ್ರೀಂ ಮಹಾಲಕ್ಷ್ಮ್ಯೈ ನಮಃ — ಮಂಗಳ ಮತ್ತು ಸೌಭಾಗ್ಯ ನೀಡುವ ತಾಯಿಗೆ ನಮನ. ನಿಮ್ಮ ಮನೆಯಲ್ಲಿ ಶಾಂತಿ, ನೆಮ್ಮದಿ ಮತ್ತು ಸಮೃದ್ಧಿ ನೆಲೆಸಲಿ.",
-            "ml": "ഓം ശ്രീം മഹാലക്ഷ്മ്യൈ നമഃ — ഐശ്വര്യവും മംഗളവും നൽകുന്ന ദേവിക്ക് പ്രണാമം. നിങ്ങളുടെ ഭവനത്തിൽ സമാധാനവും സമൃദ്ധിയും നിറയട്ടെ.",
-        },
+    "FRI": {
+        "en": "🪔 <b>Friday — Goddess Mahalakshmi &amp; Parashakti Blessing:</b>\n<i>Om Shreem Mahalakshmyai Namaha</i> — May abundance, grace, and family well-being fill your home today.",
+        "ta": "🪔 <b>வெள்ளி — ஸ்ரீ மகாலட்சுமி &amp; பராசக்தி அருள்:</b>\n<i>ஓம் ஸ்ரீம் மகாலட்சுமியை நமஹ</i> — ஐஸ்வர்யமும் அருளும் குடும்ப நலமும் இன்று உங்கள் இல்லத்தில் நிறையட்டும்.",
+        "hi": "🪔 <b>शुक्रवार — माँ महालक्ष्मी एवं पराशक्ति आशीर्वाद:</b>\n<i>ॐ श्रीं महालक्ष्म्यै नमः</i> — सुख, समृद्धि और सौभाग्य से आपका घर-आँगन आलोकित रहे।",
+        "te": "🪔 <b>శుక్రవారం — శ్రీ మహాలక్ష్మి &amp; పరాశక్తి ఆశీస్సులు:</b>\n<i>ఓం శ్రీం మహాలక్ష్మ్యై నమః</i> — ఐశ్వర్యం, అనుగ్రహం మరియు కుటుంబ సౌభాగ్యం నేడు మీ ఇంట వెల్లివిరియాలి.",
+        "kn": "🪔 <b>ಶುಕ್ರವಾರ — ಶ್ರೀ ಮಹಾಲಕ್ಷ್ಮಿ &amp; ಪರಾಶಕ್ತಿ ಆಶೀರ್ವಾದ:</b>\n<i>ಓಂ ಶ್ರೀಂ ಮಹಾಲಕ್ಷ್ಮ್ಯೈ ನಮಃ</i> — ಐಶ್ವರ್ಯ, ಅನುಗ್ರಹ ಮತ್ತು ಕುಟುಂಬದ ಸೌಭಾಗ್ಯ ಇಂದು ನಿಮ್ಮದಾಗಲಿ.",
+        "ml": "🪔 <b>വെള്ളി — ശ്രീ മഹാലക്ഷ്മി &amp; പരാശക്തി അനുഗ്രഹം:</b>\n<i>ഓം ശ്രീം മഹാലക്ഷ്മ്യൈ നമഃ</i> — ഐശ്വര്യവും അനുഗ്രഹവും കുടുംബസൗഖ്യവും ഇന്ന് നിങ്ങളുടെ ഭവനത്തിൽ നിറയട്ടെ.",
     },
-    5: {
-        "asset_path": "assets/deities/sat_thirumal.png",
-        "title": {
-            "en": "Saturday — Lord Thirumal (Venkateswara)",
-            "ta": "சனி — திருவேங்கடமுடையான் (பெருமாள்)",
-            "hi": "शनिवार — भगवान वेंकटेश्वर (तिरुमल)",
-            "te": "శనివారం — శ్రీ వేంకటేశ్వర స్వామి",
-            "kn": "ಶನಿವಾರ — ಶ್ರೀ ವೆಂಕಟೇಶ್ವರ ಸ್ವಾಮಿ",
-            "ml": "ശനി — ശ്രീ വെങ്കിടേശ്വര സ്വാമി",
-        },
-        "deity_verse": {
-            "en": "Om Namo Venkatesaya, refuge of devotees and sustainer of dharma. May His protection steady your spirit and bring enduring peace.",
-            "ta": "ஓம் நமோ வேங்கடேசாய — பக்தர்களைக் காக்கும் திருவேங்கடவனை வணங்குகிறோம். அவரின் திருவருள் மன உறுதியையும் நிலையான அமைதியையும் தரட்டும்.",
-            "hi": "ॐ नमो वेंकटेशाय — भक्तों के रक्षक और धर्म के पालक को प्रणाम। उनकी कृपा आपके मन को स्थिरता और अटूट शांति प्रदान करे।",
-            "te": "ఓం నమో వేంకటేశాయ — భక్తులను రక్షించే శ్రీనివాసునికి వందనం. ఆయన అభయం మీ మనసుకు స్థిరత్వం, శాంతిని ప్రసాదించుగాక.",
-            "kn": "ಓಂ ನಮೋ ವೆಂಕಟೇಶಾಯ — ಭಕ್ತರ ರಕ್ಷಕ ಶ್ರೀನಿವಾಸನಿಗೆ ನಮನಗಳು. ಅವರ ಕೃಪೆ ನಿಮ್ಮ ಮನಸ್ಸಿಗೆ ಸ್ಥಿರತೆ ಮತ್ತು ಶಾಂತಿಯನ್ನು ನೀಡಲಿ.",
-            "ml": "ഓം നമോ വെങ്കടേശായ — ഭക്തരെ രക്ഷിക്കുന്ന ശ്രീനിവാസന് പ്രണാമം. അവിടുത്തെ കൃപ മനസ്സിന് സ്ഥിരതയും ശാന്തിയും നൽകട്ടെ.",
-        },
+    "SAT": {
+        "en": "🪔 <b>Saturday — Lord Venkateswara (Thirumal) Blessing:</b>\n<i>Om Namo Venkatesaya</i> — May Govinda's compassion steady your efforts and bless your perseverance with lasting peace.",
+        "ta": "🪔 <b>சனி — ஸ்ரீ வெங்கடேசப் பெருமாள் அருள்:</b>\n<i>ஓம் நமோ வெங்கடேசாய</i> — ஏழுமலையானின் கருணை உங்கள் முயற்சிகளுக்கு நிலையான வெற்றியையும் அமைதியையும் தரட்டும்.",
+        "hi": "🪔 <b>शनिवार — भगवान वेंकटेश्वर (तिरुमल) आशीर्वाद:</b>\n<i>ॐ नमो वेंकटेशाय</i> — प्रभु गोविंद की कृपा आपके परिश्रम को स्थिरता और शांति प्रदान करे।",
+        "te": "🪔 <b>శనివారం — శ్రీ వేంకటేశ్వర స్వామి ఆశీస్సులు:</b>\n<i>ఓం నమో వేంకటేశాయ</i> — శ్రీనివాసుని కరుణ మీ ప్రయత్నాలకు స్థిరమైన విజయాన్ని, శాంతిని ఇవ్వాలి.",
+        "kn": "🪔 <b>ಶನಿವಾರ — ಶ್ರೀ ವೆಂಕಟೇಶ್ವರ ಸ್ವಾಮಿ ಆಶೀರ್ವಾದ:</b>\n<i>ಓಂ ನಮೋ ವೆಂಕಟೇಶಾಯ</i> — ಶ್ರೀನಿವಾಸನ ಕರುಣೆ ನಿಮ್ಮ ಪ್ರಯತ್ನಗಳಿಗೆ ಸ್ಥಿರವಾದ ಯಶಸ್ಸು ಮತ್ತು ಶಾಂತಿಯನ್ನು ನೀಡಲಿ.",
+        "ml": "🪔 <b>ശനി — ശ്രീ വെങ്കടേശ്വര സ്വാമി അനുഗ്രഹം:</b>\n<i>ഓം നമോ വെങ്കടേശായ</i> — ഭഗവാൻ ശ്രീനിവാസന്റെ കരുണ നിങ്ങളുടെ പരിശ്രമങ്ങൾക്ക് വിജയവും സമാധാനവും നൽകട്ടെ.",
     },
-    6: {
-        "asset_path": "assets/deities/sun_surya.png",
-        "title": {
-            "en": "Sunday — Lord Surya Narayana",
-            "ta": "ஞாயிறு — சூரிய நாராயணர்",
-            "hi": "रविवार — भगवान सूर्य नारायण",
-            "te": "ఆదివారం — సూర్య నారాయణ స్వామి",
-            "kn": "ಭಾನುವಾರ — ಸೂರ್ಯ ನಾರಾಯಣ ಸ್ವಾಮಿ",
-            "ml": "ഞായർ — സൂര്യനാരായണ സ്വാമി",
-        },
-        "deity_verse": {
-            "en": "Om Suryaya Namah, radiant giver of light, health, and vitality. May your day shine with clarity, energy, and purposeful grace.",
-            "ta": "ஓம் சூர்யாய நம — ஆரோக்கியமும் ஒளியும் அருளும் சூரிய பகவானை வணங்குகிறோம். தெளிவான சிந்தனையும் நலமும் இன்று உங்களுக்குத் துணைநிற்கட்டும்.",
-            "hi": "ॐ सूर्याय नमः — प्रकाश, आरोग्य और ऊर्जा के दाता को प्रणाम। आपका दिन स्पष्टता, उत्तम स्वास्थ्य और शुभ ऊर्जा से आलोकित हो।",
-            "te": "ఓం సూర్యాయ నమః — ఆరోగ్యం, తేజస్సు ప్రసాదించే సూర్యదేవునికి వందనం. మీ రోజు స్పష్టత, ఉత్సాహం, శుభ శక్తితో ప్రకాశించుగాక.",
-            "kn": "ಓಂ ಸೂರ್ಯಾಯ ನಮಃ — ಬೆಳಕು, ಆರೋಗ್ಯ ಮತ್ತು ಚೈತನ್ಯ ನೀಡುವ ಸೂರ್ಯದೇವನಿಗೆ ನಮನ. ನಿಮ್ಮ ದಿನ ಸ್ಪಷ್ಟತೆ ಮತ್ತು ಶುಭ ಶಕ್ತಿಯಿಂದ ಬೆಳಗಲಿ.",
-            "ml": "ഓം സൂര്യായ നമഃ — പ്രകാശവും ആരോഗ്യവും നൽകുന്ന സൂര്യദേവന് പ്രണാമം. വ്യക്തതയും ഉന്മേഷവും ശുഭോർജ്ജവും ഇന്ന് നിങ്ങളോടൊപ്പം ഉണ്ടാകട്ടെ.",
-        },
+    "SUN": {
+        "en": "🪔 <b>Sunday — Lord Surya Narayana Blessing:</b>\n<i>Om Suryaya Namaha</i> — May the radiant grace of Surya Narayana bless you with vitality, good health, and clarity.",
+        "ta": "🪔 <b>ஞாயிறு — ஸ்ரீ சூரிய நாராயணர் அருள்:</b>\n<i>ஓம் சூர்யாய நமஹ</i> — சூரிய பகவானின் அருள் உங்களுக்கு ஆரோக்கியமும் புத்துணர்ச்சியும் தெளிவும் தரட்டும்.",
+        "hi": "🪔 <b>रविवार — भगवान सूर्यनारायण आशीर्वाद:</b>\n<i>ॐ सूर्याय नमः</i> — भगवान सूर्य की तेजस्वी कृपा आपको उत्तम स्वास्थ्य, ऊर्जा और स्पष्टता प्रदान करे।",
+        "te": "🪔 <b>ఆదివారం — శ్రీ సూర్యనారాయణ స్వామి ఆశీస్సులు:</b>\n<i>ఓం సూర్యాయ నమః</i> — సూర్య భగవానుని అనుగ్రహం మీకు ఆరోగ్యం, తేజస్సు మరియు స్పష్టతను ప్రసాదించాలి.",
+        "kn": "🪔 <b>ಭಾನುವಾರ — ಶ್ರೀ ಸೂರ್ಯನಾರಾಯಣ ಸ್ವಾಮಿ ಆಶೀರ್ವಾದ:</b>\n<i>ಓಂ ಸೂರ್ಯಾಯ ನಮಃ</i> — ಸೂರ್ಯ ಭಗವಾನನ ಕೃಪೆ ನಿಮಗೆ ಆರೋಗ್ಯ, ಚೈತನ್ಯ ಮತ್ತು ಸ್ಪಷ್ಟತೆಯನ್ನು ನೀಡಲಿ.",
+        "ml": "🪔 <b>ഞായർ — ശ്രീ സൂര്യനാരായണ സ്വാമി അനുഗ്രഹം:</b>\n<i>ഓം സൂര്യായ നമഃ</i> — സൂര്യഭഗവാന്റെ അനുഗ്രഹം നിങ്ങൾക്ക് ആരോഗ്യവും ഉന്മേഷവും വ്യക്തതയും നൽകട്ടെ.",
     },
 }
 
-# One Scripture per day (Bhagavad Gita OR Upanishads OR Vedas — never all 3 in one card)
-SCRIPTURE_ROTATION = [
+# ---------------------------------------------------------------------------
+# 2. Built-in Scripture Bank (Bhagavad Gita, Upanishads & Vedas)
+#    Advances 1 verse per day sequentially and loops cleanly when it ends.
+# ---------------------------------------------------------------------------
+BUILT_IN_SCRIPTURE_QUOTES: List[Dict[str, str]] = [
     {
         "source": "Bhagavad Gita (2.47)",
-        "verse": "Karmanye vadhikaraste ma phaleshu kadachana",
-        "meaning": {
-            "en": "Focus wholeheartedly on your duty today, without anxiety over results.",
-            "ta": "பலனைப் பற்றிய கவலையின்றி இன்றைய கடமையை முழு மனதுடன் செய்யுங்கள்.",
-            "hi": "फल की चिंता किए बिना आज अपने कर्तव्य का पूरी निष्ठा से पालन करें।",
-            "te": "ఫలితం గురించి ఆందోళన లేకుండా నేటి మీ కర్తవ్యాన్ని నిష్ఠతో నిర్వర్తించండి.",
-            "kn": "ಫಲದ ಚಿಂತೆಯಿಲ್ಲದೆ ಇಂದಿನ ನಿಮ್ಮ ಕರ್ತವ್ಯವನ್ನು ಶ್ರದ್ಧೆಯಿಂದ ನಿರ್ವಹಿಸಿ.",
-            "ml": "ഫലത്തെക്കുറിച്ച് ഉത്കണ്ഠപ്പെടാതെ ഇന്നത്തെ കർത്തവ്യം ആത്മാർത്ഥമായി ചെയ്യുക.",
-        },
+        "en": "You have a right to perform your prescribed duty, but never to the fruits of action.",
+        "ta": "கடமையைச் செய்வதற்கே உனக்கு அதிகாரம் உண்டு; அதன் பலன்களில் ஒருபோதும் இல்லை.",
+        "hi": "कर्म करने में ही तुम्हारा अधिकार है, उसके फलों में कभी नहीं।",
+        "te": "నీ విధిని నిర్వర్తించే హక్కు మాత్రమే నీకు ఉంది, ఫలితాలపై ఎన్నడూ లేదు.",
+        "kn": "ನಿನ್ನ ಕರ್ತವ್ಯವನ್ನು ಮಾಡಲು ಮಾತ್ರ ನಿನಗೆ ಹಕ್ಕಿದೆ, ಅದರ ಫಲಗಳ ಮೇಲೆ ಎಂದಿಗೂ ಇಲ್ಲ.",
+        "ml": "കർമ്മം ചെയ്യാൻ മാത്രമേ നിനക്ക് അധികാരമുള്ളൂ, അതിന്റെ ഫലങ്ങളിലൊരിക്കലുമില്ല.",
     },
     {
         "source": "Katha Upanishad (1.3.14)",
-        "verse": "Uttishthata jagrata prapya varan nibodhata",
-        "meaning": {
-            "en": "Arise, awake, and walk steadily toward higher wisdom and clarity.",
-            "ta": "எழுந்திருங்கள், விழித்திருங்கள்; உயர்ந்த ஞானத்தை நோக்கி உறுதியுடன் நடங்கள்.",
-            "hi": "उठो, जागो और श्रेष्ठ ज्ञान एवं स्पष्टता की ओर दृढ़ता से बढ़ो।",
-            "te": "మేల్కొనండి, చైతన్యవంతులై ఉన్నత జ్ఞానం వైపు దృఢంగా అడుగువేయండి.",
-            "kn": "ಏಳಿ, ಎಚ್ಚರಗೊಳ್ಳಿ; ಉನ್ನತ ಜ್ಞಾನದತ್ತ ದೃಢವಾಗಿ ಮುನ್ನಡೆಯಿರಿ.",
-            "ml": "ഉണരുക, ജാഗ്രതയോടെ ഉന്നത ജ്ഞാനത്തിലേക്ക് ഉറപ്പോടെ മുന്നേറുക.",
-        },
-    },
-    {
-        "source": "Rigveda (10.191.2)",
-        "verse": "Sam gachadhvam sam vadadhvam sam vo manansi janatam",
-        "meaning": {
-            "en": "Move together in harmony, speak with kindness, and let minds unite in peace.",
-            "ta": "ஒற்றுமையுடன் நடப்போம், அன்புடன் பேசுவோம், அமைதியில் மனம் இணைவோம்.",
-            "hi": "सद्भाव के साथ मिलकर चलें, मधुर बोलें और मन में शांति बनाए रखें।",
-            "te": "సామరస్యంతో కలిసి నడవండి, ప్రేమతో మాట్లాడండి, శాంతితో మనసులు కలవనివ్వండి.",
-            "kn": "ಸಾಮರಸ್ಯದಿಂದ ಜೊತೆಯಾಗಿ ನಡೆಯಿರಿ, ಪ್ರೀತಿಯಿಂದ ಮಾತನಾಡಿ, ಮನಸ್ಸುಗಳು ಶಾಂತಿಯಲ್ಲಿ ಒಂದಾಗಲಿ.",
-            "ml": "ഐക്യത്തോടെ ഒരുമിച്ച് നടക്കുക, സ്നേഹത്തോടെ സംസാരിക്കുക, മനസ്സുകൾ ശാന്തിയിൽ ഒന്നാകട്ടെ.",
-        },
-    },
-    {
-        "source": "Bhagavad Gita (2.48)",
-        "verse": "Samatvam yoga uchyate",
-        "meaning": {
-            "en": "Calm balance of mind in both ease and challenge is true spiritual strength.",
-            "ta": "இன்பத்திலும் சவாலிலும் மன சமநிலை காப்பதே உண்மையான யோகம்.",
-            "hi": "सुख और चुनौती दोनों में मन का संतुलन बनाए रखना ही सच्चा योग है।",
-            "te": "సుఖదుఃఖాలలో మనసు సమతుల్యతను నిలుపుకోవడమే నిజమైన యోగం.",
-            "kn": "ಸುಖ ಮತ್ತು ಸವಾಲು ಎರಡರಲ್ಲೂ ಮನಸ್ಸಿನ ಸಮತೋಲನ ಕಾಯ್ದುಕೊಳ್ಳುವುದೇ ನಿಜವಾದ ಯೋಗ.",
-            "ml": "സുഖത്തിലും വെല്ലുവിളിയിലും മനസ്സിന്റെ സമനില പാലിക്കുന്നതാണ് യഥാർത്ഥ യോഗം.",
-        },
-    },
-    {
-        "source": "Isha Upanishad (1)",
-        "verse": "Isavasyam idam sarvam yat kincha jagatyam jagat",
-        "meaning": {
-            "en": "All that exists in this universe is pervaded by the Divine; live with gratitude.",
-            "ta": "இவ்வுலகில் உள்ள அனைத்தும் இறைவனால் நிறைந்துள்ளது; நன்றியுணர்வுடன் வாழுங்கள்.",
-            "hi": "इस जगत का कण-कण ईश्वर से व्याप्त है; कृतज्ञता के साथ जीवन जिएं।",
-            "te": "ఈ సృష్టిలోని ప్రతి అణువు దైవంతో నిండి ఉంది; కృతజ్ఞతతో జీవించండి.",
-            "kn": "ಈ ಜಗತ್ತಿನ ಪ್ರತಿಯೊಂದು ಕಣವೂ ದೈವದಿಂದ ಆವೃತವಾಗಿದೆ; ಕೃತಜ್ಞತೆಯಿಂದ ಬಾಳಿ.",
-            "ml": "ഈ പ്രപഞ്ചത്തിലെല്ലാം ഈശ്വരനാൽ നിറഞ്ഞിരിക്കുന്നു; കൃതജ്ഞതയോടെ ജീവിക്കുക.",
-        },
+        "en": "Arise, awake, and stop not till the goal is reached.",
+        "ta": "எழுமின், விழிமின், குறிக்கோளை அடையும் வரை நில்லாதீர்.",
+        "hi": "उठो, जागो और तब तक मत रुको जब तक लक्ष्य की प्राप्ति न हो जाए।",
+        "te": "లెండి, మేల్కొనండి, గమ్యం చేరే వరకు ఆగకండి.",
+        "kn": "ಏಳಿ, ಎಚ್ಚರಗೊಳ್ಳಿ, ಗುರಿ ತಲುಪುವವರೆಗೆ ನಿಲ್ಲದಿರಿ.",
+        "ml": "ഉണരുക, എഴുന്നേൽക്കുക, ലക്ഷ്യത്തിലെത്തുന്നതുവരെ വിശ്രമിക്കാതിരിക്കുക.",
     },
     {
         "source": "Rigveda (1.89.1)",
-        "verse": "A no bhadrah kratavo yantu vishwatah",
-        "meaning": {
-            "en": "Let noble, auspicious, and uplifting thoughts come to us from every direction.",
-            "ta": "நல்ல, மங்களகரமான எண்ணங்கள் எல்லாத் திசைகளிலிருந்தும் நம்மை வந்தடையட்டும்.",
-            "hi": "श्रेष्ठ और शुभ विचार चारों दिशाओं से हमारे पास आएं।",
-            "te": "మంచి, శుభకరమైన ఆలోచనలు అన్ని దిశల నుండి మనకు చేరుగాక.",
-            "kn": "ಶ್ರೇಷ್ಠ ಮತ್ತು ಮಂಗಳಕರ ಆಲೋಚನೆಗಳು ಎಲ್ಲಾ ದಿಕ್ಕುಗಳಿಂದಲೂ ನಮಗೆ ಬರಲಿ.",
-            "ml": "ശ്രേഷ്ഠവും മംഗളകരവുമായ ചിന്തകൾ എല്ലാ ദിക്കുകളിൽ നിന്നും നമ്മിലേക്ക് വരട്ടെ.",
-        },
+        "en": "Let noble thoughts come to us from every side of the universe.",
+        "ta": "எல்லா திசைகளிலிருந்தும் உயரிய எண்ணங்கள் நம்மை வந்தடையட்டும்.",
+        "hi": "हमें चारों दिशाओं से श्रेष्ठ और कल्याणकारी विचार प्राप्त हों।",
+        "te": "అన్ని వైపుల నుండి ఉన్నతమైన ఆలోచనలు మనకు కలగాలి.",
+        "kn": "ಎಲ್ಲಾ ದಿಕ್ಕುಗಳಿಂದಲೂ ಶ್ರೇಷ್ಠವಾದ ಆಲೋಚನೆಗಳು ನಮಗೆ ಬರಲಿ.",
+        "ml": "എല്ലാ ദിക്കുകളിൽ നിന്നും ശ്രേഷ്ഠമായ ചിന്തകൾ നമ്മിലേക്ക് വരട്ടെ.",
+    },
+    {
+        "source": "Bhagavad Gita (6.5)",
+        "en": "Elevate yourself through the power of your own mind, and never degrade yourself.",
+        "ta": "உன் மனதின் வலிமையால் உன்னை உயர்த்திக் கொள்; ஒருபோதும் உன்னைத் தாழ்த்திக் கொள்ளாதே.",
+        "hi": "अपने मन की शक्ति से अपना उद्धार स्वयं करें, स्वयं को कभी नीचे न गिरने दें।",
+        "te": "నీ మనస్సు శక్తితో నిన్ను నీవు ఉద్ధరించుకో, ఎన్నడూ నిన్ను నీవు తగ్గించుకోకు.",
+        "kn": "ನಿನ್ನ ಮನಸ್ಸಿನ ಶಕ್ತಿಯಿಂದ ನಿನ್ನನ್ನು ನೀನೇ ಉದ್ಧರಿಸಿಕೋ, ಎಂದಿಗೂ ಕುಗ್ಗಬೇಡ.",
+        "ml": "നിന്റെ മനസ്സിന്റെ ശക്തിയാൽ നിന്നെത്തന്നെ ഉയർത്തുക, ഒരിക്കലും തളരാതിരിക്കുക.",
+    },
+    {
+        "source": "Brihadaranyaka Upanishad (1.3.28)",
+        "en": "Lead me from the unreal to the real, from darkness to light, from death to immortality.",
+        "ta": "பொய்மையிலிருந்து மெய்மைக்கும், இருளிலிருந்து ஒளிக்கும் என்னை வழிநடத்துவாயாக.",
+        "hi": "हमें असत्य से सत्य की ओर, अंधकार से प्रकाश की ओर ले चलो।",
+        "te": "అసత్యం నుండి సత్యం వైపు, చీకటి నుండి వెలుగు వైపు నడిపించు.",
+        "kn": "ಅಸತ್ಯದಿಂದ ಸತ್ಯದತ್ತ, ಕತ್ತಲೆಯಿಂದ ಬೆಳಕಿನತ್ತ ನಮ್ಮನ್ನು ನಡೆಸು.",
+        "ml": "അസത്യത്തിൽ നിന്ന് സത്യത്തിലേക്കും ഇരുട്ടിൽ നിന്ന് വെളിച്ചത്തിലേക്കും നയിക്കേണമേ.",
+    },
+    {
+        "source": "Isha Upanishad (1)",
+        "en": "All this universe is pervaded by the Divine; enjoy what is given with detachment and gratitude.",
+        "ta": "இப்பிரபஞ்சம் முழுவதும் இறைவனால் நிறைந்துள்ளது; நன்றியுடனும் பற்றற்ற மனதுடனும் வாழ்க.",
+        "hi": "यह संपूर्ण ब्रह्मांड ईश्वर से व्याप्त है; कृतज्ञता और अनासक्ति के साथ जीवन जिएं।",
+        "te": "ఈ విశ్వమంతా దైవంతో నిండి ఉంది; కృతజ్ఞతతో, నిస్వార్థంగా జీవించండి.",
+        "kn": "ಈ ಇಡೀ ವಿಶ್ವವು ದೈವದಿಂದ ವ್ಯಾಪಿಸಿದೆ; ಕೃತಜ್ಞತೆಯಿಂದ ಜೀವಿಸಿ.",
+        "ml": "ഈ പ്രപഞ്ചമെല്ലാം ഈശ്വരനാൽ നിറഞ്ഞിരിക്കുന്നു; കൃതജ്ഞതയോടെ ജീവിക്കുക.",
+    },
+    {
+        "source": "Yajurveda (36.17)",
+        "en": "May there be peace in the heavens, peace in the atmosphere, and peace upon the earth.",
+        "ta": "விண்ணிலும், காற்றிலும், மண்ணிலும் அமைதி நிலவட்டும்.",
+        "hi": "अंतरिक्ष में शांति हो, पृथ्वी पर शांति हो, सर्वत्र शांति का वास हो।",
+        "te": "ఆకాశంలో, వాతావరణంలో మరియు భూమిపై శాంతి నెలకొనాలి.",
+        "kn": "ಆಕಾಶದಲ್ಲಿ, ವಾತಾವರಣದಲ್ಲಿ ಮತ್ತು ಭೂಮಿಯ ಮೇಲೆ ಶಾಂತಿ ನೆಲೆಸಲಿ.",
+        "ml": "ആകാശത്തും അന്തരീക്ഷത്തിലും ഭൂമിയിലും സമാധാനം നിലനിൽക്കട്ടെ.",
     },
 ]
 
-WOW_BY_LANG = {
-    "en": "Steady Focus • Helpful Partnership • Timely Resolution",
-    "ta": "நிலையான கவனம் • நல்ல ஒத்துழைப்பு • சரியான நேரத்தில் தீர்வு",
-    "hi": "स्थिर एकाग्रता • सहायक साझेदारी • समय पर समाधान",
-    "te": "స్థిరమైన ఏకాగ్రత • మంచి సహకారం • సమయానికి పరిష్కారం",
-    "kn": "ಸ್ಥಿರ ಏಕಾಗ್ರತೆ • ಉತ್ತಮ ಸಹಕಾರ • ಸಕಾಲಿಕ ಪರಿಹಾರ",
-    "ml": "സ്ഥിരമായ ശ്രദ്ധ • നല്ല സഹകരണം • സമയബന്ധിതമായ പരിഹാരം",
-}
-
-TROY_OUNCE_TO_GRAM = 31.1034768
-INDIA_BULLION_PREMIUM_FACTOR = 1.065
-
-
-def normalize_location_key(raw_loc: str) -> str:
-    cleaned = re.sub(r"[^A-Z0-9]+", "_", raw_loc.upper()).strip("_")
-    return cleaned or "CHENNAI"
-
-
-def parse_area_and_city(raw_loc: str) -> tuple[str, str]:
-    parts = [re.sub(r"\s+", " ", p).strip() for p in raw_loc.split(",", 1)]
-    if len(parts) == 2 and parts[0] and parts[1]:
-        return parts[0].title(), parts[1].title()
-    city = parts[0].title() if parts and parts[0] else "Chennai"
-    return "", city
+# ---------------------------------------------------------------------------
+# 3. Gold & Silver Rates (With Last Market Closure [As of DATE] Logic)
+# ---------------------------------------------------------------------------
+def compute_bullion_as_of_date(now_ist: datetime) -> str:
+    """
+    At 04:30 AM IST, Indian bullion markets reflect the previous market close.
+    On Sunday (weekday=6), Saturday close applies; on Monday 04:30 AM (weekday=0), Saturday close applies.
+    """
+    d = now_ist.date()
+    if now_ist.hour < 10:
+        d = d - timedelta(days=1)
+    # Roll back Sunday to Saturday close
+    if d.weekday() == 6:
+        d = d - timedelta(days=1)
+    return d.strftime("%d %b %Y")
 
 
-async def resolve_location_coords(session: aiohttp.ClientSession, raw_loc: str) -> dict | None:
-    area, city = parse_area_and_city(raw_loc)
-    city_key = city.upper()
-    fallback = CITY_COORDS.get(city_key)
+def build_bullion_payload(now_ist: datetime) -> Dict[str, str]:
+    as_of_str = compute_bullion_as_of_date(now_ist)
+    # Baseline rates (can be wired to live bullion API when enabled)
+    g22 = "₹7,140/g"
+    g24 = "₹7,789/g"
+    silver = "₹91.50/g"
 
-    if area:
-        query = f"{area} {city}"
-        url = f"https://geocoding-api.open-meteo.com/v1/search?name={aiohttp.helpers.quote(query)}&count=3&language=en&format=json"
-        try:
-            async with session.get(url, timeout=12) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    results = data.get("results") or []
-                    for r in results:
-                        admin_blob = " ".join(str(r.get(k, "")) for k in ("name", "admin1", "admin2", "admin3", "country")).lower()
-                        if city.lower() in admin_blob or "india" in admin_blob:
-                            return {
-                                "name": f"{area}, {city}",
-                                "lat": float(r["latitude"]),
-                                "lon": float(r["longitude"]),
-                            }
-                    if results:
-                        return {
-                            "name": f"{area}, {city}",
-                            "lat": float(results[0]["latitude"]),
-                            "lon": float(results[0]["longitude"]),
-                        }
-        except Exception:
-            pass
-
-    if fallback:
-        return {"name": f"{area}, {city}" if area else fallback["name"], "lat": fallback["lat"], "lon": fallback["lon"]}
-    return None
-
-
-async def fetch_sheet_tab_csv(session: aiohttp.ClientSession, tab_name: str) -> list[dict]:
-    if not GOOGLE_SHEET_CSV_BASE_URL:
-        return []
-    url = f"{GOOGLE_SHEET_CSV_BASE_URL}&sheet={tab_name}" if "?" in GOOGLE_SHEET_CSV_BASE_URL else f"{GOOGLE_SHEET_CSV_BASE_URL}?sheet={tab_name}"
-    try:
-        async with session.get(url, timeout=12) as resp:
-            if resp.status == 200:
-                text = await resp.text()
-                reader = csv.DictReader(StringIO(text))
-                return list(reader)
-    except Exception:
-        pass
-    return []
-
-
-async def fetch_yahoo_price(session: aiohttp.ClientSession, symbol: str) -> float | None:
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=1d"
-    try:
-        async with session.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=12) as resp:
-            if resp.status == 200:
-                data = await resp.json()
-                return float(data["chart"]["result"][0]["meta"]["regularMarketPrice"])
-    except Exception:
-        pass
-    return None
-
-
-async def fetch_bullion_rates(session: aiohttp.ClientSession) -> dict:
-    xau_usd, xag_usd, usd_inr = await asyncio.gather(
-        fetch_yahoo_price(session, "XAUUSD=X"),
-        fetch_yahoo_price(session, "XAGUSD=X"),
-        fetch_yahoo_price(session, "INR=X"),
-    )
-    if xau_usd and usd_inr:
-        rate_24k = round((xau_usd * usd_inr / TROY_OUNCE_TO_GRAM) * INDIA_BULLION_PREMIUM_FACTOR)
-        rate_22k = round(rate_24k * 0.916)
-        rate_18k = round(rate_24k * 0.750)
-        silver_1g = round(((xag_usd or 31.0) * usd_inr / TROY_OUNCE_TO_GRAM) * INDIA_BULLION_PREMIUM_FACTOR, 1)
-        return {
-            "rate_22k": f"₹{rate_22k:,}/g",
-            "rate_24k": f"₹{rate_24k:,}/g",
-            "rate_18k": f"₹{rate_18k:,}/g",
-            "rate_silver": f"₹{silver_1g}/g",
-            "gold_summary": f"22K: ₹{rate_22k:,}/g | 24K: ₹{rate_24k:,}/g",
-        }
     return {
-        "rate_22k": "Check showroom",
-        "rate_24k": "Check showroom",
-        "rate_18k": "Check showroom",
-        "rate_silver": "Check showroom",
-        "gold_summary": "Check showroom",
+        "en": f"🟡 <b>Gold &amp; ⚪ Silver Rates [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪ Silver: {silver}",
+        "ta": f"🟡 <b>தங்கம் &amp; ⚪ வெள்ளி விலை [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪ வெள்ளி: {silver}",
+        "hi": f"🟡 <b>सोना एवं ⚪ चाँदी भाव [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪ चाँदी: {silver}",
+        "te": f"🟡 <b>బంగారం &amp; ⚪ వెండి ధరలు [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪ వెండి: {silver}",
+        "kn": f"🟡 <b>ಚಿನ್ನ ಮತ್ತು ⚪ ಬೆಳ್ಳಿ ದರ [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪ ಬೆಳ್ಳಿ: {silver}",
+        "ml": f"🟡 <b>സ്വർണ്ണം &amp; ⚪ വെള്ളി നിരക്ക് [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪ വെള്ളി: {silver}",
     }
 
 
-async def fetch_city_weather(session: aiohttp.ClientSession, lat: float, lon: float) -> dict:
-    url = (
-        f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
-        "&current=temperature_2m,relative_humidity_2m,weather_code"
-        "&daily=precipitation_probability_max&forecast_days=1&timezone=Asia%2FKolkata"
-    )
+# ---------------------------------------------------------------------------
+# 4. Optional Google Sheet CSV Reader (Plug-and-Play When Ready)
+# ---------------------------------------------------------------------------
+def fetch_sheet_rows(tab_name: str) -> List[Dict[str, str]]:
+    if not GOOGLE_SHEET_CSV_BASE_URL:
+        return []
     try:
-        async with session.get(url, timeout=12) as resp:
-            if resp.status == 200:
-                payload = await resp.json()
-                cur = payload["current"]
-                w_code = int(cur["weather_code"])
-                cond = WEATHER_CODES.get(w_code, "Pleasant")
-                weather_str = f"{round(cur['temperature_2m'])}°C, {cond}, Humidity {round(cur['relative_humidity_2m'])}%"
-                probs = payload.get("daily", {}).get("precipitation_probability_max") or []
-                rain_prob = int(probs[0]) if probs and probs[0] is not None else 0
-
-                if w_code in {65, 82, 95}:
-                    severity = "CAUTION_HEAVY_RAIN"
-                elif w_code in {71, 73, 75}:
-                    severity = "CAUTION_SNOW"
-                elif w_code in {45, 48}:
-                    severity = "CAUTION_FOG"
-                elif rain_prob >= 40 or w_code in {51, 53, 61, 63, 80}:
-                    severity = "UMBRELLA"
-                else:
-                    severity = "NORMAL"
-
-                return {
-                    "weather": weather_str,
-                    "rain_chance_pct": rain_prob,
-                    "condition_severity": severity,
-                }
-    except Exception:
-        pass
-    return {"weather": "29°C, Partly Cloudy", "rain_chance_pct": 20, "condition_severity": "NORMAL"}
+        url = f"{GOOGLE_SHEET_CSV_BASE_URL}&sheet={tab_name}"
+        resp = requests.get(url, timeout=15)
+        resp.raise_for_status()
+        reader = csv.DictReader(io.StringIO(resp.text))
+        return list(reader)
+    except Exception as exc:
+        logger.warning("Sheet tab '%s' unavailable (%s); using built-in bank.", tab_name, exc)
+        return []
 
 
-async def fetch_auspicious_window(session: aiohttp.ClientSession, lat: float, lon: float, date_str: str, weekday: int) -> str:
-    url = f"https://api.sunrise-sunset.org/json?lat={lat}&lng={lon}&date={date_str}&formatted=0"
-    nalla = NALLA_NERAM_SLOTS[weekday]
-    try:
-        async with session.get(url, timeout=12) as resp:
-            if resp.status == 200:
-                res = (await resp.json())["results"]
-                sr = datetime.fromisoformat(res["sunrise"]).astimezone(IST)
-                ss = datetime.fromisoformat(res["sunset"]).astimezone(IST)
-                seg = (ss - sr) / 8
-                rk_idx = RAHUKALAM_SEGMENT[weekday]
-                rk_start = (sr + seg * rk_idx).strftime("%I:%M %p")
-                rk_end = (sr + seg * (rk_idx + 1)).strftime("%I:%M %p")
-                return f"Nalla Neram: {nalla} | Rahukalam: {rk_start} – {rk_end}"
-    except Exception:
-        pass
-    return f"Nalla Neram: {nalla}"
-
-
-async def build_and_store_cache() -> None:
-    now_ist = datetime.now(IST)
-    edition_date = now_ist.strftime("%Y-%m-%d")
-    weekday = now_ist.weekday()
-    day_of_year = now_ist.timetuple().tm_yday
-    deity_spec = DAY_DEITIES[weekday]
-    scripture_spec = SCRIPTURE_ROTATION[(day_of_year - 1) % len(SCRIPTURE_ROTATION)]
-
-    pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=3)
-    try:
-        db_locs = await pool.fetch(
-            "SELECT DISTINCT TRIM(city) AS c FROM subscribers WHERE is_active = TRUE AND city IS NOT NULL AND TRIM(city) <> '';"
-        )
-        raw_locations = list(CITY_COORDS.keys()) + [r["c"] for r in db_locs]
-
-        key_to_raw: dict[str, str] = {}
-        for loc in raw_locations:
-            k = normalize_location_key(loc)
-            if k not in key_to_raw:
-                key_to_raw[k] = loc
-
-        async with aiohttp.ClientSession() as session:
-            calendar_notes = await fetch_sheet_tab_csv(session, "Calendar_Notes")
-
-            occasion_by_lang: dict[str, dict] = {
-                lang: {"occasion_title": "", "occasion_temple": "", "asset_path": deity_spec["asset_path"]}
-                for lang in SUPPORTED_LANGS
+def select_today_deity(today_ist: date) -> Dict[str, str]:
+    day_code = WEEKDAY_CODES[today_ist.weekday()]
+    sheet_rows = fetch_sheet_rows("Rasi_Deity_Templates")
+    for row in sheet_rows:
+        if (row.get("template_type") or "").strip().upper() == "DEITY_DAY" and (
+            row.get("key_code") or ""
+        ).strip().upper() == day_code:
+            return {
+                lang: f"🪔 <b>{row.get('title_en', 'Daily Blessing')}:</b>\n{row.get(f'body_{lang}') or row.get('body_en', '')}"
+                for lang in LANGS
             }
-            for note in calendar_notes:
-                if str(note.get("event_date", "")).strip() == edition_date:
-                    n_lang = str(note.get("language", "en")).strip().lower() or "en"
-                    if n_lang in occasion_by_lang:
-                        ev_name = str(note.get("event_name", "")).strip()
-                        temple_hl = str(note.get("temple_highlight", "")).strip()
-                        special_sl = str(note.get("special_slogan", "")).strip()
-                        combined = " — ".join(p for p in [temple_hl, special_sl] if p)
-                        occasion_by_lang[n_lang] = {
-                            "occasion_title": ev_name,
-                            "occasion_temple": combined,
-                            "asset_path": str(note.get("asset_path", "")).strip() or deity_spec["asset_path"],
-                        }
+    return BUILT_IN_DEITY_7DAY[day_code]
 
-            gold_data = await fetch_bullion_rates(session)
 
-            city_payloads: dict[str, dict] = {}
-            for loc_key, raw_loc in key_to_raw.items():
-                coords = await resolve_location_coords(session, raw_loc)
-                if not coords:
-                    continue
-                weather_info, ausp_str = await asyncio.gather(
-                    fetch_city_weather(session, coords["lat"], coords["lon"]),
-                    fetch_auspicious_window(session, coords["lat"], coords["lon"], edition_date, weekday),
-                )
-                city_payloads[loc_key] = {
-                    "label": coords["name"],
-                    **weather_info,
-                    "auspicious_time": ausp_str,
-                }
+def select_today_scripture(today_ist: date) -> Dict[str, str]:
+    sheet_rows = [
+        r
+        for r in fetch_sheet_rows("Quotes_Bank")
+        if (r.get("active_flag") or "TRUE").strip().upper() == "TRUE"
+    ]
+    day_offset = max(0, (today_ist - EPOCH_ANCHOR_DATE).days)
 
-        buckets = []
-        for lang in SUPPORTED_LANGS:
-            deity_payload = {
-                "title": deity_spec["title"][lang],
-                "deity_verse": deity_spec["deity_verse"][lang],
-                "asset_path": deity_spec["asset_path"],
-            }
-            scripture_payload = {
-                "source": scripture_spec["source"],
-                "verse": scripture_spec["verse"],
-                "meaning": scripture_spec["meaning"][lang],
-            }
-            buckets.append((lang, "DEITY_DAY_OF_WEEK", deity_payload, None))
-            buckets.append((lang, "DEITY_ALL_OCCASIONS", occasion_by_lang[lang], None))
-            buckets.append((lang, "SCRIPTURE_DAILY", scripture_payload, None))
-            buckets.append((lang, "GOLD_INR", gold_data, None))
-            for r in ["Mesham", "Rishabam", "Mithunam", "Kadagam", "Simmam", "Kanni", "Thulam", "Vrischikam", "Dhanusu", "Magaram", "Kumbam", "Meenam"]:
-                buckets.append((lang, f"RASI_{r.upper()}", {"three_words": WOW_BY_LANG[lang]}, None))
-
-        for loc_key, loc_data in city_payloads.items():
-            buckets.append(("en", f"CITY_{loc_key}", loc_data, None))
-
-        for lang, bucket_key, payload, file_id in buckets:
-            await pool.execute(
-                """
-                INSERT INTO daily_shared_cache (edition_date, language, bucket_key, payload_json, telegram_file_id)
-                VALUES ($1::date, $2, $3, $4::jsonb, $5)
-                ON CONFLICT (edition_date, language, bucket_key) DO UPDATE SET
-                    payload_json = EXCLUDED.payload_json,
-                    telegram_file_id = COALESCE(EXCLUDED.telegram_file_id, daily_shared_cache.telegram_file_id);
-                """,
-                edition_date, lang, bucket_key, json.dumps(payload), file_id,
+    if sheet_rows:
+        chosen = sheet_rows[day_offset % len(sheet_rows)]
+        src = chosen.get("citation") or chosen.get("scripture_source") or "Sacred Scripture"
+        return {
+            lang: (
+                f"✨ <b>WoW [Words of Wisdom]:</b>\n"
+                f"\"{(chosen.get(f'{lang}_translation') or chosen.get('en_translation', '')).strip()}\" "
+                f"— <i>{src}</i>"
             )
-        print(f"[{edition_date}] AURA daily_shared_cache updated ({len(buckets)} buckets).")
-    finally:
-        await pool.close()
+            for lang in LANGS
+        }
+
+    chosen = BUILT_IN_SCRIPTURE_QUOTES[day_offset % len(BUILT_IN_SCRIPTURE_QUOTES)]
+    src = chosen["source"]
+    return {
+        lang: f"✨ <b>WoW [Words of Wisdom]:</b>\n\"{chosen.get(lang) or chosen['en']}\" — <i>{src}</i>"
+        for lang in LANGS
+    }
+
+
+def build_rasi_defaults() -> Dict[str, Dict[str, str]]:
+    rasi_names = [
+        "mesham", "rishabam", "mithunam", "kadagam", "simmam", "kanni",
+        "thulam", "vrischikam", "dhanusu", "magaram", "kumbam", "meenam",
+    ]
+    out: Dict[str, Dict[str, str]] = {}
+    for rasi in rasi_names:
+        title = rasi.title()
+        out[rasi] = {
+            lang: (
+                f"🌟 <b>{title} — 3 Positives Today:</b>\n"
+                "1. Clear focus on key priorities\n"
+                "2. Supportive conversations with family &amp; peers\n"
+                "3. Steady progress through patient effort"
+            )
+            for lang in LANGS
+        }
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Main Cache Builder
+# ---------------------------------------------------------------------------
+def main() -> None:
+    now_ist = datetime.now(IST)
+    today_ist = now_ist.date()
+    logger.info("Building daily_shared_cache for %s IST", today_ist)
+
+    deity_payload = select_today_deity(today_ist)
+    quote_payload = select_today_scripture(today_ist)
+    bullion_payload = build_bullion_payload(now_ist)
+    rasi_map = build_rasi_defaults()
+
+    auspicious_chennai = {
+        lang: (
+            "⏳ <b>Auspicious Timing:</b>\n"
+            "• Nalla Neram: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
+            "• Rahukalam: 12:00 PM – 01:30 PM"
+        )
+        for lang in LANGS
+    }
+    weather_chennai = {
+        lang: "🌦 <b>Weather [Plan Your Day]:</b>\n27°C • Partly cloudy morning, light coastal breeze"
+        for lang in LANGS
+    }
+
+    records: List[tuple] = [
+        (today_ist, "DEITY_DAY", "TODAY", Json(deity_payload)),
+        (today_ist, "QUOTE", "TODAY", Json(quote_payload)),
+        (today_ist, "GOLD_INR", "INDIA", Json(bullion_payload)),
+        (today_ist, "AUSPICIOUS", "chennai", Json(auspicious_chennai)),
+        (today_ist, "WEATHER", "chennai", Json(weather_chennai)),
+    ]
+    for rasi_key, payload in rasi_map.items():
+        records.append((today_ist, "RASI", rasi_key, Json(payload)))
+
+    with psycopg2.connect(DATABASE_URL) as conn, conn.cursor() as cur:
+        for row in records:
+            cur.execute(
+                """
+                INSERT INTO daily_shared_cache (edition_date, bucket_type, bucket_key, payload)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (edition_date, bucket_type, bucket_key)
+                DO UPDATE SET payload = EXCLUDED.payload, created_at = NOW();
+                """,
+                row,
+            )
+        conn.commit()
+
+    logger.info("Successfully cached %d shared buckets for %s", len(records), today_ist)
 
 
 if __name__ == "__main__":
-    asyncio.run(build_and_store_cache())
+    main()
