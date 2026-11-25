@@ -1,5 +1,6 @@
-# build_daily_cache.py — FURLIS AURA Daily Cache Builder
+# build_daily_cache.py — AURA Daily Cache Builder
 import os
+import re
 import csv
 import json
 import asyncio
@@ -21,6 +22,7 @@ CITY_COORDS = {
     "MADURAI": {"name": "Madurai", "lat": 9.9252, "lon": 78.1198},
     "COIMBATORE": {"name": "Coimbatore", "lat": 11.0168, "lon": 76.9558},
 }
+
 WEATHER_CODES = {
     0: "Clear Sky", 1: "Mainly Clear", 2: "Partly Cloudy", 3: "Overcast",
     45: "Foggy", 48: "Dense Fog", 51: "Light Drizzle", 53: "Moderate Drizzle",
@@ -28,7 +30,9 @@ WEATHER_CODES = {
     71: "Light Snow", 73: "Moderate Snow", 75: "Heavy Snow",
     80: "Rain Showers", 82: "Heavy Rain Showers", 95: "Thunderstorm",
 }
+
 RAHUKALAM_SEGMENT = {0: 1, 1: 6, 2: 4, 3: 5, 4: 3, 5: 2, 6: 7}
+
 NALLA_NERAM_SLOTS = {
     0: "06:15 AM – 07:15 AM | 04:45 PM – 05:45 PM",
     1: "07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM",
@@ -38,6 +42,7 @@ NALLA_NERAM_SLOTS = {
     5: "09:15 AM – 10:15 AM | 04:45 PM – 05:45 PM",
     6: "07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM",
 }
+
 DAY_DEITIES = {
     0: ("Monday Special — Lord Shiva Blessings", "May Lord Shiva’s grace bring inner stillness, clarity, and protection today.", "assets/deities/mon_shiva.png"),
     1: ("Tuesday Special — Lord Murugan & Hanuman Blessings", "May courage, focus, and strength remove every obstacle on your path.", "assets/deities/tue_murugan.png"),
@@ -47,14 +52,64 @@ DAY_DEITIES = {
     5: ("Saturday Special — Lord Thirumal (Venkateswara) Blessings", "May Lord Thirumal’s grace bring clarity, peace, and steady strength today.", "assets/deities/sat_thirumal.png"),
     6: ("Sunday Special — Lord Surya Narayana Blessings", "May vitality, radiance, and positive energy empower your day.", "assets/deities/sun_surya.png"),
 }
+
 SCRIPTURE_QUOTES = [
     {"quote": "You have a right to perform your prescribed duty, but never to its fruits.", "author": "Bhagavad Gita (2.47)"},
     {"quote": "For him who has conquered the mind, the mind is the best of friends.", "author": "Bhagavad Gita (6.6)"},
     {"quote": "Arise, awake, and stop not till the goal is reached.", "author": "Katha Upanishad (1.3.14)"},
     {"quote": "Let noble thoughts come to us from every side.", "author": "Rigveda (1.89.1)"},
 ]
+
 TROY_OUNCE_TO_GRAM = 31.1034768
 INDIA_BULLION_PREMIUM_FACTOR = 1.065
+
+
+def normalize_location_key(raw_loc: str) -> str:
+    cleaned = re.sub(r"[^A-Z0-9]+", "_", raw_loc.upper()).strip("_")
+    return cleaned or "CHENNAI"
+
+
+def parse_area_and_city(raw_loc: str) -> tuple[str, str]:
+    parts = [re.sub(r"\s+", " ", p).strip() for p in raw_loc.split(",", 1)]
+    if len(parts) == 2 and parts[0] and parts[1]:
+        return parts[0].title(), parts[1].title()
+    city = parts[0].title() if parts and parts[0] else "Chennai"
+    return "", city
+
+
+async def resolve_location_coords(session: aiohttp.ClientSession, raw_loc: str) -> dict | None:
+    area, city = parse_area_and_city(raw_loc)
+    city_key = city.upper()
+    fallback = CITY_COORDS.get(city_key)
+
+    if area:
+        query = f"{area} {city}"
+        url = f"https://geocoding-api.open-meteo.com/v1/search?name={aiohttp.helpers.quote(query)}&count=3&language=en&format=json"
+        try:
+            async with session.get(url, timeout=12) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    results = data.get("results") or []
+                    for r in results:
+                        admin_blob = " ".join(str(r.get(k, "")) for k in ("name", "admin1", "admin2", "admin3", "country")).lower()
+                        if city.lower() in admin_blob or "india" in admin_blob:
+                            return {
+                                "name": f"{area}, {city}",
+                                "lat": float(r["latitude"]),
+                                "lon": float(r["longitude"]),
+                            }
+                    if results:
+                        return {
+                            "name": f"{area}, {city}",
+                            "lat": float(results[0]["latitude"]),
+                            "lon": float(results[0]["longitude"]),
+                        }
+        except Exception:
+            pass
+
+    if fallback:
+        return {"name": f"{area}, {city}" if area else fallback["name"], "lat": fallback["lat"], "lon": fallback["lon"]}
+    return None
 
 
 async def fetch_sheet_tab_csv(session: aiohttp.ClientSession, tab_name: str) -> list[dict]:
@@ -178,8 +233,16 @@ async def build_and_store_cache() -> None:
 
     pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=3)
     try:
-        db_cities = await pool.fetch("SELECT DISTINCT UPPER(TRIM(city)) AS c FROM subscribers WHERE is_active = TRUE AND city IS NOT NULL;")
-        active_city_keys = set(CITY_COORDS.keys()) | {r["c"] for r in db_cities if r["c"] in CITY_COORDS}
+        db_locs = await pool.fetch(
+            "SELECT DISTINCT TRIM(city) AS c FROM subscribers WHERE is_active = TRUE AND city IS NOT NULL AND TRIM(city) <> '';"
+        )
+        raw_locations = list(CITY_COORDS.keys()) + [r["c"] for r in db_locs]
+
+        key_to_raw: dict[str, str] = {}
+        for loc in raw_locations:
+            k = normalize_location_key(loc)
+            if k not in key_to_raw:
+                key_to_raw[k] = loc
 
         async with aiohttp.ClientSession() as session:
             sheet_quotes, calendar_notes = await asyncio.gather(
@@ -208,14 +271,21 @@ async def build_and_store_cache() -> None:
                     break
 
             gold_data = await fetch_bullion_rates(session)
-            city_payloads = {}
-            for c_key in active_city_keys:
-                meta = CITY_COORDS[c_key]
+
+            city_payloads: dict[str, dict] = {}
+            for loc_key, raw_loc in key_to_raw.items():
+                coords = await resolve_location_coords(session, raw_loc)
+                if not coords:
+                    continue
                 weather_info, ausp_str = await asyncio.gather(
-                    fetch_city_weather(session, meta["lat"], meta["lon"]),
-                    fetch_auspicious_window(session, meta["lat"], meta["lon"], edition_date, weekday),
+                    fetch_city_weather(session, coords["lat"], coords["lon"]),
+                    fetch_auspicious_window(session, coords["lat"], coords["lon"], edition_date, weekday),
                 )
-                city_payloads[c_key] = {**weather_info, "auspicious_time": ausp_str}
+                city_payloads[loc_key] = {
+                    "label": coords["name"],
+                    **weather_info,
+                    "auspicious_time": ausp_str,
+                }
 
         buckets = [
             ("en", "DEITY_DAY_OF_WEEK", {"title": deity_title, "slogan": deity_slogan, "asset_path": asset_path}, None),
@@ -223,8 +293,9 @@ async def build_and_store_cache() -> None:
             ("en", "GOLD_INR", gold_data, None),
             ("en", "FAMOUS_QUOTE", quote_item, None),
         ]
-        for c_key, c_data in city_payloads.items():
-            buckets.append(("en", f"CITY_{c_key}", c_data, None))
+        for loc_key, loc_data in city_payloads.items():
+            buckets.append(("en", f"CITY_{loc_key}", loc_data, None))
+
         for r in ["Mesham", "Rishabam", "Mithunam", "Kadagam", "Simmam", "Kanni", "Thulam", "Vrischikam", "Dhanusu", "Magaram", "Kumbam", "Meenam"]:
             buckets.append(("en", f"RASI_{r.upper()}", {"three_words": "Steady Focus • Helpful Partnership • Timely Resolution"}, None))
 
@@ -237,9 +308,9 @@ async def build_and_store_cache() -> None:
                     payload_json = EXCLUDED.payload_json,
                     telegram_file_id = COALESCE(EXCLUDED.telegram_file_id, daily_shared_cache.telegram_file_id);
                 """,
-                edition_date, lang, bucket_key, json.dumps(payload), file_id
+                edition_date, lang, bucket_key, json.dumps(payload), file_id,
             )
-        print(f"[{edition_date}] FURLIS AURA daily_shared_cache updated ({len(buckets)} buckets).")
+        print(f"[{edition_date}] AURA daily_shared_cache updated ({len(buckets)} buckets).")
     finally:
         await pool.close()
 
