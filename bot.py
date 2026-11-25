@@ -1,14 +1,12 @@
 import os
 import re
 import json
-import hmac
-import hashlib
+import asyncio
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, date, timezone, timedelta
 from typing import Optional
 
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import asyncpg
 from aiohttp import web
 
 from telegram import (
@@ -41,9 +39,6 @@ BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 DATABASE_URL = os.environ["DATABASE_URL"]
 PORT = int(os.environ.get("PORT", "10000"))
 
-FOUNDER_ACTION_EMAIL = os.environ.get("FOUNDER_ACTION_EMAIL", "")
-FOUNDER_TELEGRAM_ID = os.environ.get("FOUNDER_TELEGRAM_ID", "")
-SUPPORT_WEBHOOK_SECRET = os.environ.get("SUPPORT_WEBHOOK_SECRET", "")
 UPI_GATEWAY_CHECKOUT_URL = os.environ.get("UPI_GATEWAY_CHECKOUT_URL", "https://example.com/upi")
 SUPPORT_FORM_URLS = json.loads(os.environ.get("SUPPORT_FORM_URLS_JSON", "{}"))
 
@@ -82,14 +77,20 @@ RASIS = [
     ("meenam", "Meenam"),
 ]
 
-# ---------------------------------------------------------------------------
-# Database Helpers
-# ---------------------------------------------------------------------------
-def get_db_conn():
-    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+DB_POOL: Optional[asyncpg.Pool] = None
 
 
-def ensure_subscribers_schema() -> None:
+# ---------------------------------------------------------------------------
+# Database Helpers (asyncpg)
+# ---------------------------------------------------------------------------
+async def get_db_pool() -> asyncpg.Pool:
+    global DB_POOL
+    if DB_POOL is None:
+        DB_POOL = await asyncpg.create_pool(dsn=DATABASE_URL, min_size=1, max_size=5)
+    return DB_POOL
+
+
+async def ensure_subscribers_schema() -> None:
     """Auto-heals required columns on startup so Rasi save never fails on schema drift."""
     ddl_statements = [
         """
@@ -142,16 +143,16 @@ def ensure_subscribers_schema() -> None:
         """,
     ]
     try:
-        with get_db_conn() as conn, conn.cursor() as cur:
+        pool = await get_db_pool()
+        async with pool.acquire() as conn:
             for stmt in ddl_statements:
-                cur.execute(stmt)
-            conn.commit()
+                await conn.execute(stmt)
         logger.info("Database schema verified successfully.")
     except Exception as exc:
         logger.exception("Schema verification failed: %s", exc)
 
 
-def upsert_subscriber_profile(
+async def upsert_subscriber_profile(
     telegram_id: int,
     first_name: str,
     username: str,
@@ -161,15 +162,16 @@ def upsert_subscriber_profile(
     rasi: str,
 ) -> None:
     city_part = locality.split(",")[-1].strip() if "," in locality else locality.strip()
-    with get_db_conn() as conn, conn.cursor() as cur:
-        cur.execute(
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
             """
             INSERT INTO subscribers (
                 telegram_id, first_name, username, preferred_language,
                 dob, locality, city, rasi, frequency, is_active,
                 consent_given_at, updated_at
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1, TRUE, NOW(), NOW())
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 1, TRUE, NOW(), NOW())
             ON CONFLICT (telegram_id) DO UPDATE SET
                 first_name = EXCLUDED.first_name,
                 username = EXCLUDED.username,
@@ -182,9 +184,23 @@ def upsert_subscriber_profile(
                 is_active = TRUE,
                 updated_at = NOW();
             """,
-            (telegram_id, first_name, username, lang, dob, locality, city_part, rasi),
+            telegram_id,
+            first_name,
+            username,
+            lang,
+            dob,
+            locality,
+            city_part,
+            rasi,
         )
-        conn.commit()
+
+
+def parse_payload_dict(raw_payload) -> dict:
+    if isinstance(raw_payload, dict):
+        return raw_payload
+    if isinstance(raw_payload, str):
+        return json.loads(raw_payload)
+    return {}
 
 
 # ---------------------------------------------------------------------------
@@ -213,7 +229,6 @@ async def cleanup_previous_messages(
         try:
             await context.bot.delete_message(chat_id=chat_id, message_id=mid)
         except Exception:
-            # Ignore if already deleted or restricted by client
             pass
     context.user_data["onboarding_msg_ids"] = remaining
 
@@ -434,7 +449,7 @@ async def set_rasi_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         dob = context.user_data.get("dob", "Not set")
         locality = context.user_data.get("locality", "Chennai")
 
-        upsert_subscriber_profile(
+        await upsert_subscriber_profile(
             telegram_id=telegram_id,
             first_name=first_name,
             username=username,
@@ -444,7 +459,6 @@ async def set_rasi_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             rasi=rasi_code,
         )
 
-        # Clean up earlier onboarding messages so only the final confirmation card remains
         await cleanup_previous_messages(
             context,
             chat_id=query.message.chat_id,
@@ -494,7 +508,6 @@ async def back_navigation_callback(update: Update, context: ContextTypes.DEFAULT
     chat_id = query.message.chat_id
     current_msg_id = query.message.message_id
 
-    # Delete all earlier onboarding steps & user text messages above the active card
     await cleanup_previous_messages(context, chat_id=chat_id, keep_msg_id=current_msg_id)
     track_onboarding_msg(context, current_msg_id)
 
@@ -544,34 +557,29 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
     telegram_id = update.effective_user.id
     today_ist = datetime.now(IST).date()
 
-    with get_db_conn() as conn, conn.cursor() as cur:
-        cur.execute("SELECT * FROM subscribers WHERE telegram_id = %s;", (telegram_id,))
-        sub = cur.fetchone()
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        sub = await conn.fetchrow("SELECT * FROM subscribers WHERE telegram_id = $1;", telegram_id)
         if not sub:
             await query.message.reply_text("Please complete /start setup first.")
             return
-
-        lang = sub.get("preferred_language") or "en"
-        rasi = sub.get("rasi") or "mesham"
-        city = (sub.get("city") or "Chennai").lower()
-
-        cur.execute(
-            """
-            SELECT bucket_type, bucket_key, payload
-            FROM daily_shared_cache
-            WHERE edition_date = %s;
-            """,
-            (today_ist,),
+        rows = await conn.fetch(
+            "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache WHERE edition_date = $1;",
+            today_ist,
         )
-        rows = cur.fetchall()
 
-    cache = {(r["bucket_type"], r["bucket_key"]): r["payload"] for r in rows}
+    lang = sub["preferred_language"] or "en"
+    rasi = sub["rasi"] or "mesham"
+    city = (sub["city"] or "chennai").lower()
+
+    cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
+
     deity_block = (cache.get(("DEITY_DAY", "TODAY")) or {}).get(lang) or (
         cache.get(("DEITY_DAY", "TODAY")) or {}
-    ).get("en", "🪔 <b>Daily Blessing:</b> Om Namah Shivaya — May peace and clarity guide your day.")
+    ).get("en", "🪔 <b>Daily Blessing:</b> Om Namah Shivaya")
     rasi_block = (cache.get(("RASI", rasi)) or {}).get(lang) or (
         cache.get(("RASI", rasi)) or {}
-    ).get("en", "✨ <b>Rasi Guidance:</b> Stay steady, speak kindly, and focus on priority tasks.")
+    ).get("en", "🌟 <b>Rasi Guidance:</b> Stay steady and focused today.")
     ausp_block = (cache.get(("AUSPICIOUS", city)) or cache.get(("AUSPICIOUS", "chennai")) or {}).get(
         lang, "⏳ <b>Auspicious Timing:</b> Morning 06:00–07:30 AM"
     )
@@ -607,20 +615,23 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
 
 async def rating_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
-    _, edition_date, score_str = query.data.split(":")
+    _, edition_date_str, score_str = query.data.split(":")
     score = int(score_str)
+    edition_date = date.fromisoformat(edition_date_str)
     try:
-        with get_db_conn() as conn, conn.cursor() as cur:
-            cur.execute(
+        pool = await get_db_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
                 """
                 INSERT INTO message_ratings (telegram_id, edition_date, rating)
-                VALUES (%s, %s, %s)
+                VALUES ($1, $2, $3)
                 ON CONFLICT (telegram_id, edition_date)
                 DO UPDATE SET rating = EXCLUDED.rating;
                 """,
-                (update.effective_user.id, edition_date, score),
+                update.effective_user.id,
+                edition_date,
+                score,
             )
-            conn.commit()
     except Exception as exc:
         logger.warning("Rating save skipped: %s", exc)
     await query.answer(f"Thank you for your {score}⭐ feedback!", show_alert=False)
@@ -629,22 +640,22 @@ async def rating_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 async def translate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer("Loading English translation...")
-    _, _, edition_date = query.data.split(":")
+    _, _, edition_date_str = query.data.split(":")
+    edition_date = date.fromisoformat(edition_date_str)
     telegram_id = update.effective_user.id
 
-    with get_db_conn() as conn, conn.cursor() as cur:
-        cur.execute("SELECT * FROM subscribers WHERE telegram_id = %s;", (telegram_id,))
-        sub = cur.fetchone() or {}
-        rasi = sub.get("rasi") or "mesham"
-        city = (sub.get("city") or "chennai").lower()
-
-        cur.execute(
-            "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache WHERE edition_date = %s;",
-            (edition_date,),
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        sub = await conn.fetchrow("SELECT * FROM subscribers WHERE telegram_id = $1;", telegram_id)
+        rows = await conn.fetch(
+            "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache WHERE edition_date = $1;",
+            edition_date,
         )
-        rows = cur.fetchall()
 
-    cache = {(r["bucket_type"], r["bucket_key"]): r["payload"] for r in rows}
+    rasi = (sub["rasi"] if sub else None) or "mesham"
+    city = ((sub["city"] if sub else None) or "chennai").lower()
+    cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
+
     en_text = (
         f"{CARD_HEADER}"
         f"{(cache.get(('DEITY_DAY', 'TODAY')) or {}).get('en', '')}\n\n"
@@ -659,9 +670,9 @@ async def translate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 async def delete_data_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     telegram_id = update.effective_user.id
-    with get_db_conn() as conn, conn.cursor() as cur:
-        cur.execute("DELETE FROM subscribers WHERE telegram_id = %s;", (telegram_id,))
-        conn.commit()
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        await conn.execute("DELETE FROM subscribers WHERE telegram_id = $1;", telegram_id)
     await update.message.reply_text(
         f"{CARD_HEADER}"
         "🗑️ Your profile and preferences have been permanently erased.\n"
@@ -671,14 +682,14 @@ async def delete_data_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 
 # ---------------------------------------------------------------------------
-# Health Check & Webhook HTTP Server (Render)
+# Health Check & Polling Runner (Render)
 # ---------------------------------------------------------------------------
 async def health_handler(request: web.Request) -> web.Response:
     return web.json_response({"status": "ok", "service": "aura-telegram-bot"})
 
 
 async def post_init(application: Application) -> None:
-    ensure_subscribers_schema()
+    await ensure_subscribers_schema()
 
 
 def build_application() -> Application:
@@ -720,7 +731,6 @@ def build_application() -> Application:
     )
 
     app.add_handler(conv)
-    # Global fallbacks ensure buttons remain responsive even after a server restart
     app.add_handler(CallbackQueryHandler(set_language_callback, pattern=r"^lang:"))
     app.add_handler(CallbackQueryHandler(set_rasi_callback, pattern=r"^rasi:"))
     app.add_handler(CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"))
@@ -746,11 +756,8 @@ async def main() -> None:
     await site.start()
     logger.info("AURA bot polling + health server active on port %s", PORT)
 
-    # Keep running forever
-    import asyncio
     await asyncio.Event().wait()
 
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())
