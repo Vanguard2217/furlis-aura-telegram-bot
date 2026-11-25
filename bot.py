@@ -33,12 +33,24 @@ SUPPORT_FORM_URLS = json.loads(os.environ.get("SUPPORT_FORM_URLS_JSON", "{}"))
 DEFAULT_SUPPORT_FORM_URL = os.environ.get("SUPPORT_FORM_URL", "")
 WELCOME_MEDIA_ID = os.environ.get("WELCOME_MEDIA_ID", "").strip()
 
-DIVIDER = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+AURA_HEADER = "ॐ  AURA  |  Morning Grace &amp; Daily Blessing  ॐ"
+DIVIDER = "━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 SHORT_DISCLAIMER = (
-    "⚖️ <i>Disclaimer: Devotional, Rasi/WoW, gold/silver, weather &amp; alert details are for general "
-    "informational guidance only—not financial, medical, legal, travel, or emergency safety advice. "
-    "Please verify critical decisions independently.</i>"
+    "⚖️ <i>General info only; not financial, medical, legal, or safety advice. "
+    "Verify independently.</i>"
+)
+
+DPDPA_DETAIL_TEXT = (
+    f"<b>{AURA_HEADER}</b>\n"
+    f"{DIVIDER}\n\n"
+    f"🔒 <b>Privacy &amp; Data (DPDPA 2023)</b>\n\n"
+    f"• <b>Profile &amp; Preferences:</b> Language, Name, Date of Birth, Locality/City, Rasi, "
+    f"Devotional/Occasion Mode &amp; 12 Pillars alert opt-in.\n\n"
+    f"• <b>Account &amp; Activity Records:</b> Telegram ID, consent/update timestamps, daily card ratings, "
+    f"and support tickets (if submitted).\n\n"
+    f"• <b>Your Rights:</b> Update any detail anytime via Profile or Settings, or permanently erase your "
+    f"data via <b>/delete_data</b> or <b>🗑️ DELETE</b> below."
 )
 
 db_pool: asyncpg.Pool | None = None
@@ -51,6 +63,63 @@ LANG_NAMES = {
     "te": "తెలుగు (Telugu)",
     "kn": "ಕನ್ನಡ (Kannada)",
     "ml": "മലയാളം (Malayalam)",
+}
+
+WELCOME_COPY = {
+    "en": {
+        "greeting": "Namaskaram, <b>{name}</b> 🙏",
+        "schedule": "Every morning at <b>04:30 AM IST</b>, receive one calm and blessed message to start your day with <b>Ashirvad:</b>",
+        "b1": "• 🪔 <b>Daily Blessing</b> + 🛕 <b>Temple &amp; Occasion Alerts</b>",
+        "b2": "• ⏳ <b>Auspicious Timing</b>",
+        "b3": "• ✨ <b>WoW [Words of Wisdom]</b>",
+        "b4": "• 🪙 Gold &amp; ⚪ Silver Rates",
+        "b5": "• 🌦️ <b>Weather [Plan Your Day]</b>",
+    },
+    "ta": {
+        "greeting": "நமஸ்காரம், <b>{name}</b> 🙏",
+        "schedule": "தினமும் காலை <b>04:30 AM IST</b> மணிக்கு, உங்கள் நாளை அமைதியுடனும் ஆசீர்வாதத்துடனும் தொடங்க <b>ஆசீர்வாதத்துடன்</b> ஒரு அமைதியான செய்தி:",
+        "b1": "• 🪔 <b>தினசரி ஆசீர்வாதம்</b> + 🛕 <b>கோவில் &amp; விசேஷ அறிவிப்புகள்</b>",
+        "b2": "• ⏳ <b>நல்ல நேரம் / சுப நேரம்</b>",
+        "b3": "• ✨ <b>WoW [Words of Wisdom]</b>",
+        "b4": "• 🪙 தங்கம் &amp; ⚪ வெள்ளி விலைகள்",
+        "b5": "• 🌦️ <b>வானிலை [நாளைய திட்டம்]</b>",
+    },
+    "hi": {
+        "greeting": "नमस्कार, <b>{name}</b> 🙏",
+        "schedule": "हर सुबह <b>04:30 AM IST</b> पर, अपने दिन की शांत और शुभ शुरुआत के लिए <b>आशीर्वाद</b> के साथ एक संदेश प्राप्त करें:",
+        "b1": "• 🪔 <b>दैनिक आशीर्वाद</b> + 🛕 <b>मंदिर व विशेष पर्व अलर्ट</b>",
+        "b2": "• ⏳ <b>शुभ समय</b>",
+        "b3": "• ✨ <b>WoW [Words of Wisdom]</b>",
+        "b4": "• 🪙 सोना व ⚪ चांदी के भाव",
+        "b5": "• 🌦️ <b>मौसम [दिन की योजना]</b>",
+    },
+    "te": {
+        "greeting": "నమస్కారం, <b>{name}</b> 🙏",
+        "schedule": "ప్రతిరోజూ ఉదయం <b>04:30 AM IST</b> గంటలకు, మీ రోజును ప్రశాంతంగా మరియు <b>ఆశీర్వాదంతో</b> ప్రారంభించడానికి ఒక సందేశం:",
+        "b1": "• 🪔 <b>రోజువారీ ఆశీర్వాదం</b> + 🛕 <b>ఆలయ &amp; ప్రత్యేక విశేషాలు</b>",
+        "b2": "• ⏳ <b>శుభ సమయం</b>",
+        "b3": "• ✨ <b>WoW [Words of Wisdom]</b>",
+        "b4": "• 🪙 బంగారం &amp; ⚪ వెండి ధరలు",
+        "b5": "• 🌦️ <b>వాతావరణం [రోజు ప్రణాళిక]</b>",
+    },
+    "kn": {
+        "greeting": "ನಮಸ್ಕಾರ, <b>{name}</b> 🙏",
+        "schedule": "ಪ್ರತಿದಿನ ಬೆಳಿಗ್ಗೆ <b>04:30 AM IST</b> ಗಂಟೆಗೆ, ನಿಮ್ಮ ದಿನವನ್ನು ಶಾಂತವಾಗಿ ಮತ್ತು <b>ಆಶೀರ್ವಾದದೊಂದಿಗೆ</b> ಆರಂಭಿಸಲು ಒಂದು ಸಂದೇಶ:",
+        "b1": "• 🪔 <b>ದೈನಂದಿನ ಆಶೀರ್ವಾದ</b> + 🛕 <b>ದೇವಾಲಯ &amp; ವಿಶೇಷ ಮಾಹಿತಿ</b>",
+        "b2": "• ⏳ <b>ಶುಭ ಸಮಯ</b>",
+        "b3": "• ✨ <b>WoW [Words of Wisdom]</b>",
+        "b4": "• 🪙 ಚಿನ್ನ &amp; ⚪ ಬೆಳ್ಳಿ ದರಗಳು",
+        "b5": "• 🌦️ <b>ಹವಾಮಾನ [ದಿನದ ಯೋಜನೆ]</b>",
+    },
+    "ml": {
+        "greeting": "നമസ്കാരം, <b>{name}</b> 🙏",
+        "schedule": "എല്ലാ ദിവസവും രാവിലെ <b>04:30 AM IST</b>-ന്, നിങ്ങളുടെ ദിവസം ശാന്തമായും <b>ആശീർവാദത്തോടെയും</b> ആരംഭിക്കാൻ ഒരു സന്ദേശം:",
+        "b1": "• 🪔 <b>ദൈനംദിന അനുഗ്രഹം</b> + 🛕 <b>ക്ഷേത്ര &amp; വിശേഷ അറിയിപ്പുകൾ</b>",
+        "b2": "• ⏳ <b>ശുഭ സമയം</b>",
+        "b3": "• ✨ <b>WoW [Words of Wisdom]</b>",
+        "b4": "• 🪙 സ്വർണ്ണം &amp; ⚪ വെള്ളി നിരക്കുകൾ",
+        "b5": "• 🌦️ <b>കാലാവസ്ഥ [ദിവസ ആസൂത്രണം]</b>",
+    },
 }
 
 UI_STRINGS = {
@@ -72,17 +141,19 @@ UI_STRINGS = {
         "support": "🛠️ Support (Suggestion / Complaint)",
         "profile_btn": "👤 Profile",
         "settings_btn": "⚙️ Settings",
+        "privacy_btn": "🔒 Privacy & Data (DPDPA)",
+        "delete_btn": "🗑️ DELETE",
         "translate_eng": "🌐 Translate [ENG]",
         "sub_12": "🔔 Subscribe 12 Pillars Alerts",
         "unsub_12": "🔕 Unsubscribe 12 Pillars Alerts",
-        "erased": "🗑️ <b>Profile Erased:</b> Your profile, Date of Birth, locality/city, and preferences have been permanently deleted per DPDPA 2023.",
+        "erased": "🗑️ <b>Data Erased:</b> Your profile, preferences, ratings, and support records have been permanently deleted per DPDPA 2023.",
     },
     "ta": {
         "ask_dob": "உங்கள் <b>பிறந்த தேதியை</b> உள்ளிடவும் (உதா: <code>15-08-1985</code>):",
         "invalid_dob": "சரியான பிறந்த தேதியை உள்ளிடவும் (உதா: <code>15-08-1985</code>):",
         "ask_city": (
             "உங்கள் <b>பகுதி மற்றும் நகரத்தை</b> உள்ளிடவும் (அல்லது <b>நகரம்</b> மட்டும்):\n"
-            "<i>உதாரணம்: அம்பத்தூர், சென்னை, அடையாறு, சென்னை, அல்லது சென்னை</i>\n"
+            "<i>உதாரணம்: Ambattur, Chennai, Adyar, Chennai, அல்லது Chennai</i>\n"
             "<i>ஏன்? பகுதியைச் சேர்த்தால் அருகிலுள்ள மழை மற்றும் வானிலை தகவல் துல்லியமாக இருக்கும்.</i>"
         ),
         "ask_rasi": "உங்கள் <b>ராசியைத்</b> தேர்ந்தெடுக்கவும்:",
@@ -95,6 +166,8 @@ UI_STRINGS = {
         "support": "🛠️ உதவி (கருத்து / புகார்)",
         "profile_btn": "👤 சுயவிவரம்",
         "settings_btn": "⚙️ அமைப்புகள்",
+        "privacy_btn": "🔒 Privacy & Data (DPDPA)",
+        "delete_btn": "🗑️ DELETE",
         "translate_eng": "🌐 Translate [ENG]",
         "sub_12": "🔔 12 தூண்கள் அறிவிப்பில் சேர்க",
         "unsub_12": "🔕 12 தூண்கள் அறிவிப்பிலிருந்து விலகுக",
@@ -118,6 +191,8 @@ UI_STRINGS = {
         "support": "🛠️ सहायता (सुझाव / शिकायत)",
         "profile_btn": "👤 प्रोफ़ाइल",
         "settings_btn": "⚙️ सेटिंग्स",
+        "privacy_btn": "🔒 Privacy & Data (DPDPA)",
+        "delete_btn": "🗑️ DELETE",
         "translate_eng": "🌐 Translate [ENG]",
         "sub_12": "🔔 12 पिलर्स अलर्ट सब्सक्राइब करें",
         "unsub_12": "🔕 12 पिलर्स अलर्ट अनसब्सक्राइब करें",
@@ -141,6 +216,8 @@ UI_STRINGS = {
         "support": "🛠️ సహాయం (సలహా / ఫిర్యాదు)",
         "profile_btn": "👤 ప్రొఫైల్",
         "settings_btn": "⚙️ సెట్టింగ్స్",
+        "privacy_btn": "🔒 Privacy & Data (DPDPA)",
+        "delete_btn": "🗑️ DELETE",
         "translate_eng": "🌐 Translate [ENG]",
         "sub_12": "🔔 12 పిల్లర్స్ అలర్ట్స్‌లో చేరండి",
         "unsub_12": "🔕 12 పిల్లర్స్ అలర్ట్స్ నుండి నిష్క్రమించండి",
@@ -164,6 +241,8 @@ UI_STRINGS = {
         "support": "🛠️ ಬೆಂಬಲ (ಸಲಹೆ / ದೂರು)",
         "profile_btn": "👤 ಪ್ರೊಫೈಲ್",
         "settings_btn": "⚙️ ಸೆಟ್ಟಿಂಗ್ಸ್",
+        "privacy_btn": "🔒 Privacy & Data (DPDPA)",
+        "delete_btn": "🗑️ DELETE",
         "translate_eng": "🌐 Translate [ENG]",
         "sub_12": "🔔 12 ಪಿಲ್ಲರ್ಸ್ ಅಲರ್ಟ್‌ಗಳಿಗೆ ಸೇರಿ",
         "unsub_12": "🔕 12 ಪಿಲ್ಲರ್ಸ್ ಅಲರ್ಟ್‌ಗಳಿಂದ ನಿರ್ಗಮಿಸಿ",
@@ -187,6 +266,8 @@ UI_STRINGS = {
         "support": "🛠️ സഹായം (നിർദ്ദേശം / പരാതി)",
         "profile_btn": "👤 പ്രൊഫൈൽ",
         "settings_btn": "⚙️ ക്രമീകരണങ്ങൾ",
+        "privacy_btn": "🔒 Privacy & Data (DPDPA)",
+        "delete_btn": "🗑️ DELETE",
         "translate_eng": "🌐 Translate [ENG]",
         "sub_12": "🔔 12 പില്ലേഴ്സ് അലർട്ടുകളിൽ ചേരുക",
         "unsub_12": "🔕 12 പില്ലേഴ്സ് അലർട്ടുകളിൽ നിന്ന് ഒഴിവാക്കുക",
@@ -234,25 +315,26 @@ def build_language_keyboard() -> InlineKeyboardMarkup:
 
 def build_language_intro_text() -> str:
     return (
-        f"ॐ <b>AURA</b>  |  <i>Morning Grace &amp; Daily Blessing</i>\n"
+        f"<b>{AURA_HEADER}</b>\n"
         f"{DIVIDER}\n\n"
-        f"Select your preferred language to begin / உங்கள் மொழിയെத் தேர்ந்தெடுக்கவும் / अपनी भाषा चुनें:"
+        f"<b>Select</b> your <b>Preferred Language</b> to begin / உங்கள் மொழியைத் தேர்ந்தெடுக்கவும் / अपनी भाषा चुनें:\n"
+        f"<i>తెలుగు • ಕನ್ನಡ • മലയാളം — Tap your language button below to continue.</i>"
     )
 
 
 def build_welcome_card(first_name: str, lang: str = "en") -> str:
     safe_name = html.escape(first_name or "there")
+    copy = WELCOME_COPY.get(lang) or WELCOME_COPY["en"]
     return (
-        f"ॐ <b>AURA</b>  |  <i>Morning Grace &amp; Daily Blessing</i>\n"
+        f"<b>{AURA_HEADER}</b>\n"
         f"{DIVIDER}\n\n"
-        f"Namaskaram, <b>{safe_name}</b> 🙏\n\n"
-        f"Every morning at <b>04:30 AM IST</b>, receive one calm and blessed message to start your day with <b>Ashirvad:</b>\n\n"
-        f"• 🪔 <b>Daily Blessing</b> + 🛕 <b>Temple &amp; Occasion Alerts</b>\n\n"
-        f"• ⏳ <b>Auspicious Timing</b> + ✨ <b>WoW (Words of Wisdom, as per Rasi)</b> + 🪙 <b>Gold Rates</b>\n\n"
-        f"• ✨ <b>WoW</b> — Words of Wisdom, as per your Rasi\n\n"
-        f"• 🪙 <b>Gold &amp; Silver Rates</b>\n\n"
-        f"• 🌦️ <b>Weather (Plan Your Day)</b> — rain chances, umbrella/caution alerts &amp; care note\n\n"
-        f"🔒 <i>DPDPA 2023: Only Language, Date of Birth, City &amp; Rasi are stored. Erase anytime via <a href=\"https://t.me\">DELETE</a> (or /delete_data).</i>\n\n"
+        f"{copy['greeting'].format(name=safe_name)}\n\n"
+        f"{copy['schedule']}\n\n"
+        f"{copy['b1']}\n\n"
+        f"{copy['b2']}\n\n"
+        f"{copy['b3']}\n\n"
+        f"{copy['b4']}\n\n"
+        f"{copy['b5']}\n\n"
         f"<b>Step 1 of 3 — {t(lang, 'ask_dob')}</b>"
     )
 
@@ -302,6 +384,13 @@ def send_founder_support_email(ticket_id: str, telegram_id: int, lang: str, cate
             server.send_message(msg)
     except Exception as e:
         print(f"Failed to dispatch email for {ticket_id}: {e}")
+
+
+async def erase_subscriber_records(uid: int) -> None:
+    assert db_pool is not None
+    await db_pool.execute("DELETE FROM message_ratings WHERE telegram_id = $1;", uid)
+    await db_pool.execute("DELETE FROM support_tickets WHERE telegram_id = $1;", uid)
+    await db_pool.execute("DELETE FROM subscribers WHERE telegram_id = $1;", uid)
 
 
 async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -354,7 +443,7 @@ def render_city_prompt(lang_code: str, dob_str: str) -> tuple[str, InlineKeyboar
     lang_label = html.escape(LANG_NAMES.get(lang_code, lang_code))
     safe_dob = html.escape(dob_str)
     text = (
-        f"ॐ <b>AURA</b>  |  <i>Setup (Step 2 of 3)</i>\n"
+        f"<b>{AURA_HEADER}</b>\n"
         f"{DIVIDER}\n\n"
         f"✓ <b>Language:</b> {lang_label}\n\n"
         f"✓ <b>Date of Birth:</b> {safe_dob}\n\n"
@@ -417,7 +506,7 @@ async def set_location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     keyboard.append([InlineKeyboardButton(t(lang_code, "back_city"), callback_data="back:location")])
 
     text = (
-        f"ॐ <b>AURA</b>  |  <i>Setup (Step 3 of 3)</i>\n"
+        f"<b>{AURA_HEADER}</b>\n"
         f"{DIVIDER}\n\n"
         f"✓ <b>Language:</b> {lang_label}\n\n"
         f"✓ <b>Date of Birth:</b> {safe_dob}\n\n"
@@ -467,7 +556,7 @@ async def set_rasi_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     reply_markup = build_daily_action_keyboard(today_str, uid, lang)
     summary = (
-        f"ॐ <b>AURA</b>  |  <i>Morning Ashirvad Ready</i> 🙏\n"
+        f"<b>{AURA_HEADER}</b>\n"
         f"{DIVIDER}\n\n"
         f"• <b>Language:</b> {html.escape(LANG_NAMES.get(lang, lang))}\n\n"
         f"• <b>Date of Birth:</b> {html.escape(dob_str or 'Not set')}\n\n"
@@ -495,7 +584,7 @@ async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
     lang = (row["preferred_language"] if row and row["preferred_language"] else "en")
 
     text = (
-        f"ॐ <b>AURA</b>  |  <i>User Profile</i>\n"
+        f"<b>{AURA_HEADER}</b>\n"
         f"{DIVIDER}\n\n"
         f"• <b>Name:</b> {name_val}\n\n"
         f"• <b>Date of Birth:</b> {dob_val}\n\n"
@@ -526,7 +615,7 @@ async def open_settings_panel(update: Update, context: ContextTypes.DEFAULT_TYPE
     pillars_val = "Subscribed" if (row and row["subscribed_12_pillars"]) else "Not Subscribed"
 
     text = (
-        f"ॐ <b>AURA</b>  |  <i>Preferences &amp; Settings</i>\n"
+        f"<b>{AURA_HEADER}</b>\n"
         f"{DIVIDER}\n\n"
         f"• <b>Language:</b> {html.escape(LANG_NAMES.get(lang, lang))}\n\n"
         f"• <b>Locality / City:</b> {city_val}\n\n"
@@ -544,10 +633,25 @@ async def open_settings_panel(update: Update, context: ContextTypes.DEFAULT_TYPE
             InlineKeyboardButton("✨ Rasi", callback_data="editfield:rasi"),
             InlineKeyboardButton("🪔 Devotional Mode", callback_data="editfield:deity_mode"),
         ],
+        [InlineKeyboardButton(t(lang, "privacy_btn"), callback_data="settings:privacy_dpdpa")],
         [InlineKeyboardButton(t(lang, "profile_btn"), callback_data="menu:profile")],
     ])
     await query.edit_message_text(text, reply_markup=keyboard, parse_mode="HTML")
     return ConversationHandler.END
+
+
+async def open_privacy_dpdpa_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+    uid = query.from_user.id
+    assert db_pool is not None
+    row = await db_pool.fetchrow("SELECT preferred_language FROM subscribers WHERE telegram_id = $1;", uid)
+    lang = (row["preferred_language"] if row and row["preferred_language"] else "en")
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton(t(lang, "delete_btn"), callback_data="action:delete_data")],
+        [InlineKeyboardButton(t(lang, "settings_btn"), callback_data="menu:settings")],
+    ])
+    await query.edit_message_text(DPDPA_DETAIL_TEXT, reply_markup=keyboard, parse_mode="HTML")
 
 
 async def choose_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -670,8 +774,19 @@ async def delete_data_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     assert db_pool is not None
     row = await db_pool.fetchrow("SELECT preferred_language FROM subscribers WHERE telegram_id = $1;", uid)
     lang = (row["preferred_language"] if row and row["preferred_language"] else "en")
-    await db_pool.execute("DELETE FROM subscribers WHERE telegram_id = $1;", uid)
+    await erase_subscriber_records(uid)
     await update.message.reply_text(t(lang, "erased"), parse_mode="HTML")
+
+
+async def delete_data_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+    uid = query.from_user.id
+    assert db_pool is not None
+    row = await db_pool.fetchrow("SELECT preferred_language FROM subscribers WHERE telegram_id = $1;", uid)
+    lang = (row["preferred_language"] if row and row["preferred_language"] else "en")
+    await erase_subscriber_records(uid)
+    await query.edit_message_text(t(lang, "erased"), parse_mode="HTML")
 
 
 async def admin_reply_ticket(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -774,7 +889,7 @@ async def handle_translate_callback(update: Update, context: ContextTypes.DEFAUL
     translated_txt = (
         f"🌐 <b>AURA — English Translation ({html.escape(edition_date_str)})</b>\n\n"
         f"🪔 <b>{html.escape(str(deity.get('title', 'Daily Blessing')))}</b>\n{html.escape(str(deity.get('slogan', '')))}\n\n"
-        f"🪙 <b>Gold &amp; Silver Rates:</b> {html.escape(str(gold.get('board_summary', '')))}\n\n"
+        f"🪙 Gold: {html.escape(str(gold.get('gold_summary', gold.get('board_summary', ''))))} | ⚪ Silver: {html.escape(str(gold.get('rate_silver', '')))}\n\n"
         f"✨ <i>\"{html.escape(str(quote_block.get('quote', '')))}\"</i> — {html.escape(str(quote_block.get('author', '')))}\n\n"
         f"{SHORT_DISCLAIMER}"
     )
@@ -864,6 +979,8 @@ async def main() -> None:
     tg_app.add_handler(conv_handler)
     tg_app.add_handler(CallbackQueryHandler(open_profile_panel, pattern=r"^menu:profile$"))
     tg_app.add_handler(CallbackQueryHandler(open_settings_panel, pattern=r"^menu:settings$"))
+    tg_app.add_handler(CallbackQueryHandler(open_privacy_dpdpa_panel, pattern=r"^settings:privacy_dpdpa$"))
+    tg_app.add_handler(CallbackQueryHandler(delete_data_callback, pattern=r"^action:delete_data$"))
     tg_app.add_handler(CommandHandler("delete_data", delete_data_cmd))
     tg_app.add_handler(CommandHandler("reply", admin_reply_ticket))
     tg_app.add_handler(CallbackQueryHandler(handle_rating_callback, pattern=r"^rate:"))
