@@ -53,6 +53,51 @@ DAY_DEITIES = {
     6: ("Sunday Special — Lord Surya Narayana Blessings", "May vitality, radiance, and positive energy empower your day.", "assets/deities/sun_surya.png"),
 }
 
+DAILY_BLESSINGS = [
+    {
+        "mantra": "Om Namah Shivaya",
+        "mantra_meaning": "Salutations to Lord Shiva—the inner consciousness, purity, and auspiciousness within.",
+        "verse": "Karmanye vadhikaraste ma phaleshu kadachana — Bhagavad Gita (2.47)",
+        "verse_meaning": "Your right is to perform your prescribed duty alone, never to attachment to the fruits of action.",
+        "asset_path": "assets/deities/mon_shiva.png",
+    },
+    {
+        "mantra": "Om Shri Ganeshaya Namah",
+        "mantra_meaning": "Salutations to Lord Ganesha, remover of obstacles and bestower of wisdom and clarity.",
+        "verse": "Uttishthata jagrata prapya varan nibodhata — Katha Upanishad (1.3.14)",
+        "verse_meaning": "Arise, awake, and having reached the wise teachers, realize the supreme truth without delay.",
+        "asset_path": "assets/deities/wed_vinayagar.png",
+    },
+    {
+        "mantra": "A no bhadrah kratavo yantu vishwatah",
+        "mantra_meaning": "Let noble and auspicious thoughts come to us from every direction.",
+        "verse": "Sam gachadhvam sam vadadhvam sam vo manansi janatam — Rigveda (10.191.2)",
+        "verse_meaning": "Walk together, speak together, and let your minds be aligned in harmony and shared purpose.",
+        "asset_path": "assets/deities/sun_surya.png",
+    },
+    {
+        "mantra": "Om Namo Bhagavate Vasudevaya",
+        "mantra_meaning": "Salutations to the Supreme Indwelling Presence who sustains all life in harmony.",
+        "verse": "Samatvam yoga uchyate — Bhagavad Gita (2.48)",
+        "verse_meaning": "Steadiness and equanimity of mind in both success and difficulty is true yoga.",
+        "asset_path": "assets/deities/sat_thirumal.png",
+    },
+    {
+        "mantra": "Om Shanti Shanti Shantih",
+        "mantra_meaning": "Peace in body, mind, and cosmic surroundings—invoking inner calm.",
+        "verse": "Isavasyam idam sarvam yat kincha jagatyam jagat — Isha Upanishad (1)",
+        "verse_meaning": "All that moves and exists in this universe is pervaded and enfolded by the Divine.",
+        "asset_path": "assets/deities/thu_guru.png",
+    },
+    {
+        "mantra": "Om Bhur Bhuvah Svah — Tat Savitur Varenyam",
+        "mantra_meaning": "Meditating on the radiant light of Savitr that awakens inner discernment across all realms.",
+        "verse": "Satyam vada, dharmam chara — Taittiriya Upanishad (1.11.1)",
+        "verse_meaning": "Speak truth and walk the path of dharma with mindfulness and integrity.",
+        "asset_path": "assets/deities/fri_amman.png",
+    },
+]
+
 SCRIPTURE_QUOTES = [
     {"quote": "You have a right to perform your prescribed duty, but never to its fruits.", "author": "Bhagavad Gita (2.47)"},
     {"quote": "For him who has conquered the mind, the mind is the best of friends.", "author": "Bhagavad Gita (6.6)"},
@@ -155,14 +200,16 @@ async def fetch_bullion_rates(session: aiohttp.ClientSession) -> dict:
             "rate_24k": f"₹{rate_24k:,}/g",
             "rate_18k": f"₹{rate_18k:,}/g",
             "rate_silver": f"₹{silver_1g}/g",
-            "board_summary": f"22K (916): ₹{rate_22k:,}/g | 24K (999): ₹{rate_24k:,}/g | 18K: ₹{rate_18k:,}/g | Silver: ₹{silver_1g}/g (Indicative)",
+            "gold_summary": f"22K: ₹{rate_22k:,}/g | 24K: ₹{rate_24k:,}/g | 18K: ₹{rate_18k:,}/g",
+            "board_summary": f"🪙 Gold: 22K ₹{rate_22k:,}/g, 24K ₹{rate_24k:,}/g | ⚪ Silver: ₹{silver_1g}/g (Indicative)",
         }
     return {
         "rate_22k": "Check showroom",
         "rate_24k": "Check showroom",
         "rate_18k": "Check showroom",
         "rate_silver": "Check showroom",
-        "board_summary": "Indicative showroom rates",
+        "gold_summary": "Check showroom",
+        "board_summary": "🪙 Gold & ⚪ Silver: Indicative showroom rates",
     }
 
 
@@ -229,6 +276,7 @@ async def build_and_store_cache() -> None:
     weekday = now_ist.weekday()
     day_of_year = now_ist.timetuple().tm_yday
     deity_title, deity_slogan, asset_path = DAY_DEITIES[weekday]
+    blessing_item = DAILY_BLESSINGS[(day_of_year - 1) % len(DAILY_BLESSINGS)]
     quote_item = SCRIPTURE_QUOTES[(day_of_year - 1) % len(SCRIPTURE_QUOTES)]
 
     pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=3)
@@ -256,7 +304,7 @@ async def build_and_store_cache() -> None:
                 if q_text and q_auth:
                     quote_item = {"quote": q_text, "author": q_auth}
 
-            occasion_payload = {"occasion_title": "", "occasion_temple": "", "asset_path": asset_path}
+            occasion_payload = {"occasion_title": "", "occasion_temple": "", "asset_path": blessing_item["asset_path"] or asset_path}
             for note in calendar_notes:
                 if str(note.get("event_date", "")).strip() == edition_date and str(note.get("language", "en")).strip().lower() in {"", "en"}:
                     ev_name = str(note.get("event_name", "")).strip()
@@ -287,8 +335,18 @@ async def build_and_store_cache() -> None:
                     "auspicious_time": ausp_str,
                 }
 
+        deity_payload = {
+            "title": deity_title,
+            "slogan": deity_slogan,
+            "mantra": blessing_item["mantra"],
+            "mantra_meaning": blessing_item["mantra_meaning"],
+            "verse": blessing_item["verse"],
+            "verse_meaning": blessing_item["verse_meaning"],
+            "asset_path": blessing_item["asset_path"] or asset_path,
+        }
+
         buckets = [
-            ("en", "DEITY_DAY_OF_WEEK", {"title": deity_title, "slogan": deity_slogan, "asset_path": asset_path}, None),
+            ("en", "DEITY_DAY_OF_WEEK", deity_payload, None),
             ("en", "DEITY_ALL_OCCASIONS", occasion_payload, None),
             ("en", "GOLD_INR", gold_data, None),
             ("en", "FAMOUS_QUOTE", quote_item, None),
