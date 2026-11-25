@@ -18,10 +18,12 @@ IST = timezone(timedelta(hours=5, minutes=30))
 TELEGRAM_API_BASE = f"https://api.telegram.org/bot{BOT_TOKEN}"
 BATCH_CONCURRENCY = 25
 
+AURA_HEADER = "ॐ  AURA  |  Morning Grace &amp; Daily Blessing  ॐ"
+DIVIDER = "━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
 SHORT_DISCLAIMER = (
-    "⚖️ <i>Disclaimer: Devotional, Rasi/WoW, gold/silver, weather &amp; alert details are for general "
-    "informational guidance only—not financial, medical, legal, travel, or emergency safety advice. "
-    "Please verify critical decisions independently.</i>"
+    "⚖️ <i>General info only; not financial, medical, legal, or safety advice. "
+    "Verify independently.</i>"
 )
 
 
@@ -64,7 +66,7 @@ def build_weather_care_block(city_name: str, city: dict) -> str:
     custom_care = str(city.get("care_line") or "").strip()
 
     prob_suffix = f" • {int(rain_prob)}% rain chance" if isinstance(rain_prob, (int, float)) else ""
-    lines = [f"🌦️ <b>{html.escape(city_name)}:</b> {html.escape(weather_raw)}{html.escape(prob_suffix)}"]
+    lines = [f"🌦️ <b>Weather [Plan Your Day] — {html.escape(city_name)}:</b> {html.escape(weather_raw)}{html.escape(prob_suffix)}"]
 
     w_lower = weather_raw.lower()
     is_caution = severity in {"CAUTION_HEAVY_RAIN", "CAUTION_FOG", "CAUTION_SNOW"} or any(
@@ -100,8 +102,17 @@ def render_caption(
     quote_block: dict,
 ) -> str:
     title = html.escape(str(deity.get("title") or "Daily Morning Blessing"))
-    slogan = html.escape(str(deity.get("slogan") or ""))
-    devotional_lines = [f"🪔 <b>{title}</b>", f"<i>{slogan}</i>"]
+    mantra = html.escape(str(deity.get("mantra") or "Om Namah Shivaya"))
+    mantra_meaning = html.escape(str(deity.get("mantra_meaning") or deity.get("slogan") or ""))
+    verse = html.escape(str(deity.get("verse") or ""))
+    verse_meaning = html.escape(str(deity.get("verse_meaning") or ""))
+
+    devotional_lines = [
+        f"🪔 <b>Daily Blessing — {title}</b>",
+        f"<b>Mantra:</b> <i>{mantra}</i> — {mantra_meaning}",
+    ]
+    if verse:
+        devotional_lines.append(f"<b>Scripture:</b> <i>{verse}</i> — {verse_meaning}")
 
     occ_title = str(occasion.get("occasion_title") or occasion.get("title") or "").strip()
     occ_detail = str(occasion.get("occasion_temple") or occasion.get("temple_highlight") or "").strip()
@@ -112,18 +123,18 @@ def render_caption(
     weather_block = build_weather_care_block(city_name, city)
     rate_22k = html.escape(str(gold.get("rate_22k", "N/A")))
     rate_24k = html.escape(str(gold.get("rate_24k", "N/A")))
-    rate_silver = html.escape(str(gold.get("rate_silver", "")))
-    silver_part = f" | Silver: {rate_silver}" if rate_silver else ""
+    rate_silver = html.escape(str(gold.get("rate_silver", "N/A")))
     rasi_words = html.escape(str(rasi.get("three_words", "")))
     auspicious = html.escape(str(city.get("auspicious_time", "")))
     quote = html.escape(str(quote_block.get("quote", "")))
     author = html.escape(str(quote_block.get("author", "")))
 
     body = (
-        f"ॐ <b>AURA</b>  |  <i>Morning Ashirvad</i>\n\n"
+        f"<b>{AURA_HEADER}</b>\n"
+        f"{DIVIDER}\n\n"
         f"{chr(10).join(devotional_lines)}\n\n"
-        f"🪙 <b>Gold &amp; Silver:</b> 22K {rate_22k} | 24K {rate_24k}{silver_part}\n\n"
-        f"✨ <b>WoW ({html.escape(rasi_name)}):</b> {rasi_words}\n\n"
+        f"🪙 Gold: 22K {rate_22k} | 24K {rate_24k} | ⚪ Silver: {rate_silver}\n\n"
+        f"✨ <b>WoW [Words of Wisdom] ({html.escape(rasi_name)}):</b> {rasi_words}\n\n"
         f"⏳ <b>Auspicious Timing:</b> {auspicious}\n\n"
         f"{weather_block}\n\n"
         f"💡 <i>\"{quote}\"</i> — {author}"
