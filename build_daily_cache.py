@@ -2,13 +2,13 @@ import os
 import csv
 import io
 import json
+import asyncio
 import logging
 from datetime import datetime, date, timezone, timedelta
-from typing import Dict, List, Any
+from typing import Dict, List
 
-import requests
-import psycopg2
-from psycopg2.extras import Json
+import aiohttp
+import asyncpg
 
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
@@ -17,7 +17,6 @@ logging.basicConfig(
 logger = logging.getLogger("build_daily_cache")
 
 DATABASE_URL = os.environ["DATABASE_URL"]
-# Optional for later: once Google Sheet is published as CSV, set this env var without changing code
 GOOGLE_SHEET_CSV_BASE_URL = os.environ.get("GOOGLE_SHEET_CSV_BASE_URL", "").strip()
 
 IST = timezone(timedelta(hours=5, minutes=30))
@@ -91,7 +90,6 @@ BUILT_IN_DEITY_7DAY: Dict[str, Dict[str, str]] = {
 
 # ---------------------------------------------------------------------------
 # 2. Built-in Scripture Bank (Bhagavad Gita, Upanishads & Vedas)
-#    Advances 1 verse per day sequentially and loops cleanly when it ends.
 # ---------------------------------------------------------------------------
 BUILT_IN_SCRIPTURE_QUOTES: List[Dict[str, str]] = [
     {
@@ -160,17 +158,12 @@ BUILT_IN_SCRIPTURE_QUOTES: List[Dict[str, str]] = [
 ]
 
 # ---------------------------------------------------------------------------
-# 3. Gold & Silver Rates (With Last Market Closure [As of DATE] Logic)
+# 3. Gold & Silver Rates ([As of DATE])
 # ---------------------------------------------------------------------------
 def compute_bullion_as_of_date(now_ist: datetime) -> str:
-    """
-    At 04:30 AM IST, Indian bullion markets reflect the previous market close.
-    On Sunday (weekday=6), Saturday close applies; on Monday 04:30 AM (weekday=0), Saturday close applies.
-    """
     d = now_ist.date()
     if now_ist.hour < 10:
         d = d - timedelta(days=1)
-    # Roll back Sunday to Saturday close
     if d.weekday() == 6:
         d = d - timedelta(days=1)
     return d.strftime("%d %b %Y")
@@ -178,7 +171,6 @@ def compute_bullion_as_of_date(now_ist: datetime) -> str:
 
 def build_bullion_payload(now_ist: datetime) -> Dict[str, str]:
     as_of_str = compute_bullion_as_of_date(now_ist)
-    # Baseline rates (can be wired to live bullion API when enabled)
     g22 = "₹7,140/g"
     g24 = "₹7,789/g"
     silver = "₹91.50/g"
@@ -194,25 +186,25 @@ def build_bullion_payload(now_ist: datetime) -> Dict[str, str]:
 
 
 # ---------------------------------------------------------------------------
-# 4. Optional Google Sheet CSV Reader (Plug-and-Play When Ready)
+# 4. Async Google Sheet CSV Reader (Plug-and-Play When Ready)
 # ---------------------------------------------------------------------------
-def fetch_sheet_rows(tab_name: str) -> List[Dict[str, str]]:
+async def fetch_sheet_rows(session: aiohttp.ClientSession, tab_name: str) -> List[Dict[str, str]]:
     if not GOOGLE_SHEET_CSV_BASE_URL:
         return []
     try:
         url = f"{GOOGLE_SHEET_CSV_BASE_URL}&sheet={tab_name}"
-        resp = requests.get(url, timeout=15)
-        resp.raise_for_status()
-        reader = csv.DictReader(io.StringIO(resp.text))
-        return list(reader)
+        async with session.get(url, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+            resp.raise_for_status()
+            text = await resp.text()
+            return list(csv.DictReader(io.StringIO(text)))
     except Exception as exc:
         logger.warning("Sheet tab '%s' unavailable (%s); using built-in bank.", tab_name, exc)
         return []
 
 
-def select_today_deity(today_ist: date) -> Dict[str, str]:
+async def select_today_deity(session: aiohttp.ClientSession, today_ist: date) -> Dict[str, str]:
     day_code = WEEKDAY_CODES[today_ist.weekday()]
-    sheet_rows = fetch_sheet_rows("Rasi_Deity_Templates")
+    sheet_rows = await fetch_sheet_rows(session, "Rasi_Deity_Templates")
     for row in sheet_rows:
         if (row.get("template_type") or "").strip().upper() == "DEITY_DAY" and (
             row.get("key_code") or ""
@@ -224,10 +216,10 @@ def select_today_deity(today_ist: date) -> Dict[str, str]:
     return BUILT_IN_DEITY_7DAY[day_code]
 
 
-def select_today_scripture(today_ist: date) -> Dict[str, str]:
+async def select_today_scripture(session: aiohttp.ClientSession, today_ist: date) -> Dict[str, str]:
     sheet_rows = [
         r
-        for r in fetch_sheet_rows("Quotes_Bank")
+        for r in await fetch_sheet_rows(session, "Quotes_Bank")
         if (r.get("active_flag") or "TRUE").strip().upper() == "TRUE"
     ]
     day_offset = max(0, (today_ist - EPOCH_ANCHOR_DATE).days)
@@ -273,15 +265,17 @@ def build_rasi_defaults() -> Dict[str, Dict[str, str]]:
 
 
 # ---------------------------------------------------------------------------
-# Main Cache Builder
+# Main Async Cache Builder
 # ---------------------------------------------------------------------------
-def main() -> None:
+async def main() -> None:
     now_ist = datetime.now(IST)
     today_ist = now_ist.date()
     logger.info("Building daily_shared_cache for %s IST", today_ist)
 
-    deity_payload = select_today_deity(today_ist)
-    quote_payload = select_today_scripture(today_ist)
+    async with aiohttp.ClientSession() as session:
+        deity_payload = await select_today_deity(session, today_ist)
+        quote_payload = await select_today_scripture(session, today_ist)
+
     bullion_payload = build_bullion_payload(now_ist)
     rasi_map = build_rasi_defaults()
 
@@ -298,31 +292,36 @@ def main() -> None:
         for lang in LANGS
     }
 
-    records: List[tuple] = [
-        (today_ist, "DEITY_DAY", "TODAY", Json(deity_payload)),
-        (today_ist, "QUOTE", "TODAY", Json(quote_payload)),
-        (today_ist, "GOLD_INR", "INDIA", Json(bullion_payload)),
-        (today_ist, "AUSPICIOUS", "chennai", Json(auspicious_chennai)),
-        (today_ist, "WEATHER", "chennai", Json(weather_chennai)),
+    records = [
+        (today_ist, "DEITY_DAY", "TODAY", json.dumps(deity_payload)),
+        (today_ist, "QUOTE", "TODAY", json.dumps(quote_payload)),
+        (today_ist, "GOLD_INR", "INDIA", json.dumps(bullion_payload)),
+        (today_ist, "AUSPICIOUS", "chennai", json.dumps(auspicious_chennai)),
+        (today_ist, "WEATHER", "chennai", json.dumps(weather_chennai)),
     ]
     for rasi_key, payload in rasi_map.items():
-        records.append((today_ist, "RASI", rasi_key, Json(payload)))
+        records.append((today_ist, "RASI", rasi_key, json.dumps(payload)))
 
-    with psycopg2.connect(DATABASE_URL) as conn, conn.cursor() as cur:
-        for row in records:
-            cur.execute(
+    conn = await asyncpg.connect(dsn=DATABASE_URL)
+    try:
+        for edition_dt, b_type, b_key, payload_json in records:
+            await conn.execute(
                 """
                 INSERT INTO daily_shared_cache (edition_date, bucket_type, bucket_key, payload)
-                VALUES (%s, %s, %s, %s)
+                VALUES ($1, $2, $3, $4::jsonb)
                 ON CONFLICT (edition_date, bucket_type, bucket_key)
                 DO UPDATE SET payload = EXCLUDED.payload, created_at = NOW();
                 """,
-                row,
+                edition_dt,
+                b_type,
+                b_key,
+                payload_json,
             )
-        conn.commit()
+    finally:
+        await conn.close()
 
     logger.info("Successfully cached %d shared buckets for %s", len(records), today_ist)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
