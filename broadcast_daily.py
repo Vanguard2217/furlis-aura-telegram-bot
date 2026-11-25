@@ -1,5 +1,6 @@
-# broadcast_daily.py — FURLIS AURA Daily Broadcaster with Auto File-ID Caching
+# broadcast_daily.py — AURA Daily Broadcaster with Auto File-ID Caching
 import os
+import re
 import html
 import json
 import asyncio
@@ -18,9 +19,15 @@ TELEGRAM_API_BASE = f"https://api.telegram.org/bot{BOT_TOKEN}"
 BATCH_CONCURRENCY = 25
 
 SHORT_DISCLAIMER = (
-    "⚖️ <i>Disclaimer: Devotional, astrology, gold/market, weather &amp; alert info is for general "
-    "guidance only—not financial, medical, travel, or safety advice. Verify critical decisions independently.</i>"
+    "⚖️ <i>Disclaimer: Devotional, Rasi/WoW, gold/silver, weather &amp; alert details are for general "
+    "informational guidance only—not financial, medical, legal, travel, or emergency safety advice. "
+    "Please verify critical decisions independently.</i>"
 )
+
+
+def normalize_location_key(raw_loc: str) -> str:
+    cleaned = re.sub(r"[^A-Z0-9]+", "_", raw_loc.upper()).strip("_")
+    return cleaned or "CHENNAI"
 
 
 def build_support_url(telegram_id: int, lang: str) -> str:
@@ -38,6 +45,7 @@ def build_inline_keyboard_dict(edition_date: str, telegram_id: int, lang: str) -
     support_url = build_support_url(telegram_id, lang)
     rows = [
         [{"text": f"⭐ {i}", "callback_data": f"rate:{edition_date}:{i}"} for i in range(1, 6)],
+        [{"text": "👤 Profile", "callback_data": "menu:profile"}, {"text": "⚙️ Settings", "callback_data": "menu:settings"}],
         [{"text": "📰 Other Services (12 Pillars & Social)", "callback_data": "menu:other_services"}],
         [{"text": "💳 Pay (UPI)", "url": upi_url}],
         [{"text": "🛠️ Support (Suggestion / Complaint)", "url": support_url}],
@@ -50,6 +58,8 @@ def build_inline_keyboard_dict(edition_date: str, telegram_id: int, lang: str) -
 def build_weather_care_block(city_name: str, city: dict) -> str:
     weather_raw = str(city.get("weather") or "Pleasant morning").strip()
     rain_prob = city.get("rain_chance_pct")
+    if isinstance(rain_prob, str) and rain_prob.isdigit():
+        rain_prob = int(rain_prob)
     severity = str(city.get("condition_severity") or "").strip().upper()
     custom_care = str(city.get("care_line") or "").strip()
 
@@ -96,23 +106,25 @@ def render_caption(
     occ_title = str(occasion.get("occasion_title") or occasion.get("title") or "").strip()
     occ_detail = str(occasion.get("occasion_temple") or occasion.get("temple_highlight") or "").strip()
     if occ_detail.lower() not in {"", "none", "special panchangam observance & temple highlights."}:
-        occ_head = f"🛕 <b>{html.escape(occ_title)}:</b> " if occ_title else "🛕 <b>Occasion &amp; Temple Alert:</b> "
+        occ_head = f"🛕 <b>{html.escape(occ_title)}:</b> " if occ_title else "🛕 <b>Temple &amp; Occasion Alert:</b> "
         devotional_lines.append(f"{occ_head}{html.escape(occ_detail)}")
 
     weather_block = build_weather_care_block(city_name, city)
     rate_22k = html.escape(str(gold.get("rate_22k", "N/A")))
     rate_24k = html.escape(str(gold.get("rate_24k", "N/A")))
+    rate_silver = html.escape(str(gold.get("rate_silver", "")))
+    silver_part = f" | Silver: {rate_silver}" if rate_silver else ""
     rasi_words = html.escape(str(rasi.get("three_words", "")))
     auspicious = html.escape(str(city.get("auspicious_time", "")))
     quote = html.escape(str(quote_block.get("quote", "")))
     author = html.escape(str(quote_block.get("author", "")))
 
     body = (
-        f"☀️ <b>FURLIS AURA</b>\n\n"
+        f"ॐ <b>AURA</b>  |  <i>Morning Ashirvad</i>\n\n"
         f"{chr(10).join(devotional_lines)}\n\n"
-        f"🪙 <b>Gold:</b> 22K {rate_22k} | 24K {rate_24k}\n"
-        f"✨ <b>{html.escape(rasi_name)}:</b> {rasi_words}\n"
-        f"⏳ <b>Auspicious:</b> {auspicious}\n"
+        f"🪙 <b>Gold &amp; Silver:</b> 22K {rate_22k} | 24K {rate_24k}{silver_part}\n\n"
+        f"✨ <b>WoW ({html.escape(rasi_name)}):</b> {rasi_words}\n\n"
+        f"⏳ <b>Auspicious Timing:</b> {auspicious}\n\n"
         f"{weather_block}\n\n"
         f"💡 <i>\"{quote}\"</i> — {author}"
     )
@@ -132,7 +144,7 @@ async def send_to_subscriber(
 ) -> bool:
     uid = sub["telegram_id"]
     lang = (sub["preferred_language"] or "en").lower()
-    city_name = (sub["city"] or "Chennai").strip()
+    city_raw = (sub["city"] or "Chennai").strip()
     rasi_name = (sub["rasi"] or "Mesham").strip()
     deity_mode = (sub["deity_mode"] or "AUTO").upper()
     deity_key = "DEITY_ALL_OCCASIONS" if deity_mode == "ALL_OCCASIONS" else "DEITY_DAY_OF_WEEK"
@@ -147,11 +159,18 @@ async def send_to_subscriber(
     occasion, _ = get_bucket("DEITY_ALL_OCCASIONS")
     gold, _ = get_bucket("GOLD_INR")
     rasi, _ = get_bucket(f"RASI_{rasi_name.upper()}")
-    city, _ = get_bucket(f"CITY_{city_name.upper()}")
+
+    loc_key = normalize_location_key(city_raw)
+    city_part = normalize_location_key(city_raw.split(",", 1)[-1])
+    city, _ = get_bucket(f"CITY_{loc_key}")
+    if not city:
+        city, _ = get_bucket(f"CITY_{city_part}")
     if not city:
         city, _ = get_bucket("CITY_CHENNAI")
+    display_loc = str(city.get("label") or city_raw or "Chennai")
+
     quote_block, _ = get_bucket("FAMOUS_QUOTE")
-    caption = render_caption(deity, occasion, gold, rasi_name, rasi, city_name, city, quote_block)
+    caption = render_caption(deity, occasion, gold, rasi_name, rasi, display_loc, city, quote_block)
     reply_markup = build_inline_keyboard_dict(edition_date, uid, lang)
     asset_path = deity.get("asset_path", "")
 
@@ -237,7 +256,7 @@ async def run_broadcast() -> None:
                 results = await asyncio.gather(*(send_to_subscriber(session, pool, s, cache_map, edition_date) for s in batch))
                 sent += sum(1 for ok in results if ok)
                 await asyncio.sleep(1.05)
-        print(f"[{edition_date}] FURLIS AURA Broadcast complete: {sent}/{len(subs)} delivered.")
+        print(f"[{edition_date}] AURA Broadcast complete: {sent}/{len(subs)} delivered.")
     finally:
         await pool.close()
 
