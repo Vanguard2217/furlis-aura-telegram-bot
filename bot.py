@@ -42,7 +42,9 @@ PORT = int(os.environ.get("PORT", "10000"))
 
 UPI_GATEWAY_CHECKOUT_URL = os.environ.get("UPI_GATEWAY_CHECKOUT_URL", "https://example.com/upi")
 SUPPORT_FORM_URLS = json.loads(os.environ.get("SUPPORT_FORM_URLS_JSON", "{}"))
-WELCOME_VIDEO_PATH = Path(os.environ.get("WELCOME_VIDEO_PATH", "assets/welcome_aura_is_here_to_serve_6s.mp4"))
+WELCOME_VIDEO_PATH = Path(
+    os.environ.get("WELCOME_VIDEO_PATH", "assets/welcome_aura_is_here_to_serve_6s.mp4")
+)
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
@@ -63,7 +65,15 @@ LANGUAGES = {
     "ml": "മലയാളം (Malayalam)",
 }
 
-# (code, english_name, localized_with_transliteration_by_lang)
+WOW_LABELS = {
+    "en": "WoW [Words of Wisdom]",
+    "ta": "WoW [ஞான மொழிகள்]",
+    "hi": "WoW [ज्ञान की बातें]",
+    "te": "WoW [జ్ఞాన వాక్కులు]",
+    "kn": "WoW [ಜ್ಞಾನದ ಮಾತುಗಳು]",
+    "ml": "WoW [ജ്ഞാനവാക്കുകൾ]",
+}
+
 RASIS = [
     (
         "mesham",
@@ -217,7 +227,7 @@ WELCOME_COPY = {
         "schedule": "Every morning at <b>04:30 AM IST</b>, receive one calm and divine message to start your day with <b>Ashirvad:</b>",
         "b1": "• 🪔 Daily Blessing + 🛕 Temple &amp; Occasion Alerts",
         "b2": "• ⏳ Auspicious Timing",
-        "b3": "• ✨ WoW [Words of Wisdom]",
+        "b3": "• ✨ {wow}",
         "b4": "• 🟡 Gold &amp; ⚪ Silver Rates",
         "b5": "• 🌦 Weather [Plan Your Day]",
         "step1": "<b>Step 1 of 3</b> — Enter your Date of Birth (e.g., <code>15-08-1985</code>):",
@@ -232,6 +242,9 @@ WELCOME_COPY = {
         "back_lang": "← Back to Language",
         "back_dob": "← Back to Date of Birth",
         "back_loc": "← Back to Locality / City",
+        "back_card": "← Back to Card",
+        "back_profile": "← Back to Profile",
+        "back_settings": "← Back to Settings",
         "confirmed_title": "🙏 <b>Subscription Confirmed — Ashirvad Active</b>",
         "lbl_name": "Name",
         "lbl_lang": "Language",
@@ -269,7 +282,7 @@ WELCOME_COPY = {
         "schedule": "தினமும் காலை <b>04:30 AM IST</b> மணிக்கு, உங்கள் நாளை அமைதியுடனும் தெய்வீக அருளுடனும் தொடங்க <b>ஆசீர்வாதத்துடன்</b> ஒரு தெய்வீகச் செய்தி:",
         "b1": "• 🪔 தினசரி ஆசீர்வாதம் + 🛕 கோவில் &amp; விசேஷ அறிவிப்புகள்",
         "b2": "• ⏳ நல்ல நேரம்",
-        "b3": "• ✨ WoW [Words of Wisdom]",
+        "b3": "• ✨ {wow}",
         "b4": "• 🟡 தங்கம் &amp; ⚪ வெள்ளி விலைகள்",
         "b5": "• 🌦 வானிலை [நாளைய திட்டம்]",
         "step1": "<b>படி 1 / 3</b> — உங்கள் பிறந்த தேதியை உள்ளிடவும் (உதா: <code>15-08-1985</code>):",
@@ -284,6 +297,9 @@ WELCOME_COPY = {
         "back_lang": "← மொழிக்குத் திரும்புக",
         "back_dob": "← பிறந்த தேதிக்குத் திரும்புக",
         "back_loc": "← பகுதி / நகரத்திற்குத் திரும்புக",
+        "back_card": "← அட்டைக்குத் திரும்புக",
+        "back_profile": "← சுயவிவரத்திற்குத் திரும்புக",
+        "back_settings": "← அமைப்புகளுக்குத் திரும்புக",
         "confirmed_title": "🙏 <b>பதிவு உறுதி செய்யப்பட்டது — ஆசீர்வாதம் செயலில் உள்ளது</b>",
         "lbl_name": "பெயர்",
         "lbl_lang": "மொழி",
@@ -321,7 +337,7 @@ WELCOME_COPY = {
         "schedule": "हर सुबह <b>04:30 AM IST</b> पर, अपने दिन की शांत और दिव्य शुरुआत के लिए <b>आशीर्वाद</b> के साथ एक पावन संदेश प्राप्त करें:",
         "b1": "• 🪔 दैनिक आशीर्वाद + 🛕 मंदिर व विशेष पर्व अलर्ट",
         "b2": "• ⏳ शुभ समय",
-        "b3": "• ✨ WoW [Words of Wisdom]",
+        "b3": "• ✨ {wow}",
         "b4": "• 🟡 सोना व ⚪ चांदी के भाव",
         "b5": "• 🌦 मौसम [दिन की योजना]",
         "step1": "<b>चरण 1 / 3</b> — अपनी जन्म तिथि दर्ज करें (उदा: <code>15-08-1985</code>):",
@@ -336,6 +352,9 @@ WELCOME_COPY = {
         "back_lang": "← भाषा पर वापस जाएं",
         "back_dob": "← जन्म तिथि पर वापस जाएं",
         "back_loc": "← क्षेत्र / शहर पर वापस जाएं",
+        "back_card": "← कार्ड पर वापस जाएं",
+        "back_profile": "← प्रोफ़ाइल पर वापस जाएं",
+        "back_settings": "← सेटिंग्स पर वापस जाएं",
         "confirmed_title": "🙏 <b>सदस्यता पुष्टि — आशीर्वाद सक्रिय</b>",
         "lbl_name": "नाम",
         "lbl_lang": "भाषा",
@@ -373,7 +392,7 @@ WELCOME_COPY = {
         "schedule": "ప్రతిరోజూ ఉదయం <b>04:30 AM IST</b> గంటలకు, మీ రోజును ప్రశాంతంగా మరియు దైవికంగా ప్రారంభించడానికి <b>ఆశీర్వాదంతో</b> ఒక దివ్య సందేశం:",
         "b1": "• 🪔 రోజువారీ ఆశీర్వాదం + 🛕 ఆలయ &amp; ప్రత్యేక విశేషాలు",
         "b2": "• ⏳ శుభ సమయం",
-        "b3": "• ✨ WoW [Words of Wisdom]",
+        "b3": "• ✨ {wow}",
         "b4": "• 🟡 బంగారం &amp; ⚪ వెండి ధరలు",
         "b5": "• 🌦 వాతావరణం [రోజు ప్రణాళిక]",
         "step1": "<b>దశ 1 / 3</b> — మీ పుట్టిన తేదీని నమోదు చేయండి (ఉదా: <code>15-08-1985</code>):",
@@ -388,6 +407,9 @@ WELCOME_COPY = {
         "back_lang": "← భాషకు తిరిగి వెళ్ళండి",
         "back_dob": "← పుట్టిన తేదీకి తిరిగి వెళ్ళండి",
         "back_loc": "← ప్రాంతం / నగరానికి తిరిగి వెళ్ళండి",
+        "back_card": "← కార్డ్‌కి తిరిగి వెళ్ళండి",
+        "back_profile": "← ప్రొఫైల్‌కి తిరిగి వెళ్ళండి",
+        "back_settings": "← సెట్టింగ్స్‌కి తిరిగి వెళ్ళండి",
         "confirmed_title": "🙏 <b>సబ్‌స్క్రిప్షన్ నిర్ధారించబడింది — ఆశీర్వాదం యాక్టివ్</b>",
         "lbl_name": "పేరు",
         "lbl_lang": "భాష",
@@ -425,7 +447,7 @@ WELCOME_COPY = {
         "schedule": "ಪ್ರತಿದಿನ ಬೆಳಿಗ್ಗೆ <b>04:30 AM IST</b> ಗಂಟೆಗೆ, ನಿಮ್ಮ ದಿನವನ್ನು ಶಾಂತವಾಗಿ ಮತ್ತು ದೈವಿಕವಾಗಿ ಆರಂಭಿಸಲು <b>ಆಶೀರ್ವಾದದೊಂದಿಗೆ</b> ಒಂದು ದಿವ್ಯ ಸಂದೇಶ:",
         "b1": "• 🪔 ದೈನಂದಿನ ಆಶೀರ್ವಾದ + 🛕 ದೇವಾಲಯ &amp; ವಿಶೇಷ ಮಾಹಿತಿ",
         "b2": "• ⏳ ಶುಭ ಸಮಯ",
-        "b3": "• ✨ WoW [Words of Wisdom]",
+        "b3": "• ✨ {wow}",
         "b4": "• 🟡 ಚಿನ್ನ ಮತ್ತು ⚪ ಬೆಳ್ಳಿ ದರಗಳು",
         "b5": "• 🌦 ಹವಾಮಾನ [ದಿನದ ಯೋಜನೆ]",
         "step1": "<b>ಹಂತ 1 / 3</b> — ನಿಮ್ಮ ಜನ್ಮ ದಿನಾಂಕವನ್ನು ನಮೂದಿಸಿ (ಉದಾ: <code>15-08-1985</code>):",
@@ -440,6 +462,9 @@ WELCOME_COPY = {
         "back_lang": "← ಭಾಷೆಗೆ ಹಿಂತಿರುಗಿ",
         "back_dob": "← ಜನ್ಮ ದಿನಾಂಕಕ್ಕೆ ಹಿಂತಿರುಗಿ",
         "back_loc": "← ಪ್ರದೇಶ / ನಗರಕ್ಕೆ ಹಿಂತಿರುಗಿ",
+        "back_card": "← ಕಾರ್ಡ್‌ಗೆ ಹಿಂತಿರುಗಿ",
+        "back_profile": "← ಪ್ರೊಫೈಲ್‌ಗೆ ಹಿಂತಿರುಗಿ",
+        "back_settings": "← ಸೆಟ್ಟಿಂಗ್ಸ್‌ಗೆ ಹಿಂತಿರುಗಿ",
         "confirmed_title": "🙏 <b>ಚಂದಾದಾರಿಕೆ ದೃಢೀಕೃತ — ಆಶೀರ್ವಾದ ಸಕ್ರಿಯ</b>",
         "lbl_name": "ಹೆಸರು",
         "lbl_lang": "ಭಾಷೆ",
@@ -477,7 +502,7 @@ WELCOME_COPY = {
         "schedule": "എല്ലാ ദിവസവും രാവിലെ <b>04:30 AM IST</b>-ന്, നിങ്ങളുടെ ദിവസം ശാന്തമായും ദൈവികമായും ആരംഭിക്കാൻ <b>ആശീർവാദത്തോടെ</b> ഒരു ദിവ്യ സന്ദേശം:",
         "b1": "• 🪔 ദൈനംദിന അനുഗ്രഹം + 🛕 ക്ഷേത്ര &amp; വിശേഷ അറിയിപ്പുകൾ",
         "b2": "• ⏳ ശുഭ സമയം",
-        "b3": "• ✨ WoW [Words of Wisdom]",
+        "b3": "• ✨ {wow}",
         "b4": "• 🟡 സ്വർണ്ണം &amp; ⚪ വെള്ളി നിരക്കുകൾ",
         "b5": "• 🌦 കാലാവസ്ഥ [ദിവസ ആസൂത്രണം]",
         "step1": "<b>ഘട്ടം 1 / 3</b> — നിങ്ങളുടെ ജനനത്തീയതി നൽകുക (ഉദാ: <code>15-08-1985</code>):",
@@ -492,6 +517,9 @@ WELCOME_COPY = {
         "back_lang": "← ഭാഷയിലേക്ക് മടങ്ങുക",
         "back_dob": "← ജനനത്തീയതിയിലേക്ക് മടങ്ങുക",
         "back_loc": "← പ്രദേശം / നഗരത്തിലേക്ക് മടങ്ങുക",
+        "back_card": "← കാർഡിലേക്ക് മടങ്ങുക",
+        "back_profile": "← പ്രൊഫൈലിലേക്ക് മടങ്ങുക",
+        "back_settings": "← ക്രമീകരണങ്ങളിലേക്ക് മടങ്ങുക",
         "confirmed_title": "🙏 <b>സബ്സ്ക്രിപ്ഷൻ സ്ഥിരീകരിച്ചു — ആശീർവാദം സജീവം</b>",
         "lbl_name": "പേര്",
         "lbl_lang": "ഭാഷ",
@@ -510,7 +538,7 @@ WELCOME_COPY = {
         "btn_delete": "🗑️ DELETE",
         "btn_edit_name": "✏️ പേര് മാറ്റുക",
         "btn_edit_dob": "🎂 ജനനത്തീയതി മാറ്റുക",
-        "btn_edit_lang": "🌐 ഭാಷ മാറ്റുക",
+        "btn_edit_lang": "🌐 ഭാഷ മാറ്റുക",
         "btn_edit_loc": "📍 പ്രദേശം / നഗരം മാറ്റുക",
         "btn_edit_rasi": "✨ രാശി മാറ്റുക",
         "profile_title": "👤 <b>നിങ്ങളുടെ പ്രൊഫൈൽ</b>",
@@ -534,9 +562,13 @@ def copy_for(lang: Optional[str]) -> dict:
     return WELCOME_COPY.get(lang or "en") or WELCOME_COPY["en"]
 
 
+def get_wow_label(lang: Optional[str]) -> str:
+    return WOW_LABELS.get(lang or "en") or WOW_LABELS["en"]
+
+
 def get_rasi_display(rasi_code: Optional[str], lang: str = "en") -> str:
     code = (rasi_code or "mesham").lower()
-    for r_code, r_eng, r_map in RASIS:
+    for r_code, _, r_map in RASIS:
         if r_code == code:
             return r_map.get(lang) or r_map["en"]
     return code.title()
@@ -758,19 +790,19 @@ async def cleanup_previous_messages(
 # ---------------------------------------------------------------------------
 # UI Builders
 # ---------------------------------------------------------------------------
-def build_language_keyboard() -> InlineKeyboardMarkup:
+def build_language_keyboard(lang_prefix: str = "lang") -> InlineKeyboardMarkup:
     rows = [
         [
-            InlineKeyboardButton("English", callback_data="lang:en"),
-            InlineKeyboardButton("தமிழ் (Tamil)", callback_data="lang:ta"),
+            InlineKeyboardButton("English", callback_data=f"{lang_prefix}:en"),
+            InlineKeyboardButton("தமிழ் (Tamil)", callback_data=f"{lang_prefix}:ta"),
         ],
         [
-            InlineKeyboardButton("हिन्दी (Hindi)", callback_data="lang:hi"),
-            InlineKeyboardButton("తెలుగు (Telugu)", callback_data="lang:te"),
+            InlineKeyboardButton("हिन्दी (Hindi)", callback_data=f"{lang_prefix}:hi"),
+            InlineKeyboardButton("తెలుగు (Telugu)", callback_data=f"{lang_prefix}:te"),
         ],
         [
-            InlineKeyboardButton("ಕನ್ನಡ (Kannada)", callback_data="lang:kn"),
-            InlineKeyboardButton("മലയാളം (Malayalam)", callback_data="lang:ml"),
+            InlineKeyboardButton("ಕನ್ನಡ (Kannada)", callback_data=f"{lang_prefix}:kn"),
+            InlineKeyboardButton("മലയാളം (Malayalam)", callback_data=f"{lang_prefix}:ml"),
         ],
     ]
     return InlineKeyboardMarkup(rows)
@@ -785,6 +817,7 @@ def build_language_prompt_text() -> str:
 
 def build_welcome_dob_text(first_name: str, lang: str = "en") -> str:
     c = copy_for(lang)
+    wow = get_wow_label(lang)
     safe_name = first_name or "Friend"
     return (
         f"{CARD_HEADER}"
@@ -792,7 +825,7 @@ def build_welcome_dob_text(first_name: str, lang: str = "en") -> str:
         f"{c['schedule']}\n\n"
         f"{c['b1']}\n\n"
         f"{c['b2']}\n\n"
-        f"{c['b3']}\n\n"
+        f"{c['b3'].format(wow=wow)}\n\n"
         f"{c['b4']}\n\n"
         f"{c['b5']}\n\n"
         f"{c['step1']}"
@@ -902,7 +935,7 @@ async def start_onboarding(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     sent = await update.effective_message.reply_text(
         build_language_prompt_text(),
         parse_mode=ParseMode.HTML,
-        reply_markup=build_language_keyboard(),
+        reply_markup=build_language_keyboard("lang"),
     )
     track_onboarding_msg(context, sent.message_id)
     return LANG
@@ -1053,21 +1086,31 @@ async def set_rasi_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 
 # ---------------------------------------------------------------------------
-# Profile, Settings & DPDPA Privacy Handlers
+# Profile, Settings, Edit Sub-Menus & DPDPA Handlers
 # ---------------------------------------------------------------------------
+async def _get_user_lang_and_row(telegram_id: int, fallback_lang: str = "en"):
+    try:
+        pool = await get_db_pool()
+        async with pool.acquire() as conn:
+            sub = await conn.fetchrow("SELECT * FROM subscribers WHERE telegram_id = $1;", telegram_id)
+    except Exception as exc:
+        logger.warning("DB read in panel skipped: %s", exc)
+        sub = None
+    lang = (sub["preferred_language"] if sub and sub["preferred_language"] else None) or fallback_lang or "en"
+    return lang, sub
+
+
 async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
+    context.user_data.pop("editing_field", None)
+
     telegram_id = query.from_user.id
-
-    pool = await get_db_pool()
-    async with pool.acquire() as conn:
-        sub = await conn.fetchrow("SELECT * FROM subscribers WHERE telegram_id = $1;", telegram_id)
-
-    lang = (sub["preferred_language"] if sub else None) or context.user_data.get("lang", "en")
+    lang, sub = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
-    name_val = (sub["first_name"] if sub else None) or query.from_user.first_name or "Friend"
-    dob_val = (sub["dob"] if sub else None) or "Not set"
+
+    name_val = (sub["first_name"] if sub and sub["first_name"] else None) or query.from_user.first_name or "Friend"
+    dob_val = (sub["dob"] if sub and sub["dob"] else None) or context.user_data.get("dob") or "Not set"
     lang_label = LANGUAGES.get(lang, "English")
 
     text = (
@@ -1083,7 +1126,10 @@ async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 InlineKeyboardButton(c["btn_edit_name"], callback_data="editfield:first_name"),
                 InlineKeyboardButton(c["btn_edit_dob"], callback_data="editfield:dob"),
             ],
-            [InlineKeyboardButton(c["btn_settings"], callback_data="panel:settings")],
+            [
+                InlineKeyboardButton(c["btn_settings"], callback_data="panel:settings"),
+                InlineKeyboardButton(c["back_card"], callback_data="send_sample_now"),
+            ],
         ]
     )
     await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=kb)
@@ -1092,17 +1138,20 @@ async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def open_settings_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
+    context.user_data.pop("editing_field", None)
+
     telegram_id = query.from_user.id
-
-    pool = await get_db_pool()
-    async with pool.acquire() as conn:
-        sub = await conn.fetchrow("SELECT * FROM subscribers WHERE telegram_id = $1;", telegram_id)
-
-    lang = (sub["preferred_language"] if sub else None) or context.user_data.get("lang", "en")
+    lang, sub = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
+
     lang_label = LANGUAGES.get(lang, "English")
-    loc_val = (sub["locality"] if sub and sub["locality"] else None) or (sub["city"] if sub else None) or "Chennai"
-    rasi_code = (sub["rasi"] if sub else None) or "mesham"
+    loc_val = (
+        (sub["locality"] if sub and sub["locality"] else None)
+        or (sub["city"] if sub and sub["city"] else None)
+        or context.user_data.get("locality")
+        or "Chennai"
+    )
+    rasi_code = (sub["rasi"] if sub and sub["rasi"] else None) or "mesham"
     rasi_display = get_rasi_display(rasi_code, lang)
 
     text = (
@@ -1122,7 +1171,10 @@ async def open_settings_panel(update: Update, context: ContextTypes.DEFAULT_TYPE
                 InlineKeyboardButton(c["btn_edit_rasi"], callback_data="editfield:rasi"),
                 InlineKeyboardButton(c["btn_profile"], callback_data="panel:profile"),
             ],
-            [InlineKeyboardButton(c["btn_privacy"], callback_data="panel:dpdpa")],
+            [
+                InlineKeyboardButton(c["btn_privacy"], callback_data="panel:dpdpa"),
+                InlineKeyboardButton(c["back_card"], callback_data="send_sample_now"),
+            ],
         ]
     )
     await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=kb)
@@ -1132,18 +1184,14 @@ async def open_dpdpa_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     query = update.callback_query
     await query.answer()
     telegram_id = query.from_user.id
-
-    pool = await get_db_pool()
-    async with pool.acquire() as conn:
-        sub = await conn.fetchrow("SELECT preferred_language FROM subscribers WHERE telegram_id = $1;", telegram_id)
-
-    lang = (sub["preferred_language"] if sub else None) or "en"
+    lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
+
     text = f"{CARD_HEADER}{c['dpdpa_title']}\n\n{c['dpdpa_body']}"
     kb = InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(c["btn_delete"], callback_data="action:delete_data")],
-            [InlineKeyboardButton(c["btn_settings"], callback_data="panel:settings")],
+            [InlineKeyboardButton(c["back_settings"], callback_data="panel:settings")],
         ]
     )
     await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=kb)
@@ -1156,25 +1204,29 @@ async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     context.user_data["editing_field"] = field
 
     telegram_id = query.from_user.id
-    pool = await get_db_pool()
-    async with pool.acquire() as conn:
-        sub = await conn.fetchrow("SELECT preferred_language FROM subscribers WHERE telegram_id = $1;", telegram_id)
-    lang = (sub["preferred_language"] if sub else None) or "en"
+    lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
 
+    back_target = "panel:profile" if field in ("first_name", "dob") else "panel:settings"
+    back_label = c["back_profile"] if field in ("first_name", "dob") else c["back_settings"]
+
     if field == "preferred_language":
+        rows = build_language_keyboard("editval_lang").inline_keyboard
+        kb = InlineKeyboardMarkup(list(rows) + [[InlineKeyboardButton(back_label, callback_data=back_target)]])
         await query.edit_message_text(
             build_language_prompt_text(),
             parse_mode=ParseMode.HTML,
-            reply_markup=build_language_keyboard(),
+            reply_markup=kb,
         )
         return EDIT_VALUE
 
     if field == "rasi":
+        rows = build_rasi_keyboard(lang=lang, prefix="editval_rasi", include_back=False).inline_keyboard
+        kb = InlineKeyboardMarkup(list(rows) + [[InlineKeyboardButton(back_label, callback_data=back_target)]])
         await query.edit_message_text(
             f"{CARD_HEADER}{c['step3']}",
             parse_mode=ParseMode.HTML,
-            reply_markup=build_rasi_keyboard(lang=lang, prefix="editval_rasi", include_back=False),
+            reply_markup=kb,
         )
         return EDIT_VALUE
 
@@ -1183,7 +1235,12 @@ async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         "dob": f"{CARD_HEADER}{c['step1']}",
         "locality": f"{CARD_HEADER}{c['step2']}",
     }
-    await query.edit_message_text(prompts.get(field, f"{CARD_HEADER}Enter new value:"), parse_mode=ParseMode.HTML)
+    kb = InlineKeyboardMarkup([[InlineKeyboardButton(back_label, callback_data=back_target)]])
+    await query.edit_message_text(
+        prompts.get(field, f"{CARD_HEADER}Enter new value:"),
+        parse_mode=ParseMode.HTML,
+        reply_markup=kb,
+    )
     return EDIT_VALUE
 
 
@@ -1193,16 +1250,14 @@ async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     prefix, val = query.data.split(":", 1)
     telegram_id = query.from_user.id
 
-    if prefix == "lang":
+    if prefix == "editval_lang":
         await update_single_field(telegram_id, "preferred_language", val)
+        context.user_data["lang"] = val
         saved_label = LANGUAGES.get(val, val)
         lang_out = val
     else:
         await update_single_field(telegram_id, "rasi", val)
-        pool = await get_db_pool()
-        async with pool.acquire() as conn:
-            sub = await conn.fetchrow("SELECT preferred_language FROM subscribers WHERE telegram_id = $1;", telegram_id)
-        lang_out = (sub["preferred_language"] if sub else None) or "en"
+        lang_out, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
         saved_label = get_rasi_display(val, lang_out)
 
     context.user_data.pop("editing_field", None)
@@ -1212,7 +1267,8 @@ async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             [
                 InlineKeyboardButton(c["btn_profile"], callback_data="panel:profile"),
                 InlineKeyboardButton(c["btn_settings"], callback_data="panel:settings"),
-            ]
+            ],
+            [InlineKeyboardButton(c["back_card"], callback_data="send_sample_now")],
         ]
     )
     await query.edit_message_text(
@@ -1228,22 +1284,32 @@ async def finish_edit_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     raw = (update.message.text or "").strip()
     telegram_id = update.effective_user.id
 
-    pool = await get_db_pool()
-    async with pool.acquire() as conn:
-        sub = await conn.fetchrow("SELECT preferred_language FROM subscribers WHERE telegram_id = $1;", telegram_id)
-    lang = (sub["preferred_language"] if sub else None) or "en"
+    lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
+    back_target = "panel:profile" if field in ("first_name", "dob") else "panel:settings"
+    back_label = c["back_profile"] if field in ("first_name", "dob") else c["back_settings"]
+    retry_kb = InlineKeyboardMarkup([[InlineKeyboardButton(back_label, callback_data=back_target)]])
 
     if field == "dob":
         if not re.match(r"^\d{2}[-/]\d{2}[-/]\d{4}$", raw):
-            await update.message.reply_text(f"{CARD_HEADER}{c['invalid_dob']}", parse_mode=ParseMode.HTML)
+            await update.message.reply_text(
+                f"{CARD_HEADER}{c['invalid_dob']}",
+                parse_mode=ParseMode.HTML,
+                reply_markup=retry_kb,
+            )
             return EDIT_VALUE
         clean_val = raw.replace("/", "-")
+        context.user_data["dob"] = clean_val
     elif field == "locality":
         if len(raw) < 2:
-            await update.message.reply_text(f"{CARD_HEADER}{c['invalid_loc']}", parse_mode=ParseMode.HTML)
+            await update.message.reply_text(
+                f"{CARD_HEADER}{c['invalid_loc']}",
+                parse_mode=ParseMode.HTML,
+                reply_markup=retry_kb,
+            )
             return EDIT_VALUE
         clean_val = raw
+        context.user_data["locality"] = clean_val
     else:
         clean_val = raw[:80] or (update.effective_user.first_name or "Friend")
 
@@ -1255,7 +1321,8 @@ async def finish_edit_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             [
                 InlineKeyboardButton(c["btn_profile"], callback_data="panel:profile"),
                 InlineKeyboardButton(c["btn_settings"], callback_data="panel:settings"),
-            ]
+            ],
+            [InlineKeyboardButton(c["back_card"], callback_data="send_sample_now")],
         ]
     )
     await update.message.reply_text(
@@ -1286,7 +1353,7 @@ async def back_navigation_callback(update: Update, context: ContextTypes.DEFAULT
         await query.edit_message_text(
             build_language_prompt_text(),
             parse_mode=ParseMode.HTML,
-            reply_markup=build_language_keyboard(),
+            reply_markup=build_language_keyboard("lang"),
         )
         return LANG
 
@@ -1323,6 +1390,7 @@ async def back_navigation_callback(update: Update, context: ContextTypes.DEFAULT
 async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
+    context.user_data.pop("editing_field", None)
 
     telegram_id = update.effective_user.id
     today_ist = datetime.now(IST).date()
@@ -1339,6 +1407,7 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
         )
 
     lang = sub["preferred_language"] or "en"
+    wow = get_wow_label(lang)
     rasi = sub["rasi"] or "mesham"
     city = (sub["city"] or "chennai").lower()
 
@@ -1363,7 +1432,7 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
         cache.get(("QUOTE", "TODAY")) or {}
     ).get(
         "en",
-        '✨ <b>WoW [Words of Wisdom]:</b>\n"You have a right to perform your prescribed duty, but never to its fruits." — <i>Bhagavad Gita (2.47)</i>',
+        f'✨ <b>{wow}:</b>\n"You have a right to perform your prescribed duty, but never to its fruits." — <i>Bhagavad Gita (2.47)</i>',
     )
 
     message_text = (
@@ -1376,7 +1445,7 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
         f"{quote_block}"
     )
 
-    await query.message.reply_text(
+    await query.edit_message_text(
         message_text,
         parse_mode=ParseMode.HTML,
         reply_markup=build_daily_action_keyboard(telegram_id, lang, str(today_ist)),
@@ -1440,10 +1509,9 @@ async def translate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 async def delete_data_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     telegram_id = update.effective_user.id
+    lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     pool = await get_db_pool()
     async with pool.acquire() as conn:
-        sub = await conn.fetchrow("SELECT preferred_language FROM subscribers WHERE telegram_id = $1;", telegram_id)
-        lang = (sub["preferred_language"] if sub else None) or "en"
         await conn.execute("DELETE FROM subscribers WHERE telegram_id = $1;", telegram_id)
         await conn.execute("DELETE FROM message_ratings WHERE telegram_id = $1;", telegram_id)
 
@@ -1455,11 +1523,9 @@ async def delete_data_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     query = update.callback_query
     await query.answer()
     telegram_id = query.from_user.id
-
+    lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     pool = await get_db_pool()
     async with pool.acquire() as conn:
-        sub = await conn.fetchrow("SELECT preferred_language FROM subscribers WHERE telegram_id = $1;", telegram_id)
-        lang = (sub["preferred_language"] if sub else None) or "en"
         await conn.execute("DELETE FROM subscribers WHERE telegram_id = $1;", telegram_id)
         await conn.execute("DELETE FROM message_ratings WHERE telegram_id = $1;", telegram_id)
 
@@ -1489,6 +1555,19 @@ def build_application() -> Application:
         .build()
     )
 
+    # Global panel/edit handlers registered first so Profile, Settings, DPDPA & Edit sub-menus always work
+    app.add_handler(CallbackQueryHandler(open_profile_panel, pattern=r"^panel:profile$"))
+    app.add_handler(CallbackQueryHandler(open_settings_panel, pattern=r"^panel:settings$"))
+    app.add_handler(CallbackQueryHandler(open_dpdpa_panel, pattern=r"^panel:dpdpa$"))
+    app.add_handler(CallbackQueryHandler(start_edit_field, pattern=r"^editfield:"))
+    app.add_handler(CallbackQueryHandler(finish_edit_callback, pattern=r"^editval_(lang|rasi):"))
+    app.add_handler(CallbackQueryHandler(delete_data_callback, pattern=r"^action:delete_data$"))
+    app.add_handler(CallbackQueryHandler(send_sample_card_callback, pattern=r"^send_sample_now$"))
+    app.add_handler(CallbackQueryHandler(rating_callback, pattern=r"^rate:"))
+    app.add_handler(CallbackQueryHandler(translate_callback, pattern=r"^translate:"))
+    app.add_handler(CommandHandler("delete_data", delete_data_command))
+    app.add_handler(CommandHandler("stop", delete_data_command))
+
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start_onboarding)],
         states={
@@ -1508,7 +1587,7 @@ def build_application() -> Application:
                 CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"),
             ],
             EDIT_VALUE: [
-                CallbackQueryHandler(finish_edit_callback, pattern=r"^(lang|editval_rasi):"),
+                CallbackQueryHandler(finish_edit_callback, pattern=r"^editval_(lang|rasi):"),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, finish_edit_text),
             ],
         },
@@ -1521,20 +1600,10 @@ def build_application() -> Application:
     )
 
     app.add_handler(conv)
-    app.add_handler(CallbackQueryHandler(start_edit_field, pattern=r"^editfield:"))
-    app.add_handler(CallbackQueryHandler(finish_edit_callback, pattern=r"^editval_rasi:"))
-    app.add_handler(CallbackQueryHandler(open_profile_panel, pattern=r"^panel:profile$"))
-    app.add_handler(CallbackQueryHandler(open_settings_panel, pattern=r"^panel:settings$"))
-    app.add_handler(CallbackQueryHandler(open_dpdpa_panel, pattern=r"^panel:dpdpa$"))
-    app.add_handler(CallbackQueryHandler(delete_data_callback, pattern=r"^action:delete_data$"))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, finish_edit_text))
     app.add_handler(CallbackQueryHandler(set_language_callback, pattern=r"^lang:"))
     app.add_handler(CallbackQueryHandler(set_rasi_callback, pattern=r"^rasi:"))
     app.add_handler(CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"))
-    app.add_handler(CallbackQueryHandler(send_sample_card_callback, pattern=r"^send_sample_now$"))
-    app.add_handler(CallbackQueryHandler(rating_callback, pattern=r"^rate:"))
-    app.add_handler(CallbackQueryHandler(translate_callback, pattern=r"^translate:"))
-    app.add_handler(CommandHandler("delete_data", delete_data_command))
-    app.add_handler(CommandHandler("stop", delete_data_command))
     return app
 
 
