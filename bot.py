@@ -79,38 +79,89 @@ WOW_LABELS = {
 
 QUOTE_LABELS = {
     "en": "Quote",
-    "ta": "Quote / பொன்மொழி",
-    "hi": "Quote / अनमोल वचन",
-    "te": "Quote / సూక్తి",
-    "kn": "Quote / ನುಡಿಮುತ್ತು",
-    "ml": "Quote / സന്ദേശം",
+    "ta": "பொன்மொழி",
+    "hi": "अनमोल वचन",
+    "te": "సూక్తి",
+    "kn": "ನುಡಿಮುತ್ತು",
+    "ml": "സന്ദേശം",
 }
 
 BLESSING_WITH_LABELS = {
-    "en": "Daily Blessing With",
-    "ta": "தினசரி ஆசீர்வாதம் — உடன்",
-    "hi": "दैनिक आशीर्वाद — साथ में",
-    "te": "రోజువారీ ఆశీర్వాదం — తో",
-    "kn": "ದೈನಂದಿನ ಆಶೀರ್ವಾದ — ಜೊತೆಗೆ",
-    "ml": "ദൈനംദിന അനുഗ്രഹം — ഒപ്പം",
+    "en": "Daily Blessing",
+    "ta": "தினசரி ஆசீர்வாதம்",
+    "hi": "दैनिक आशीर्वाद",
+    "te": "రోజువారీ ఆశీర్వాదం",
+    "kn": "ದೈನಂದಿನ ಆಶೀರ್ವಾದ",
+    "ml": "ദൈനംദിന അനുഗ്രഹം",
 }
 
 GOLD_RATE_LABELS = {
     "en": "Gold Rate",
-    "ta": "Gold Rate / தங்கம் விலை",
-    "hi": "Gold Rate / सोना भाव",
-    "te": "Gold Rate / బంగారం ధర",
-    "kn": "Gold Rate / ಚಿನ್ನ ದರ",
-    "ml": "Gold Rate / സ്വർണ്ണ നിരക്ക്",
+    "ta": "தங்கம் விலை",
+    "hi": "सोना भाव",
+    "te": "బంగారం ధర",
+    "kn": "ಚಿನ್ನ ದರ",
+    "ml": "സ്വർണ്ണ നിരക്ക്",
 }
 
 SILVER_RATE_LABELS = {
     "en": "Silver Rate",
-    "ta": "Silver Rate / வெள்ளி விலை",
-    "hi": "Silver Rate / चांदी भाव",
-    "te": "Silver Rate / వెండి ధర",
-    "kn": "Silver Rate / ಬೆಳ್ಳಿ ದರ",
-    "ml": "Silver Rate / വെള്ളി നിരക്ക്",
+    "ta": "வெள்ளி விலை",
+    "hi": "चांदी भाव",
+    "te": "వెండి ధర",
+    "kn": "ಬೆಳ್ಳಿ ದರ",
+    "ml": "വെള്ളി നിരക്ക്",
+}
+
+LOCALIZED_CARD_DEFAULTS = {
+    "en": {
+        "deity": "🪔 <b>Daily Blessing:</b> Om Namah Shivaya",
+        "wow": "✨ <b>WoW [Words of Wisdom]:</b> Stay steady and focused today.",
+        "ausp": "⏰ <b>Auspicious Timing [Plan Your Decisions]:</b> Morning 06:00–07:30 AM",
+        "gold": "🟡 <b>Gold Rate ⚪️ Silver Rate [As of {date}]:</b> Updating shortly",
+        "weather": "🌦 <b>Weather [Plan Your Day]:</b> Pleasant morning breeze",
+        "quote": '🌟 <b>Quote:</b>\n"You have a right to perform your prescribed duty, but never to its fruits." — <i>Bhagavad Gita (2.47)</i>',
+    },
+    "ta": {
+        "deity": "🪔 <b>தினசரி ஆசீர்வாதம்:</b> ஓம் நம சிவாய",
+        "wow": "✨ <b>WoW [ஞான மொழிகள்]:</b> இன்று அமைதியுடனும் தெளிவான கவனத்துடனும் செயல்படுங்கள்.",
+        "ausp": "⏰ <b>நல்ல நேரம் [உங்கள் முடிவுகளைத் திட்டமிடுங்கள்]:</b> காலை 06:00–07:30 AM",
+        "gold": "🟡 <b>தங்கம் விலை ⚪️ வெள்ளி விலை [{date} நிலவரப்படி]:</b> விரைவில் புதுப்பிக்கப்படும்",
+        "weather": "🌦 <b>வானிலை [உங்கள் நாளைத் திட்டமிடுங்கள்]:</b> இனிமையான காலை தென்றல்",
+        "quote": '🌟 <b>பொன்மொழி:</b>\n"கடமையைச் செய்வதற்கே உனக்கு அதிகாரம் உண்டு; அதன் பலன்களில் ஒருபோதும் இல்லை." — <i>பகவத் கீதை (2.47)</i>',
+    },
+    "hi": {
+        "deity": "🪔 <b>दैनिक आशीर्वाद:</b> ॐ नमः शिवाय",
+        "wow": "✨ <b>WoW [ज्ञान की बातें]:</b> आज शांत मन और एकाग्रता के साथ आगे बढ़ें।",
+        "ausp": "⏰ <b>शुभ समय [अपने निर्णयों की योजना बनाएं]:</b> प्रातः 06:00–07:30 AM",
+        "gold": "🟡 <b>सोना भाव ⚪️ चांदी भाव [{date} तक]:</b> शीघ्र अपडेट हो रहा है",
+        "weather": "🌦 <b>मौसम [दिन की योजना]:</b> सुहावनी सुबह की हवा",
+        "quote": '🌟 <b>अनमोल वचन:</b>\n"कर्म करने में ही तुम्हारा अधिकार है, उसके फलों में कभी नहीं।" — <i>भगवद्गीता (2.47)</i>',
+    },
+    "te": {
+        "deity": "🪔 <b>రోజువారీ ఆశీర్వాదం:</b> ఓం నమః శివాయ",
+        "wow": "✨ <b>WoW [జ్ఞాన వాక్కులు]:</b> నేడు ప్రశాంతంగా మరియు స్పష్టమైన దృష్టితో ముందుకు సాగండి.",
+        "ausp": "⏰ <b>శుభ సమయం [మీ నిర్ణయాలను ప్రణాళిక చేయండి]:</b> ఉదయం 06:00–07:30 AM",
+        "gold": "🟡 <b>బంగారం ధర ⚪️ వెండి ధర [{date} నాటికి]:</b> త్వరలో నవీకరించబడుతుంది",
+        "weather": "🌦 <b>వాతావరణం [రోజు ప్రణాళిక]:</b> ఆహ్లాదకరమైన ఉదయపు గాలి",
+        "quote": '🌟 <b>సూక్తి:</b>\n"నీ విధిని నిర్వర్తించే హక్కు మాత్రమే నీకు ఉంది, ఫలితాలపై ఎన్నడూ లేదు." — <i>భగవద్గీత (2.47)</i>',
+    },
+    "kn": {
+        "deity": "🪔 <b>ದೈನಂದಿನ ಆಶೀರ್ವಾದ:</b> ಓಂ ನಮಃ ಶಿವಾಯ",
+        "wow": "✨ <b>WoW [ಜ್ಞಾನದ ಮಾತುಗಳು]:</b> ಇಂದು ಶಾಂತವಾಗಿ ಮತ್ತು ಸ್ಪಷ್ಟ ಗಮನದಿಂದ ಮುನ್ನಡೆಯಿರಿ.",
+        "ausp": "⏰ <b>ಶುಭ ಸಮಯ [ನಿಮ್ಮ ನಿರ್ಧಾರಗಳನ್ನು ಯೋಜಿಸಿ]:</b> ಬೆಳಿಗ್ಗೆ 06:00–07:30 AM",
+        "gold": "🟡 <b>ಚಿನ್ನ ದರ ⚪️ ಬೆಳ್ಳಿ ದರ [{date} ರಂತೆ]:</b> ಶೀಘ್ರದಲ್ಲೇ ನವೀಕರಿಸಲಾಗುವುದು",
+        "weather": "🌦 <b>ಹವಾಮಾನ [ದಿನದ ಯೋಜನೆ]:</b> ಆಹ್ಲಾದಕರ ಮುಂಜಾನೆಯ ಗಾಳಿ",
+        "quote": '🌟 <b>ನುಡಿಮುತ್ತು:</b>\n"ನಿನ್ನ ಕರ್ತವ್ಯವನ್ನು ಮಾಡಲು ಮಾತ್ರ ನಿನಗೆ ಹಕ್ಕಿದೆ, ಅದರ ಫಲಗಳ ಮೇಲೆ ಎಂದಿಗೂ ಇಲ್ಲ." — <i>ಭಗವದ್ಗೀತೆ (2.47)</i>',
+    },
+    "ml": {
+        "deity": "🪔 <b>ദൈനംദിന അനുഗ്രഹം:</b> ഓം നമഃ ശിവായ",
+        "wow": "✨ <b>WoW [ജ്ഞാനവാക്കുകൾ]:</b> ഇന്ന് ശാന്തമായും വ്യക്തമായ ശ്രദ്ധയോടെയും മുന്നോട്ട് പോകുക.",
+        "ausp": "⏰ <b>ശുഭ സമയം [തീരുമാനങ്ങൾ ആസൂത്രണം ചെയ്യുക]:</b> രാവിലെ 06:00–07:30 AM",
+        "gold": "🟡 <b>സ്വർണ്ണ നിരക്ക് ⚪️ വെള്ളി നിരക്ക് [{date} പ്രകാരം]:</b> ഉടൻ അപ്‌ഡേറ്റ് ചെയ്യുന്നതാണ്",
+        "weather": "🌦 <b>കാലാവസ്ഥ [ദിവസ ആസൂത്രണം]:</b> പ്രസന്നമായ പ്രഭാത കാറ്റ്",
+        "quote": '🌟 <b>സന്ദേശം:</b>\n"കർമ്മം ചെയ്യാൻ മാത്രമേ നിനക്ക് അധികാരമുള്ളൂ, അതിന്റെ ഫലങ്ങളിലൊരിക്കലുമില്ല." — <i>ഭഗവദ്ഗീത (2.47)</i>',
+    },
 }
 
 RASIS = [
@@ -166,6 +217,7 @@ WELCOME_COPY = {
         "btn_pay": "🛒 Shop",
         "btn_help": "💬 Help & Feedback",
         "btn_translate": "🌐 Translate [ENG]",
+        "btn_close_translation": "✕ Close Translation",
         "btn_privacy": "🔒 Privacy & Data (DPDPA)",
         "btn_delete": "🗑️ Delete My Data (DPDPA)",
         "btn_confirm_delete": "⚠️ Confirm Permanent Erasure",
@@ -178,10 +230,7 @@ WELCOME_COPY = {
         "other_title": "📣 <b>Other Services</b>",
         "other_body": "• Daily Panchang, Rasi, Gold Rate / Silver Rate &amp; Local Weather telemetry.\n• Tap below to return to your daily card.",
         "help_title": "💬 <b>Help &amp; Feedback</b>",
-        "help_prompt": (
-            "Type your feedback, question, or support request right here in chat and send it.\n"
-            "<i>Our team will review it directly—no external forms needed.</i>"
-        ),
+        "help_prompt": "Type your feedback, question, or support request right here in chat and send it.",
         "help_received": "🙏 <b>Thank you!</b> Your message has been received and logged for our team.",
         "dpdpa_title": "🔒 <b>Privacy &amp; Data (DPDPA 2023)</b>",
         "dpdpa_body": (
@@ -228,9 +277,10 @@ WELCOME_COPY = {
         "btn_other": "📣 மற்ற சேவைகள்",
         "btn_12pillars": "🏛️ 12 தூண்கள் பார்வை",
         "btn_pay": "🛒 Shop",
-        "btn_help": "💬 உதவி &amp; கருத்து",
+        "btn_help": "💬 உதவி & கருத்து",
         "btn_translate": "🌐 Translate [ENG]",
-        "btn_privacy": "🔒 தனியுரிமை &amp; தரவு (DPDPA)",
+        "btn_close_translation": "✕ Close Translation",
+        "btn_privacy": "🔒 தனியுரிமை & தரவு (DPDPA)",
         "btn_delete": "🗑️ என் தரவை நீக்கு (DPDPA)",
         "btn_confirm_delete": "⚠️ நிரந்தர நீக்கத்தை உறுதி செய்க",
         "btn_edit_name": "✏️ பெயரை மாற்றுக",
@@ -240,12 +290,9 @@ WELCOME_COPY = {
         "btn_edit_rasi": "✨ ராசியை மாற்றுக",
         "profile_title": "👤 <b>உங்கள் சுயவிவரம் &amp; விருப்பங்கள்</b>",
         "other_title": "📣 <b>மற்ற சேவைகள்</b>",
-        "other_body": "• தினசரி பஞ்சாங்கம், ராசி, Gold Rate / Silver Rate &amp; உள்ளூர் வானிலை விவரங்கள்.\n• அட்டைக்குத் திரும்ப கீழே உள்ள பொத்தானைத் தட்டவும்.",
+        "other_body": "• தினசரி பஞ்சாங்கம், ராசி, தங்கம் விலை / வெள்ளி விலை &amp; உள்ளூர் வானிலை விவரங்கள்.\n• அட்டைக்குத் திரும்ப கீழே உள்ள பொத்தானைத் தட்டவும்.",
         "help_title": "💬 <b>உதவி &amp; கருத்து</b>",
-        "help_prompt": (
-            "உங்கள் கருத்து, கேள்வி அல்லது உதவி கோரிக்கையை இங்கே நேரடியாக தட்டச்சு செய்து அனுப்பவும்.\n"
-            "<i>வெளிப்புற படிவம் தேவையில்லை—எங்கள் குழு நேரடியாகப் பரிசீலிக்கும்.</i>"
-        ),
+        "help_prompt": "உங்கள் கருத்து, கேள்வி அல்லது உதவி கோரிக்கையை இங்கே நேரடியாக தட்டச்சு செய்து அனுப்பவும்.",
         "help_received": "🙏 <b>நன்றி!</b> உங்கள் செய்தி பெறப்பட்டு எங்கள் குழுவிற்காகப் பதிவு செய்யப்பட்டுள்ளது.",
         "dpdpa_title": "🔒 <b>தனியுரிமை &amp; தரவு (DPDPA 2023)</b>",
         "dpdpa_body": (
@@ -294,6 +341,7 @@ WELCOME_COPY = {
         "btn_pay": "🛒 Shop",
         "btn_help": "💬 सहायता व प्रतिक्रिया",
         "btn_translate": "🌐 Translate [ENG]",
+        "btn_close_translation": "✕ Close Translation",
         "btn_privacy": "🔒 गोपनीयता व डेटा (DPDPA)",
         "btn_delete": "🗑️ मेरा डेटा हटाएं (DPDPA)",
         "btn_confirm_delete": "⚠️ स्थायी रूप से हटाने की पुष्टि करें",
@@ -304,12 +352,9 @@ WELCOME_COPY = {
         "btn_edit_rasi": "✨ राशि बदलें",
         "profile_title": "👤 <b>आपकी प्रोफ़ाइल व प्राथमिकताएं</b>",
         "other_title": "📣 <b>अन्य सेवाएं</b>",
-        "other_body": "• दैनिक पंचांग, राशि, Gold Rate / Silver Rate और स्थानीय मौसम जानकारी।",
+        "other_body": "• दैनिक पंचांग, राशि, सोना भाव / चांदी भाव और स्थानीय मौसम जानकारी।",
         "help_title": "💬 <b>सहायता व प्रतिक्रिया</b>",
-        "help_prompt": (
-            "अपनी प्रतिक्रिया, प्रश्न या सहायता अनुरोध यहीं चैट में टाइप करके भेजें।\n"
-            "<i>किसी बाहरी फ़ॉर्म की आवश्यकता नहीं है—हमारी टीम सीधे समीक्षा करेगी।</i>"
-        ),
+        "help_prompt": "अपनी प्रतिक्रिया, प्रश्न या सहायता अनुरोध यहीं चैट में टाइप करके भेजें।",
         "help_received": "🙏 <b>धन्यवाद!</b> आपका संदेश प्राप्त हो गया है और हमारी टीम के लिए दर्ज कर लिया गया है।",
         "dpdpa_title": "🔒 <b>गोपनीयता व डेटा (DPDPA 2023)</b>",
         "dpdpa_body": (
@@ -356,9 +401,10 @@ WELCOME_COPY = {
         "btn_other": "📣 ఇతర సేవలు",
         "btn_12pillars": "🏛️ 12 పిల్లర్స్ వీక్షణ",
         "btn_pay": "🛒 Shop",
-        "btn_help": "💬 సహాయం &amp; అభిప్రాయం",
+        "btn_help": "💬 సహాయం & అభిప్రాయం",
         "btn_translate": "🌐 Translate [ENG]",
-        "btn_privacy": "🔒 గోప్యత &amp; డేటా (DPDPA)",
+        "btn_close_translation": "✕ Close Translation",
+        "btn_privacy": "🔒 గోప్యత & డేటా (DPDPA)",
         "btn_delete": "🗑️ నా డేటా తొలగించండి (DPDPA)",
         "btn_confirm_delete": "⚠️ శాశ్వత తొలగింపును నిర్ధారించండి",
         "btn_edit_name": "✏️ పేరు మార్చండి",
@@ -368,12 +414,9 @@ WELCOME_COPY = {
         "btn_edit_rasi": "✨ రాశి మార్చండి",
         "profile_title": "👤 <b>మీ ప్రొఫైల్ &amp; ప్రాధాన్యతలు</b>",
         "other_title": "📣 <b>ఇతర సేవలు</b>",
-        "other_body": "• రోజువారీ పంచాంగం, రాశి, Gold Rate / Silver Rate &amp; స్థానిక వాతావరణ సమాచారం.",
+        "other_body": "• రోజువారీ పంచాంగం, రాశి, బంగారం ధర / వెండి ధర &amp; స్థానిక వాతావరణ సమాచారం.",
         "help_title": "💬 <b>సహాయం &amp; అభిప్రాయం</b>",
-        "help_prompt": (
-            "మీ అభిప్రాయం, ప్రశ్న లేదా సహాయ అభ్యర్థనను ఇక్కడే చాట్‌లో టైప్ చేసి పంపండి.\n"
-            "<i>బయటి ఫారమ్ అవసరం లేదు—మా బృందం నేరుగా పరిశీలిస్తుంది.</i>"
-        ),
+        "help_prompt": "మీ అభిప్రాయం, ప్రశ్న లేదా సహాయ అభ్యర్థనను ఇక్కడే చాట్‌లో టైప్ చేసి పంపండి.",
         "help_received": "🙏 <b>ధన్యవాదాలు!</b> మీ సందేశం అందింది మరియు మా బృందం కోసం నమోదు చేయబడింది.",
         "dpdpa_title": "🔒 <b>గోప్యత &amp; డేటా (DPDPA 2023)</b>",
         "dpdpa_body": (
@@ -420,8 +463,9 @@ WELCOME_COPY = {
         "btn_other": "📣 ಇತರೆ ಸೇವೆಗಳು",
         "btn_12pillars": "🏛️ 12 ಪಿಲ್ಲರ್ಸ್ ವೀಕ್ಷಣೆ",
         "btn_pay": "🛒 Shop",
-        "btn_help": "💬 ಬೆಂಬಲ &amp; ಪ್ರತಿಕ್ರಿಯೆ",
+        "btn_help": "💬 ಬೆಂಬಲ & ಪ್ರತಿಕ್ರಿಯೆ",
         "btn_translate": "🌐 Translate [ENG]",
+        "btn_close_translation": "✕ Close Translation",
         "btn_privacy": "🔒 ಗೌಪ್ಯತೆ ಮತ್ತು ಡೇಟಾ (DPDPA)",
         "btn_delete": "🗑️ ನನ್ನ ಡೇಟಾ ಅಳಿಸಿ (DPDPA)",
         "btn_confirm_delete": "⚠️ ಶಾಶ್ವತ ಅಳಿಸುವಿಕೆಯನ್ನು ದೃಢೀಕರಿಸಿ",
@@ -432,12 +476,9 @@ WELCOME_COPY = {
         "btn_edit_rasi": "✨ ರಾಶಿ ಬದಲಿಸಿ",
         "profile_title": "👤 <b>ನಿಮ್ಮ ಪ್ರೊಫೈಲ್ ಮತ್ತು ಆದ್ಯತೆಗಳು</b>",
         "other_title": "📣 <b>ಇತರೆ ಸೇವೆಗಳು</b>",
-        "other_body": "• ದೈನಂದಿನ ಪಂಚಾಂಗ, ರಾಶಿ, Gold Rate / Silver Rate ಮತ್ತು ಸ್ಥಳೀಯ ಹವಾಮಾನ ಮಾಹಿತಿ.",
+        "other_body": "• ದೈನಂದಿನ ಪಂಚಾಂಗ, ರಾಶಿ, ಚಿನ್ನ ದರ / ಬೆಳ್ಳಿ ದರ ಮತ್ತು ಸ್ಥಳೀಯ ಹವಾಮಾನ ಮಾಹಿತಿ.",
         "help_title": "💬 <b>ಬೆಂಬಲ &amp; ಪ್ರತಿಕ್ರಿಯೆ</b>",
-        "help_prompt": (
-            "ನಿಮ್ಮ ಪ್ರತಿಕ್ರಿಯೆ, ಪ್ರಶ್ನೆ ಅಥವಾ ಸಹಾಯ ವಿನಂತಿಯನ್ನು ಇಲ್ಲಿಯೇ ಚಾಟ್‌ನಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ ಕಳುಹಿಸಿ.\n"
-            "<i>ಹೊರಗಿನ ಫಾರ್ಮ್ ಅಗತ್ಯವಿಲ್ಲ—ನಮ್ಮ ತಂಡವು ನೇರವಾಗಿ ಪರಿಶೀಲಿಸುತ್ತದೆ.</i>"
-        ),
+        "help_prompt": "ನಿಮ್ಮ ಪ್ರತಿಕ್ರಿಯೆ, ಪ್ರಶ್ನೆ ಅಥವಾ ಸಹಾಯ ವಿನಂತಿಯನ್ನು ಇಲ್ಲಿಯೇ ಚಾಟ್‌ನಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ ಕಳುಹಿಸಿ.",
         "help_received": "🙏 <b>ಧನ್ಯವಾದಗಳು!</b> ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಸ್ವೀಕರಿಸಲಾಗಿದೆ ಮತ್ತು ನಮ್ಮ ತಂಡಕ್ಕಾಗಿ ದಾಖಲಿಸಲಾಗಿದೆ.",
         "dpdpa_title": "🔒 <b>ಗೌಪ್ಯತೆ ಮತ್ತು ಡೇಟಾ (DPDPA 2023)</b>",
         "dpdpa_body": (
@@ -486,7 +527,8 @@ WELCOME_COPY = {
         "btn_pay": "🛒 Shop",
         "btn_help": "💬 സഹായവും പ്രതികരണവും",
         "btn_translate": "🌐 Translate [ENG]",
-        "btn_privacy": "🔒 സ്വകാര്യത &amp; ഡാറ്റ (DPDPA)",
+        "btn_close_translation": "✕ Close Translation",
+        "btn_privacy": "🔒 സ്വകാര്യത & ഡാറ്റ (DPDPA)",
         "btn_delete": "🗑️ എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക (DPDPA)",
         "btn_confirm_delete": "⚠️ ശാശ്വത നീക്കം സ്ഥിരീകരിക്കുക",
         "btn_edit_name": "✏️ പേര് മാറ്റുക",
@@ -496,12 +538,9 @@ WELCOME_COPY = {
         "btn_edit_rasi": "✨ രാശി മാറ്റുക",
         "profile_title": "👤 <b>നിങ്ങളുടെ പ്രൊഫൈലും മുൻഗണനകളും</b>",
         "other_title": "📣 <b>മറ്റ് സേവനങ്ങൾ</b>",
-        "other_body": "• ദൈനംദിന പഞ്ചാംഗം, രാശി, Gold Rate / Silver Rate &amp; പ്രാദേശിക കാലാവസ്ഥ വിവരങ്ങൾ.",
+        "other_body": "• ദൈനംദിന പഞ്ചാംഗം, രാശി, സ്വർണ്ണ നിരക്ക് / വെള്ളി നിരക്ക് &amp; പ്രാദേശിക കാലാവസ്ഥ വിവരങ്ങൾ.",
         "help_title": "💬 <b>സഹായവും പ്രതികരണവും</b>",
-        "help_prompt": (
-            "നിങ്ങളുടെ അഭിപ്രായം, ചോദ്യം അല്ലെങ്കിൽ സഹായ അഭ്യർത്ഥന ഇവിടെത്തന്നെ ചാറ്റിൽ ടൈപ്പ് ചെയ്ത് അയയ്ക്കുക.\n"
-            "<i>പുറത്തുള്ള ഫോം ആവശ്യമില്ല—ഞങ്ങളുടെ ടീം നേരിട്ട് പരിശോധിക്കും.</i>"
-        ),
+        "help_prompt": "നിങ്ങളുടെ അഭിപ്രായം, ചോദ്യം അല്ലെങ്കിൽ സഹായ അഭ്യർത്ഥന ഇവിടെത്തന്നെ ചാറ്റിൽ ടൈപ്പ് ചെയ്ത് അയയ്ക്കുക.",
         "help_received": "🙏 <b>നന്ദി!</b> നിങ്ങളുടെ സന്ദേശം ലഭിക്കുകയും ഞങ്ങളുടെ ടീമിനായി രേഖപ്പെടുത്തുകയും ചെയ്തിട്ടുണ്ട്.",
         "dpdpa_title": "🔒 <b>സ്വകാര്യത &amp; ഡാറ്റ (DPDPA 2023)</b>",
         "dpdpa_body": (
@@ -802,6 +841,8 @@ async def safe_edit_or_reply(
                 )
             return
         except BadRequest as exc:
+            if "Message is not modified" in str(exc):
+                return
             logger.debug("safe_edit_or_reply fallback to send_message: %s", exc)
 
     if update.effective_chat:
@@ -1150,15 +1191,17 @@ async def _get_user_lang_and_row(telegram_id: int, fallback_lang: str = "en"):
 
 async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
-    await query.answer()
+    if query:
+        await query.answer()
     context.user_data.pop("editing_field", None)
     context.user_data.pop("awaiting_feedback", None)
 
-    telegram_id = query.from_user.id
+    user = query.from_user if query else update.effective_user
+    telegram_id = user.id
     lang, sub = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
 
-    name_val = (sub["first_name"] if sub and sub["first_name"] else None) or query.from_user.first_name or "Friend"
+    name_val = (sub["first_name"] if sub and sub["first_name"] else None) or user.first_name or "Friend"
     dob_val = (sub["dob"] if sub and sub["dob"] else None) or context.user_data.get("dob") or "Not set"
     lang_label = LANGUAGES.get(lang, "English")
     loc_val = (
@@ -1205,6 +1248,11 @@ async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
         ]
     )
     await safe_edit_or_reply(update, context, text, reply_markup=kb)
+
+
+async def open_profile_panel_end_conv(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await open_profile_panel(update, context)
+    return ConversationHandler.END
 
 
 async def open_other_services_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1545,37 +1593,27 @@ def _build_card_message_from_cache(
 ) -> str:
     wow = get_wow_label(lang)
     quote = get_quote_label(lang)
-    blessing_with = get_blessing_with_label(lang)
-    gold_rate = get_gold_rate_label(lang)
-    silver_rate = get_silver_rate_label(lang)
+    defaults = LOCALIZED_CARD_DEFAULTS.get(lang) or LOCALIZED_CARD_DEFAULTS["en"]
 
-    deity_block = (cache.get(("DEITY_DAY", "TODAY")) or {}).get(lang) or (
-        cache.get(("DEITY_DAY", "TODAY")) or {}
-    ).get("en", f"🪔 <b>{blessing_with}:</b> Om Namah Shivaya")
+    deity_dict = cache.get(("DEITY_DAY", "TODAY")) or {}
+    deity_block = deity_dict.get(lang) or defaults["deity"]
 
-    raw_wow = (cache.get(("RASI", rasi)) or {}).get(lang) or (
-        cache.get(("RASI", rasi)) or {}
-    ).get("en", f"✨ <b>{wow}:</b> Stay steady and focused today.")
+    rasi_dict = cache.get(("RASI", rasi)) or {}
+    raw_wow = rasi_dict.get(lang) or defaults["wow"]
     wow_block = raw_wow.replace("🌟 <b>Rasi Guidance:</b>", f"✨ <b>{wow}:</b>")
 
-    raw_ausp = (cache.get(("AUSPICIOUS", city)) or cache.get(("AUSPICIOUS", "chennai")) or {}).get(
-        lang, "⏰ <b>Auspicious Timing [Plan Your Decisions]:</b> Morning 06:00–07:30 AM"
-    )
+    ausp_dict = cache.get(("AUSPICIOUS", city)) or cache.get(("AUSPICIOUS", "chennai")) or {}
+    raw_ausp = ausp_dict.get(lang) or defaults["ausp"]
     ausp_block = raw_ausp.replace("⏳ <b>Auspicious Timing", "⏰ <b>Auspicious Timing")
 
-    gold_block = (cache.get(("GOLD_INR", "INDIA")) or {}).get(
-        lang, f"🟡 <b>{gold_rate} ⚪️ {silver_rate} [As of {today_ist.strftime('%d %b %Y')}]:</b> Updating shortly"
-    )
-    weather_block = (cache.get(("WEATHER", city)) or cache.get(("WEATHER", "chennai")) or {}).get(
-        lang, "🌦 <b>Weather [Plan Your Day]:</b> Pleasant morning breeze"
-    )
+    gold_dict = cache.get(("GOLD_INR", "INDIA")) or {}
+    gold_block = gold_dict.get(lang) or defaults["gold"].format(date=today_ist.strftime("%d %b %Y"))
 
-    raw_quote = (cache.get(("QUOTE", "TODAY")) or {}).get(lang) or (
-        cache.get(("QUOTE", "TODAY")) or {}
-    ).get(
-        "en",
-        f'🌟 <b>{quote}:</b>\n"You have a right to perform your prescribed duty, but never to its fruits." — <i>Bhagavad Gita (2.47)</i>',
-    )
+    weather_dict = cache.get(("WEATHER", city)) or cache.get(("WEATHER", "chennai")) or {}
+    weather_block = weather_dict.get(lang) or defaults["weather"]
+
+    quote_dict = cache.get(("QUOTE", "TODAY")) or {}
+    raw_quote = quote_dict.get(lang) or defaults["quote"]
     quote_block = raw_quote.replace(f"✨ <b>{wow}:</b>", f"🌟 <b>{quote}:</b>").replace(
         "✨ <b>WoW [Words of Wisdom]:</b>", f"🌟 <b>{quote}:</b>"
     )
@@ -1658,7 +1696,20 @@ async def translate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
     cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
 
     en_text = _build_card_message_from_cache(cache, "en", rasi, city, edition_date)
-    await query.message.reply_text(en_text, parse_mode=ParseMode.HTML)
+    close_kb = InlineKeyboardMarkup(
+        [[InlineKeyboardButton("✕ Close Translation", callback_data="close_translation")]]
+    )
+    await query.message.reply_text(en_text, parse_mode=ParseMode.HTML, reply_markup=close_kb)
+
+
+async def close_translation_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+    if query.message:
+        try:
+            await query.message.delete()
+        except Exception:
+            pass
 
 
 async def delete_data_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1725,20 +1776,6 @@ def build_application() -> Application:
         .build()
     )
 
-    app.add_handler(CallbackQueryHandler(open_profile_panel, pattern=r"^panel:(profile|settings)$"))
-    app.add_handler(CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"))
-    app.add_handler(CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"))
-    app.add_handler(CallbackQueryHandler(open_help_feedback_panel, pattern=r"^menu:help_feedback$"))
-    app.add_handler(CallbackQueryHandler(open_dpdpa_panel, pattern=r"^panel:dpdpa$"))
-    app.add_handler(CallbackQueryHandler(confirm_delete_callback, pattern=r"^action:confirm_delete$"))
-    app.add_handler(CallbackQueryHandler(start_edit_field, pattern=r"^editfield:"))
-    app.add_handler(CallbackQueryHandler(finish_edit_callback, pattern=r"^editval_(lang|rasi):"))
-    app.add_handler(CallbackQueryHandler(delete_data_callback, pattern=r"^action:delete_data$"))
-    app.add_handler(CallbackQueryHandler(send_sample_card_callback, pattern=r"^send_sample_now$"))
-    app.add_handler(CallbackQueryHandler(translate_callback, pattern=r"^translate:"))
-    app.add_handler(CommandHandler("delete_data", delete_data_command))
-    app.add_handler(CommandHandler("stop", delete_data_command))
-
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start_onboarding)],
         states={
@@ -1760,7 +1797,7 @@ def build_application() -> Application:
             EDIT_VALUE: [
                 CallbackQueryHandler(finish_edit_callback, pattern=r"^editval_(lang|rasi):"),
                 CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"),
-                CallbackQueryHandler(open_profile_panel, pattern=r"^panel:(profile|settings)$"),
+                CallbackQueryHandler(open_profile_panel_end_conv, pattern=r"^panel:(profile|settings)$"),
                 CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"),
                 CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"),
                 CallbackQueryHandler(open_help_feedback_panel, pattern=r"^menu:help_feedback$"),
@@ -1769,7 +1806,7 @@ def build_application() -> Application:
             ],
             FEEDBACK_TEXT: [
                 CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"),
-                CallbackQueryHandler(open_profile_panel, pattern=r"^panel:(profile|settings)$"),
+                CallbackQueryHandler(open_profile_panel_end_conv, pattern=r"^panel:(profile|settings)$"),
                 CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, save_help_feedback_message),
             ],
@@ -1778,7 +1815,7 @@ def build_application() -> Application:
             CommandHandler("start", start_onboarding),
             CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"),
             CallbackQueryHandler(set_rasi_callback, pattern=r"^rasi:"),
-            CallbackQueryHandler(open_profile_panel, pattern=r"^panel:(profile|settings)$"),
+            CallbackQueryHandler(open_profile_panel_end_conv, pattern=r"^panel:(profile|settings)$"),
             CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"),
             CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"),
             CallbackQueryHandler(open_help_feedback_panel, pattern=r"^menu:help_feedback$"),
@@ -1788,6 +1825,20 @@ def build_application() -> Application:
     )
 
     app.add_handler(conv)
+    app.add_handler(CallbackQueryHandler(open_profile_panel, pattern=r"^panel:(profile|settings)$"))
+    app.add_handler(CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"))
+    app.add_handler(CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"))
+    app.add_handler(CallbackQueryHandler(open_help_feedback_panel, pattern=r"^menu:help_feedback$"))
+    app.add_handler(CallbackQueryHandler(open_dpdpa_panel, pattern=r"^panel:dpdpa$"))
+    app.add_handler(CallbackQueryHandler(confirm_delete_callback, pattern=r"^action:confirm_delete$"))
+    app.add_handler(CallbackQueryHandler(start_edit_field, pattern=r"^editfield:"))
+    app.add_handler(CallbackQueryHandler(finish_edit_callback, pattern=r"^editval_(lang|rasi):"))
+    app.add_handler(CallbackQueryHandler(delete_data_callback, pattern=r"^action:delete_data$"))
+    app.add_handler(CallbackQueryHandler(send_sample_card_callback, pattern=r"^send_sample_now$"))
+    app.add_handler(CallbackQueryHandler(translate_callback, pattern=r"^translate:"))
+    app.add_handler(CallbackQueryHandler(close_translation_callback, pattern=r"^close_translation$"))
+    app.add_handler(CommandHandler("delete_data", delete_data_command))
+    app.add_handler(CommandHandler("stop", delete_data_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_free_text_input))
     app.add_handler(CallbackQueryHandler(set_language_callback, pattern=r"^lang:"))
     app.add_handler(CallbackQueryHandler(set_rasi_callback, pattern=r"^rasi:"))
