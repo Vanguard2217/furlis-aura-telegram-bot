@@ -37,6 +37,7 @@ CARD_LABELS = {
         "blessing_with": "Daily Blessing With",
         "gold_rate": "Gold Rate",
         "silver_rate": "Silver Rate",
+        "auspicious": "Auspicious Timing [Plan Your Decisions]",
         "wow": "WoW [Words of Wisdom]",
         "weather": "Weather [Plan Your Day]",
         "rain_suffix": " • {pct}% rain chance",
@@ -59,6 +60,7 @@ CARD_LABELS = {
         "blessing_with": "தினசரி ஆசீர்வாதம் — உடன்",
         "gold_rate": "Gold Rate / தங்கம் விலை",
         "silver_rate": "Silver Rate / வெள்ளி விலை",
+        "auspicious": "நல்ல நேரம் [உங்கள் முடிவுகளைத் திட்டமிடுங்கள்]",
         "wow": "WoW [ஞான மொழிகள்]",
         "weather": "வானிலை [உங்கள் நாளைத் திட்டமிடுங்கள்]",
         "rain_suffix": " • {pct}% மழை வாய்ப்பு",
@@ -81,6 +83,7 @@ CARD_LABELS = {
         "blessing_with": "दैनिक आशीर्वाद — साथ में",
         "gold_rate": "Gold Rate / सोना भाव",
         "silver_rate": "Silver Rate / चांदी भाव",
+        "auspicious": "शुभ समय [अपने निर्णयों की योजना बनाएं]",
         "wow": "WoW [ज्ञान की बातें]",
         "weather": "मौसम [दिन की योजना]",
         "rain_suffix": " • {pct}% बारिश की संभावना",
@@ -103,6 +106,7 @@ CARD_LABELS = {
         "blessing_with": "రోజువారీ ఆశీర్వాదం — తో",
         "gold_rate": "Gold Rate / బంగారం ధర",
         "silver_rate": "Silver Rate / వెండి ధర",
+        "auspicious": "శుభ సమయం [మీ నిర్ణయాలను ప్రణాళిక చేయండి]",
         "wow": "WoW [జ్ఞాన వాక్కులు]",
         "weather": "వాతావరణం [రోజు ప్రణాళిక]",
         "rain_suffix": " • {pct}% వర్షం అవకాశం",
@@ -125,6 +129,7 @@ CARD_LABELS = {
         "blessing_with": "ದೈನಂದಿನ ಆಶೀರ್ವಾದ — ಜೊತೆಗೆ",
         "gold_rate": "Gold Rate / ಚಿನ್ನ ದರ",
         "silver_rate": "Silver Rate / ಬೆಳ್ಳಿ ದರ",
+        "auspicious": "ಶುಭ ಸಮಯ [ನಿಮ್ಮ ನಿರ್ಧಾರಗಳನ್ನು ಯೋಜಿಸಿ]",
         "wow": "WoW [ಜ್ಞಾನದ ಮಾತುಗಳು]",
         "weather": "ಹವಾಮಾನ [ದಿನದ ಯೋಜನೆ]",
         "rain_suffix": " • {pct}% ಮಳೆ ಸಾಧ್ಯತೆ",
@@ -147,6 +152,7 @@ CARD_LABELS = {
         "blessing_with": "ദൈനംദിന അനുഗ്രഹം — ഒപ്പം",
         "gold_rate": "Gold Rate / സ്വർണ്ണ നിരക്ക്",
         "silver_rate": "Silver Rate / വെള്ളി നിരക്ക്",
+        "auspicious": "ശുഭ സമയം [തീരുമാനങ്ങൾ ആസൂത്രണം ചെയ്യുക]",
         "wow": "WoW [ജ്ഞാനവാക്കുകൾ]",
         "weather": "കാലാവസ്ഥ [ദിവസ ആസൂത്രണം]",
         "rain_suffix": " • {pct}% മഴ സാധ്യത",
@@ -182,7 +188,11 @@ def parse_payload(raw_payload) -> dict:
     if isinstance(raw_payload, dict):
         return raw_payload
     if isinstance(raw_payload, str):
-        return json.loads(raw_payload)
+        try:
+            parsed = json.loads(raw_payload)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
     return {}
 
 
@@ -226,11 +236,12 @@ def render_message(
     blessing_with = L["blessing_with"]
     gold_rate = L["gold_rate"]
     silver_rate = L["silver_rate"]
+    auspicious = L["auspicious"]
 
     deity_block = deity_payload.get(lang) or deity_payload.get("en") or f"🪔 <b>{blessing_with}:</b> Om Namah Shivaya"
     rasi_block = rasi_payload.get(lang) or rasi_payload.get("en") or "🌟 <b>Rasi Guidance:</b> Stay steady and focused today."
-    ausp_block = ausp_payload.get(lang) or ausp_payload.get("en") or "⏳ <b>Auspicious Timing:</b> Morning 06:00–07:30 AM"
-    gold_block = gold_payload.get(lang) or gold_payload.get("en") or f"🟡 <b>{gold_rate} &amp; ⚪ {silver_rate} [As of {edition_date}]</b>"
+    ausp_block = ausp_payload.get(lang) or ausp_payload.get("en") or f"⏳ <b>{auspicious}:</b> Morning 06:00–07:30 AM"
+    gold_block = gold_payload.get(lang) or gold_payload.get("en") or f"🟡 <b>{gold_rate} ⚪️ {silver_rate} [As of {edition_date}]</b>"
     weather_block = weather_payload.get(lang) or weather_payload.get("en") or f"🌦 <b>{L['weather']}:</b> Pleasant morning breeze"
     quote_block = quote_payload.get(lang) or quote_payload.get("en") or f"✨ <b>{wow}:</b> Stay calm and mindful today."
 
