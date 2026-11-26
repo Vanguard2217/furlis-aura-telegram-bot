@@ -1,7 +1,6 @@
 # broadcast_daily.py — AURA Daily Broadcaster with Full Regional Localization
 import os
 import re
-import html
 import json
 import asyncio
 import logging
@@ -18,8 +17,6 @@ logger = logging.getLogger("broadcast_daily")
 BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 DATABASE_URL = os.environ["DATABASE_URL"]
 UPI_CHECKOUT_BASE_URL = os.environ.get("UPI_GATEWAY_CHECKOUT_URL", "https://example.com/upi")
-SUPPORT_FORM_URLS = json.loads(os.environ.get("SUPPORT_FORM_URLS_JSON", "{}"))
-DEFAULT_SUPPORT_FORM_URL = os.environ.get("SUPPORT_FORM_URL", "")
 IST = timezone(timedelta(hours=5, minutes=30))
 TELEGRAM_API_BASE = f"https://api.telegram.org/bot{BOT_TOKEN}"
 BATCH_CONCURRENCY = 25
@@ -39,6 +36,7 @@ CARD_LABELS = {
         "silver_rate": "Silver Rate",
         "auspicious": "Auspicious Timing [Plan Your Decisions]",
         "wow": "WoW [Words of Wisdom]",
+        "quote": "Quote",
         "weather": "Weather [Plan Your Day]",
         "rain_suffix": " • {pct}% rain chance",
         "caution": "⚠️ <b>CAUTION:</b> Heavy rain / snow / low visibility possible—plan extra travel buffer.",
@@ -47,10 +45,9 @@ CARD_LABELS = {
         "care_umbrella": "💛 <i>Care: May your steps stay dry, safe, and peaceful today.</i>",
         "care_normal": "💛 <i>Care: Wishing you a calm, healthy, and steady day ahead.</i>",
         "btn_profile": "👤 Profile",
-        "btn_settings": "⚙️ Settings",
-        "btn_other": "✨ Other Services",
+        "btn_other": "📣 Other Services",
         "btn_12pillars": "🏛️ 12 Pillars View",
-        "btn_pay": "🙏 Support / Dakshina",
+        "btn_pay": "🛒 Shop",
         "btn_support": "💬 Help & Feedback",
         "btn_privacy": "🔒 Privacy & Data (DPDPA)",
         "btn_delete": "🗑️ Delete My Data (DPDPA)",
@@ -62,6 +59,7 @@ CARD_LABELS = {
         "silver_rate": "Silver Rate / வெள்ளி விலை",
         "auspicious": "நல்ல நேரம் [உங்கள் முடிவுகளைத் திட்டமிடுங்கள்]",
         "wow": "WoW [ஞான மொழிகள்]",
+        "quote": "Quote / பொன்மொழி",
         "weather": "வானிலை [உங்கள் நாளைத் திட்டமிடுங்கள்]",
         "rain_suffix": " • {pct}% மழை வாய்ப்பு",
         "caution": "⚠️ <b>எச்சரிக்கை:</b> கனமழை / பனி / குறைந்த பார்வை வாய்ப்பு—கவனமாக பயணிக்கவும்.",
@@ -70,10 +68,9 @@ CARD_LABELS = {
         "care_umbrella": "💛 <i>அக்கறை: இன்று உங்கள் பயணம் பாதுகாப்பாகவும் அமைதியாகவும் அமையட்டும்.</i>",
         "care_normal": "💛 <i>அக்கறை: இன்று அமைதியான, ஆரோக்கியமான நாளாக அமைய வாழ்த்துகள்.</i>",
         "btn_profile": "👤 சுயவிவரம்",
-        "btn_settings": "⚙️ அமைப்புகள்",
-        "btn_other": "✨ மற்ற சேவைகள்",
+        "btn_other": "📣 மற்ற சேவைகள்",
         "btn_12pillars": "🏛️ 12 தூண்கள் பார்வை",
-        "btn_pay": "🙏 ஆதரவு / தட்சிணை",
+        "btn_pay": "🛒 Shop",
         "btn_support": "💬 உதவி &amp; கருத்து",
         "btn_privacy": "🔒 தனியுரிமை &amp; தரவு (DPDPA)",
         "btn_delete": "🗑️ என் தரவை நீக்கு (DPDPA)",
@@ -85,6 +82,7 @@ CARD_LABELS = {
         "silver_rate": "Silver Rate / चांदी भाव",
         "auspicious": "शुभ समय [अपने निर्णयों की योजना बनाएं]",
         "wow": "WoW [ज्ञान की बातें]",
+        "quote": "Quote / अनमोल वचन",
         "weather": "मौसम [दिन की योजना]",
         "rain_suffix": " • {pct}% बारिश की संभावना",
         "caution": "⚠️ <b>सावधानी:</b> भारी बारिश / कोहरा संभव—यात्रा में अतिरिक्त समय रखें।",
@@ -93,10 +91,9 @@ CARD_LABELS = {
         "care_umbrella": "💛 <i>देखभाल: आज आपके कदम सुरक्षित और शांतिपूर्ण रहें।</i>",
         "care_normal": "💛 <i>देखभाल: आपका दिन शांत, स्वस्थ और मंगलमय हो।</i>",
         "btn_profile": "👤 प्रोफ़ाइल",
-        "btn_settings": "⚙️ सेटिंग्स",
-        "btn_other": "✨ अन्य सेवाएं",
+        "btn_other": "📣 अन्य सेवाएं",
         "btn_12pillars": "🏛️ 12 पिलर्स दृश्य",
-        "btn_pay": "🙏 सहयोग / दक्षिणा",
+        "btn_pay": "🛒 Shop",
         "btn_support": "💬 सहायता व प्रतिक्रिया",
         "btn_privacy": "🔒 गोपनीयता व डेटा (DPDPA)",
         "btn_delete": "🗑️ मेरा डेटा हटाएं (DPDPA)",
@@ -108,6 +105,7 @@ CARD_LABELS = {
         "silver_rate": "Silver Rate / వెండి ధర",
         "auspicious": "శుభ సమయం [మీ నిర్ణయాలను ప్రణాళిక చేయండి]",
         "wow": "WoW [జ్ఞాన వాక్కులు]",
+        "quote": "Quote / సూక్తి",
         "weather": "వాతావరణం [రోజు ప్రణాళిక]",
         "rain_suffix": " • {pct}% వర్షం అవకాశం",
         "caution": "⚠️ <b>జాగ్రత్త:</b> భారీ వర్షం / పొగమంచు అవకాశం—జాగ్రత్తగా ప్రయాణించండి.",
@@ -116,10 +114,9 @@ CARD_LABELS = {
         "care_umbrella": "💛 <i>శ్రద్ధ: నేటి మీ ప్రయాణం సురక్షితంగా, ప్రశాంతంగా సాగుగాక.</i>",
         "care_normal": "💛 <i>శ్రద్ధ: మీకు ప్రశాంతమైన, ఆరోగ్యకరమైన రోజు కలగాలని కోరుకుంటున్నాము.</i>",
         "btn_profile": "👤 ప్రొఫైల్",
-        "btn_settings": "⚙️ సెట్టింగ్స్",
-        "btn_other": "✨ ఇతర సేవలు",
+        "btn_other": "📣 ఇతర సేవలు",
         "btn_12pillars": "🏛️ 12 పిల్లర్స్ వీక్షణ",
-        "btn_pay": "🙏 సహకారం / దక్షిణ",
+        "btn_pay": "🛒 Shop",
         "btn_support": "💬 సహాయం &amp; అభిప్రాయం",
         "btn_privacy": "🔒 గోప్యత &amp; డేటా (DPDPA)",
         "btn_delete": "🗑️ నా డేటా తొలగించండి (DPDPA)",
@@ -131,6 +128,7 @@ CARD_LABELS = {
         "silver_rate": "Silver Rate / ಬೆಳ್ಳಿ ದರ",
         "auspicious": "ಶುಭ ಸಮಯ [ನಿಮ್ಮ ನಿರ್ಧಾರಗಳನ್ನು ಯೋಜಿಸಿ]",
         "wow": "WoW [ಜ್ಞಾನದ ಮಾತುಗಳು]",
+        "quote": "Quote / ನುಡಿಮುತ್ತು",
         "weather": "ಹವಾಮಾನ [ದಿನದ ಯೋಜನೆ]",
         "rain_suffix": " • {pct}% ಮಳೆ ಸಾಧ್ಯತೆ",
         "caution": "⚠️ <b>ಎಚ್ಚರಿಕೆ:</b> ಭಾರೀ ಮಳೆ / ಮಂಜು ಸಾಧ್ಯತೆ—ಜಾಗರೂಕತೆಯಿಂದ ಪ್ರಯಾಣಿಸಿ.",
@@ -139,10 +137,9 @@ CARD_LABELS = {
         "care_umbrella": "💛 <i>ಕಾಳಜಿ: ಇಂದಿನ ನಿಮ್ಮ ಹೆಜ್ಜೆಗಳು ಸುರಕ್ಷಿತ ಮತ್ತು ಶಾಂತಿಯುತವಾಗಿರಲಿ.</i>",
         "care_normal": "💛 <i>ಕಾಳಜಿ: ನಿಮಗೆ ಶಾಂತ, ಆರೋಗ್ಯಕರ ಮತ್ತು ಶುಭ ದಿನವಾಗಲಿ.</i>",
         "btn_profile": "👤 ಪ್ರೊಫೈಲ್",
-        "btn_settings": "⚙️ ಸೆಟ್ಟಿಂಗ್ಸ್",
-        "btn_other": "✨ ಇತರೆ ಸೇವೆಗಳು",
+        "btn_other": "📣 ಇತರೆ ಸೇವೆಗಳು",
         "btn_12pillars": "🏛️ 12 ಪಿಲ್ಲರ್ಸ್ ವೀಕ್ಷಣೆ",
-        "btn_pay": "🙏 ಸಹಾಯ / ದಕ್ಷಿಣೆ",
+        "btn_pay": "🛒 Shop",
         "btn_support": "💬 ಬೆಂಬಲ &amp; ಪ್ರತಿಕ್ರಿಯೆ",
         "btn_privacy": "🔒 ಗೌಪ್ಯತೆ ಮತ್ತು ಡೇಟಾ (DPDPA)",
         "btn_delete": "🗑️ ನನ್ನ ಡೇಟಾ ಅಳಿಸಿ (DPDPA)",
@@ -154,6 +151,7 @@ CARD_LABELS = {
         "silver_rate": "Silver Rate / വെള്ളി നിരക്ക്",
         "auspicious": "ശുഭ സമയം [തീരുമാനങ്ങൾ ആസൂത്രണം ചെയ്യുക]",
         "wow": "WoW [ജ്ഞാനവാക്കുകൾ]",
+        "quote": "Quote / സന്ദേശം",
         "weather": "കാലാവസ്ഥ [ദിവസ ആസൂത്രണം]",
         "rain_suffix": " • {pct}% മഴ സാധ്യത",
         "caution": "⚠️ <b>ജാഗ്രത:</b> കനത്ത മഴ / മൂടൽമഞ്ഞ് സാധ്യത—യാത്രയിൽ ശ്രദ്ധിക്കുക.",
@@ -162,10 +160,9 @@ CARD_LABELS = {
         "care_umbrella": "💛 <i>കരുതൽ: ഇന്നത്തെ യാത്ര സുരക്ഷിതവും സമാധാനപരവുമാകട്ടെ.</i>",
         "care_normal": "💛 <i>കരുതൽ: ശാന്തവും ആരോഗ്യകരവുമായ ഒരു നല്ല ദിവസം ആശംസിക്കുന്നു.</i>",
         "btn_profile": "👤 പ്രൊഫൈൽ",
-        "btn_settings": "⚙️ ക്രമീകരണങ്ങൾ",
-        "btn_other": "✨ മറ്റ് സേവനങ്ങൾ",
+        "btn_other": "📣 മറ്റ് സേവനങ്ങൾ",
         "btn_12pillars": "🏛️ 12 പില്ലേഴ്സ് കാഴ്ച",
-        "btn_pay": "🙏 സഹായം / ദക്ഷിണ",
+        "btn_pay": "🛒 Shop",
         "btn_support": "💬 സഹായവും പ്രതികരണവും",
         "btn_privacy": "🔒 സ്വകാര്യത &amp; ഡാറ്റ (DPDPA)",
         "btn_delete": "🗑️ എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക (DPDPA)",
@@ -196,25 +193,18 @@ def parse_payload(raw_payload) -> dict:
     return {}
 
 
-def build_support_url(telegram_id: int, lang: str) -> str:
-    template = SUPPORT_FORM_URLS.get(lang) or SUPPORT_FORM_URLS.get("en") or DEFAULT_SUPPORT_FORM_URL
-    if not template:
-        return "https://t.me"
-    if "{uid}" in template:
-        return template.format(uid=telegram_id)
-    sep = "&" if "?" in template else "?"
-    return f"{template}{sep}uid={telegram_id}"
-
-
 def build_inline_keyboard_dict(edition_date: str, telegram_id: int, lang: str) -> dict:
     L = lbl(lang)
     upi_url = f"{UPI_CHECKOUT_BASE_URL}?uid={telegram_id}&ref={edition_date}"
-    support_url = build_support_url(telegram_id, lang)
     rows = [
-        [{"text": f"{i}⭐", "callback_data": f"rate:{edition_date}:{i}"} for i in range(1, 6)],
-        [{"text": L["btn_profile"], "callback_data": "panel:profile"}, {"text": L["btn_settings"], "callback_data": "panel:settings"}],
-        [{"text": L["btn_other"], "callback_data": "menu:other_services"}, {"text": L["btn_pay"], "url": upi_url}],
-        [{"text": L["btn_support"], "url": support_url}],
+        [
+            {"text": L["btn_profile"], "callback_data": "panel:profile"},
+            {"text": L["btn_other"], "callback_data": "menu:other_services"},
+        ],
+        [
+            {"text": L["btn_pay"], "url": upi_url},
+            {"text": L["btn_support"], "callback_data": "menu:help_feedback"},
+        ],
     ]
     if lang != "en":
         rows.append([{"text": L["btn_translate"], "callback_data": f"translate:en:{edition_date}"}])
@@ -233,23 +223,33 @@ def render_message(
 ) -> str:
     L = lbl(lang)
     wow = L["wow"]
+    quote = L["quote"]
     blessing_with = L["blessing_with"]
     gold_rate = L["gold_rate"]
     silver_rate = L["silver_rate"]
     auspicious = L["auspicious"]
 
     deity_block = deity_payload.get(lang) or deity_payload.get("en") or f"🪔 <b>{blessing_with}:</b> Om Namah Shivaya"
-    rasi_block = rasi_payload.get(lang) or rasi_payload.get("en") or "🌟 <b>Rasi Guidance:</b> Stay steady and focused today."
-    ausp_block = ausp_payload.get(lang) or ausp_payload.get("en") or f"⏳ <b>{auspicious}:</b> Morning 06:00–07:30 AM"
+
+    raw_wow = rasi_payload.get(lang) or rasi_payload.get("en") or f"✨ <b>{wow}:</b> Stay steady and focused today."
+    wow_block = raw_wow.replace("🌟 <b>Rasi Guidance:</b>", f"✨ <b>{wow}:</b>")
+
+    raw_ausp = ausp_payload.get(lang) or ausp_payload.get("en") or f"⏰ <b>{auspicious}:</b> Morning 06:00–07:30 AM"
+    ausp_block = raw_ausp.replace("⏳ <b>Auspicious Timing", "⏰ <b>Auspicious Timing")
+
     gold_block = gold_payload.get(lang) or gold_payload.get("en") or f"🟡 <b>{gold_rate} ⚪️ {silver_rate} [As of {edition_date}]</b>"
     weather_block = weather_payload.get(lang) or weather_payload.get("en") or f"🌦 <b>{L['weather']}:</b> Pleasant morning breeze"
-    quote_block = quote_payload.get(lang) or quote_payload.get("en") or f"✨ <b>{wow}:</b> Stay calm and mindful today."
+
+    raw_quote = quote_payload.get(lang) or quote_payload.get("en") or f"🌟 <b>{quote}:</b> Stay calm and mindful today."
+    quote_block = raw_quote.replace(f"✨ <b>{wow}:</b>", f"🌟 <b>{quote}:</b>").replace(
+        "✨ <b>WoW [Words of Wisdom]:</b>", f"🌟 <b>{quote}:</b>"
+    )
 
     body = (
         f"<b>{AURA_HEADER}</b>\n"
         f"{DIVIDER}\n\n"
         f"{deity_block}\n\n"
-        f"{rasi_block}\n\n"
+        f"{wow_block}\n\n"
         f"{ausp_block}\n\n"
         f"{gold_block}\n\n"
         f"{weather_block}\n\n"
