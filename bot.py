@@ -209,7 +209,7 @@ WELCOME_COPY = {
         "lbl_dob": "Date of Birth",
         "lbl_loc": "Locality / City",
         "lbl_rasi": "Zodiac / Rasi",
-        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
+        "lbl_time": "<b>Daily Delivery:</b> 04:30 AM IST",
         "btn_sample": "📨 Send Today's Card Now",
         "btn_profile": "👤 Profile",
         "btn_other": "📣 Other Services",
@@ -271,7 +271,7 @@ WELCOME_COPY = {
         "lbl_dob": "பிறந்த தேதி",
         "lbl_loc": "பகுதி / நகரம்",
         "lbl_rasi": "ராசி",
-        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
+        "lbl_time": "<b>Daily Delivery:</b> 04:30 AM IST",
         "btn_sample": "📨 இன்றைய அட்டையை அனுப்புக",
         "btn_profile": "👤 சுயவிவரம்",
         "btn_other": "📣 மற்ற சேவைகள்",
@@ -333,7 +333,7 @@ WELCOME_COPY = {
         "lbl_dob": "जन्म तिथि",
         "lbl_loc": "क्षेत्र / शहर",
         "lbl_rasi": "राशि",
-        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
+        "lbl_time": "<b>Daily Delivery:</b> 04:30 AM IST",
         "btn_sample": "📨 आज का कार्ड अभी भेजें",
         "btn_profile": "👤 प्रोफ़ाइल",
         "btn_other": "📣 अन्य सेवाएं",
@@ -395,7 +395,7 @@ WELCOME_COPY = {
         "lbl_dob": "పుట్టిన తేదీ",
         "lbl_loc": "ప్రాంతం / నగరం",
         "lbl_rasi": "రాశి",
-        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
+        "lbl_time": "<b>Daily Delivery:</b> 04:30 AM IST",
         "btn_sample": "📨 నేటి కార్డ్ ఇప్పుడే పంపండి",
         "btn_profile": "👤 ప్రొఫైల్",
         "btn_other": "📣 ఇతర సేవలు",
@@ -457,7 +457,7 @@ WELCOME_COPY = {
         "lbl_dob": "ಜನ್ಮ ದಿನಾಂಕ",
         "lbl_loc": "ಪ್ರದೇಶ / ನಗರ",
         "lbl_rasi": "ರಾಶಿ",
-        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
+        "lbl_time": "<b>Daily Delivery:</b> 04:30 AM IST",
         "btn_sample": "📨 ಇಂದಿನ ಕಾರ್ಡ್ ಈಗ ಕಳುಹಿಸಿ",
         "btn_profile": "👤 ಪ್ರೊಫೈಲ್",
         "btn_other": "📣 ಇತರೆ ಸೇವೆಗಳು",
@@ -519,7 +519,7 @@ WELCOME_COPY = {
         "lbl_dob": "ജനനത്തീയതി",
         "lbl_loc": "പ്രദേശം / നഗരം",
         "lbl_rasi": "രാശി",
-        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
+        "lbl_time": "<b>Daily Delivery:</b> 04:30 AM IST",
         "btn_sample": "📨 ഇന്നത്തെ കാർഡ് ഇപ്പോൾ അയയ്ക്കുക",
         "btn_profile": "👤 പ്രൊഫൈൽ",
         "btn_other": "📣 മറ്റ് സേവനങ്ങൾ",
@@ -588,6 +588,12 @@ def get_rasi_display(rasi_code: Optional[str], lang: str = "en") -> str:
         if r_code == code:
             return r_map.get(lang) or r_map["en"]
     return code.title()
+
+
+def normalize_city_key(raw_loc: Optional[str]) -> str:
+    city_part = raw_loc.split(",")[-1].strip().lower() if raw_loc else "chennai"
+    cleaned = re.sub(r"[^a-z0-9]+", "_", city_part).strip("_")
+    return cleaned or "chennai"
 
 
 # ---------------------------------------------------------------------------
@@ -844,6 +850,8 @@ async def safe_edit_or_reply(
             if "Message is not modified" in str(exc):
                 return
             logger.debug("safe_edit_or_reply fallback to send_message: %s", exc)
+        except Exception as exc:
+            logger.debug("safe_edit_or_reply generic fallback: %s", exc)
 
     if update.effective_chat:
         sent = await context.bot.send_message(
@@ -1198,6 +1206,8 @@ async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     user = query.from_user if query else update.effective_user
     telegram_id = user.id
+    logger.info("PANEL_PROFILE_OPENED uid=%s", telegram_id)
+
     lang, sub = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
 
@@ -1250,18 +1260,14 @@ async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await safe_edit_or_reply(update, context, text, reply_markup=kb)
 
 
-async def open_profile_panel_end_conv(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await open_profile_panel(update, context)
-    return ConversationHandler.END
-
-
 async def open_other_services_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
-    await query.answer()
+    if query:
+        await query.answer()
     context.user_data.pop("editing_field", None)
     context.user_data.pop("awaiting_feedback", None)
 
-    telegram_id = query.from_user.id
+    telegram_id = query.from_user.id if query else update.effective_user.id
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
 
@@ -1282,20 +1288,20 @@ async def toggle_12pillars_callback(update: Update, context: ContextTypes.DEFAUL
     await open_profile_panel(update, context)
 
 
-async def open_help_feedback_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def open_help_feedback_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
-    await query.answer()
+    if query:
+        await query.answer()
     context.user_data.pop("editing_field", None)
     context.user_data["awaiting_feedback"] = True
 
-    telegram_id = query.from_user.id
+    telegram_id = query.from_user.id if query else update.effective_user.id
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
 
     text = f"{CARD_HEADER}{c['help_title']}\n\n{c['help_prompt']}"
     kb = InlineKeyboardMarkup([[InlineKeyboardButton(c["back_card"], callback_data="back:card")]])
     await safe_edit_or_reply(update, context, text, reply_markup=kb)
-    return FEEDBACK_TEXT
 
 
 async def save_help_feedback_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -1359,8 +1365,9 @@ async def save_help_feedback_message(update: Update, context: ContextTypes.DEFAU
 
 async def open_dpdpa_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
-    await query.answer()
-    telegram_id = query.from_user.id
+    if query:
+        await query.answer()
+    telegram_id = query.from_user.id if query else update.effective_user.id
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
 
@@ -1376,8 +1383,9 @@ async def open_dpdpa_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 async def confirm_delete_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
-    await query.answer()
-    telegram_id = query.from_user.id
+    if query:
+        await query.answer()
+    telegram_id = query.from_user.id if query else update.effective_user.id
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
 
@@ -1390,14 +1398,15 @@ async def confirm_delete_callback(update: Update, context: ContextTypes.DEFAULT_
     await safe_edit_or_reply(update, context, f"{CARD_HEADER}{c['confirm_delete_body']}", reply_markup=kb)
 
 
-async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
-    await query.answer()
+    if query:
+        await query.answer()
     field = query.data.split(":", 1)[1]
     context.user_data.pop("awaiting_feedback", None)
     context.user_data["editing_field"] = field
 
-    telegram_id = query.from_user.id
+    telegram_id = query.from_user.id if query else update.effective_user.id
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
 
@@ -1405,13 +1414,13 @@ async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         rows = build_language_keyboard("editval_lang").inline_keyboard
         kb = InlineKeyboardMarkup(list(rows) + [[InlineKeyboardButton(c["back_profile"], callback_data="back:profile")]])
         await safe_edit_or_reply(update, context, build_language_prompt_text(), reply_markup=kb)
-        return EDIT_VALUE
+        return
 
     if field == "rasi":
         rows = build_rasi_keyboard(lang=lang, prefix="editval_rasi", include_back=False).inline_keyboard
         kb = InlineKeyboardMarkup(list(rows) + [[InlineKeyboardButton(c["back_profile"], callback_data="back:profile")]])
         await safe_edit_or_reply(update, context, f"{CARD_HEADER}{c['step3']}", reply_markup=kb)
-        return EDIT_VALUE
+        return
 
     prompts = {
         "first_name": f"{CARD_HEADER}<b>{c['btn_edit_name']}</b>:",
@@ -1425,12 +1434,12 @@ async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         prompts.get(field, f"{CARD_HEADER}Enter new value:"),
         reply_markup=kb,
     )
-    return EDIT_VALUE
 
 
-async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
-    await query.answer()
+    if query:
+        await query.answer()
     prefix, val = query.data.split(":", 1)
     telegram_id = query.from_user.id
 
@@ -1458,7 +1467,6 @@ async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         f"{CARD_HEADER}{c['saved_msg'].format(val=saved_label)}",
         reply_markup=kb,
     )
-    return ConversationHandler.END
 
 
 async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -1658,7 +1666,8 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
 
     lang = (sub["preferred_language"] if sub and sub["preferred_language"] else None) or context.user_data.get("lang") or "en"
     rasi = ((sub["rasi"] if sub and sub["rasi"] else None) or "mesham").lower()
-    city = ((sub["city"] if sub and sub["city"] else None) or "chennai").lower()
+    raw_loc = (sub["locality"] if sub and sub["locality"] else None) or (sub["city"] if sub and sub["city"] else None) or "chennai"
+    city = normalize_city_key(raw_loc)
 
     cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
     message_text = _build_card_message_from_cache(cache, lang, rasi, city, today_ist)
@@ -1692,7 +1701,8 @@ async def translate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
         logger.warning("Translate lookup fallback: %s", exc)
 
     rasi = ((sub["rasi"] if sub and sub["rasi"] else None) or "mesham").lower()
-    city = ((sub["city"] if sub and sub["city"] else None) or "chennai").lower()
+    raw_loc = (sub["locality"] if sub and sub["locality"] else None) or (sub["city"] if sub and sub["city"] else None) or "chennai"
+    city = normalize_city_key(raw_loc)
     cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
 
     en_text = _build_card_message_from_cache(cache, "en", rasi, city, edition_date)
@@ -1776,6 +1786,22 @@ def build_application() -> Application:
         .build()
     )
 
+    # Top-priority global handlers (group=-1) so Profile, Other Services,
+    # DPDPA, Edits, Translate, and Sample Card work on EVERY card regardless
+    # of ConversationHandler state.
+    app.add_handler(CallbackQueryHandler(open_profile_panel, pattern=r"^panel:(profile|settings)$"), group=-1)
+    app.add_handler(CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"), group=-1)
+    app.add_handler(CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"), group=-1)
+    app.add_handler(CallbackQueryHandler(open_help_feedback_panel, pattern=r"^menu:help_feedback$"), group=-1)
+    app.add_handler(CallbackQueryHandler(open_dpdpa_panel, pattern=r"^panel:dpdpa$"), group=-1)
+    app.add_handler(CallbackQueryHandler(confirm_delete_callback, pattern=r"^action:confirm_delete$"), group=-1)
+    app.add_handler(CallbackQueryHandler(delete_data_callback, pattern=r"^action:delete_data$"), group=-1)
+    app.add_handler(CallbackQueryHandler(start_edit_field, pattern=r"^editfield:"), group=-1)
+    app.add_handler(CallbackQueryHandler(finish_edit_callback, pattern=r"^editval_(lang|rasi):"), group=-1)
+    app.add_handler(CallbackQueryHandler(send_sample_card_callback, pattern=r"^send_sample_now$"), group=-1)
+    app.add_handler(CallbackQueryHandler(translate_callback, pattern=r"^translate:"), group=-1)
+    app.add_handler(CallbackQueryHandler(close_translation_callback, pattern=r"^close_translation$"), group=-1)
+
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start_onboarding)],
         states={
@@ -1794,49 +1820,17 @@ def build_application() -> Application:
                 CallbackQueryHandler(set_rasi_callback, pattern=r"^rasi:"),
                 CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"),
             ],
-            EDIT_VALUE: [
-                CallbackQueryHandler(finish_edit_callback, pattern=r"^editval_(lang|rasi):"),
-                CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"),
-                CallbackQueryHandler(open_profile_panel_end_conv, pattern=r"^panel:(profile|settings)$"),
-                CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"),
-                CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"),
-                CallbackQueryHandler(open_help_feedback_panel, pattern=r"^menu:help_feedback$"),
-                CallbackQueryHandler(confirm_delete_callback, pattern=r"^action:confirm_delete$"),
-                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_free_text_input),
-            ],
-            FEEDBACK_TEXT: [
-                CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"),
-                CallbackQueryHandler(open_profile_panel_end_conv, pattern=r"^panel:(profile|settings)$"),
-                CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"),
-                MessageHandler(filters.TEXT & ~filters.COMMAND, save_help_feedback_message),
-            ],
         },
         fallbacks=[
             CommandHandler("start", start_onboarding),
             CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"),
             CallbackQueryHandler(set_rasi_callback, pattern=r"^rasi:"),
-            CallbackQueryHandler(open_profile_panel_end_conv, pattern=r"^panel:(profile|settings)$"),
-            CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"),
-            CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"),
-            CallbackQueryHandler(open_help_feedback_panel, pattern=r"^menu:help_feedback$"),
-            CallbackQueryHandler(confirm_delete_callback, pattern=r"^action:confirm_delete$"),
         ],
         per_message=False,
     )
 
     app.add_handler(conv)
-    app.add_handler(CallbackQueryHandler(open_profile_panel, pattern=r"^panel:(profile|settings)$"))
-    app.add_handler(CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"))
-    app.add_handler(CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"))
-    app.add_handler(CallbackQueryHandler(open_help_feedback_panel, pattern=r"^menu:help_feedback$"))
-    app.add_handler(CallbackQueryHandler(open_dpdpa_panel, pattern=r"^panel:dpdpa$"))
-    app.add_handler(CallbackQueryHandler(confirm_delete_callback, pattern=r"^action:confirm_delete$"))
-    app.add_handler(CallbackQueryHandler(start_edit_field, pattern=r"^editfield:"))
-    app.add_handler(CallbackQueryHandler(finish_edit_callback, pattern=r"^editval_(lang|rasi):"))
-    app.add_handler(CallbackQueryHandler(delete_data_callback, pattern=r"^action:delete_data$"))
-    app.add_handler(CallbackQueryHandler(send_sample_card_callback, pattern=r"^send_sample_now$"))
-    app.add_handler(CallbackQueryHandler(translate_callback, pattern=r"^translate:"))
-    app.add_handler(CallbackQueryHandler(close_translation_callback, pattern=r"^close_translation$"))
+    app.add_handler(CommandHandler("profile", open_profile_panel))
     app.add_handler(CommandHandler("delete_data", delete_data_command))
     app.add_handler(CommandHandler("stop", delete_data_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_free_text_input))
@@ -1849,8 +1843,12 @@ def build_application() -> Application:
 async def main() -> None:
     application = build_application()
     await application.initialize()
+    await application.bot.delete_webhook(drop_pending_updates=True)
     await application.start()
-    await application.updater.start_polling(drop_pending_updates=True)
+    await application.updater.start_polling(
+        drop_pending_updates=True,
+        allowed_updates=Update.ALL_TYPES,
+    )
 
     web_app = web.Application()
     web_app.router.add_get("/health", health_handler)
