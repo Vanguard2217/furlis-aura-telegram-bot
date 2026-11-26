@@ -157,6 +157,24 @@ BUILT_IN_SCRIPTURE_QUOTES: List[Dict[str, str]] = [
     },
 ]
 
+QUOTE_HEADERS = {
+    "en": "🌟 <b>Quote:</b>",
+    "ta": "🌟 <b>Quote / பொன்மொழி:</b>",
+    "hi": "🌟 <b>Quote / अनमोल वचन:</b>",
+    "te": "🌟 <b>Quote / సూక్తి:</b>",
+    "kn": "🌟 <b>Quote / ನುಡಿಮುತ್ತು:</b>",
+    "ml": "🌟 <b>Quote / സന്ദേശം:</b>",
+}
+
+WOW_HEADERS = {
+    "en": "✨ <b>WoW [Words of Wisdom]:</b>",
+    "ta": "✨ <b>WoW [ஞான மொழிகள்]:</b>",
+    "hi": "✨ <b>WoW [ज्ञान की बातें]:</b>",
+    "te": "✨ <b>WoW [జ్ఞాన వాక్కులు]:</b>",
+    "kn": "✨ <b>WoW [ಜ್ಞಾನದ ಮಾತುಗಳು]:</b>",
+    "ml": "✨ <b>WoW [ജ്ഞാനവാക്കുകൾ]:</b>",
+}
+
 # ---------------------------------------------------------------------------
 # 3. Gold & Silver Rates ([As of DATE])
 # ---------------------------------------------------------------------------
@@ -229,7 +247,7 @@ async def select_today_scripture(session: aiohttp.ClientSession, today_ist: date
         src = chosen.get("citation") or chosen.get("scripture_source") or "Sacred Scripture"
         return {
             lang: (
-                f"✨ <b>WoW [Words of Wisdom]:</b>\n"
+                f"{QUOTE_HEADERS[lang]}\n"
                 f"\"{(chosen.get(f'{lang}_translation') or chosen.get('en_translation', '')).strip()}\" "
                 f"— <i>{src}</i>"
             )
@@ -239,12 +257,12 @@ async def select_today_scripture(session: aiohttp.ClientSession, today_ist: date
     chosen = BUILT_IN_SCRIPTURE_QUOTES[day_offset % len(BUILT_IN_SCRIPTURE_QUOTES)]
     src = chosen["source"]
     return {
-        lang: f"✨ <b>WoW [Words of Wisdom]:</b>\n\"{chosen.get(lang) or chosen['en']}\" — <i>{src}</i>"
+        lang: f"{QUOTE_HEADERS[lang]}\n\"{chosen.get(lang) or chosen['en']}\" — <i>{src}</i>"
         for lang in LANGS
     }
 
 
-def build_rasi_defaults() -> Dict[str, Dict[str, str]]:
+def build_wow_defaults() -> Dict[str, Dict[str, str]]:
     rasi_names = [
         "mesham", "rishabam", "mithunam", "kadagam", "simmam", "kanni",
         "thulam", "vrischikam", "dhanusu", "magaram", "kumbam", "meenam",
@@ -254,7 +272,8 @@ def build_rasi_defaults() -> Dict[str, Dict[str, str]]:
         title = rasi.title()
         out[rasi] = {
             lang: (
-                f"🌟 <b>{title} — 3 Positives Today:</b>\n"
+                f"{WOW_HEADERS[lang]}\n"
+                f"• <b>{title} — 3 Positives Today:</b>\n"
                 "1. Clear focus on key priorities\n"
                 "2. Supportive conversations with family &amp; peers\n"
                 "3. Steady progress through patient effort"
@@ -277,11 +296,11 @@ async def main() -> None:
         quote_payload = await select_today_scripture(session, today_ist)
 
     bullion_payload = build_bullion_payload(now_ist)
-    rasi_map = build_rasi_defaults()
+    wow_map = build_wow_defaults()
 
     auspicious_chennai = {
         lang: (
-            "⏳ <b>Auspicious Timing [Plan Your Decisions]:</b>\n"
+            "⏰ <b>Auspicious Timing [Plan Your Decisions]:</b>\n"
             "• Nalla Neram: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
             "• Rahukalam: 12:00 PM – 01:30 PM"
         )
@@ -299,7 +318,7 @@ async def main() -> None:
         (today_ist, "AUSPICIOUS", "chennai", json.dumps(auspicious_chennai)),
         (today_ist, "WEATHER", "chennai", json.dumps(weather_chennai)),
     ]
-    for rasi_key, payload in rasi_map.items():
+    for rasi_key, payload in wow_map.items():
         records.append((today_ist, "RASI", rasi_key, json.dumps(payload)))
 
     conn = await asyncpg.connect(dsn=DATABASE_URL)
