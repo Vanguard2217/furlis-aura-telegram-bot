@@ -77,6 +77,33 @@ WOW_LABELS = {
     "ml": "WoW [ജ്ഞാനവാക്കുകൾ]",
 }
 
+BLESSING_WITH_LABELS = {
+    "en": "Daily Blessing With",
+    "ta": "தினசரி ஆசீர்வாதம் — உடன்",
+    "hi": "दैनिक आशीर्वाद — साथ में",
+    "te": "రోజువారీ ఆశీర్వాదం — తో",
+    "kn": "ದೈನಂದಿನ ಆಶೀರ್ವಾದ — ಜೊತೆಗೆ",
+    "ml": "ദൈനംദിന അനുഗ്രഹം — ഒപ്പം",
+}
+
+GOLD_RATE_LABELS = {
+    "en": "Gold Rate",
+    "ta": "Gold Rate / தங்கம் விலை",
+    "hi": "Gold Rate / सोना भाव",
+    "te": "Gold Rate / బంగారం ధర",
+    "kn": "Gold Rate / ಚಿನ್ನ ದರ",
+    "ml": "Gold Rate / സ്വർണ്ണ നിരക്ക്",
+}
+
+SILVER_RATE_LABELS = {
+    "en": "Silver Rate",
+    "ta": "Silver Rate / வெள்ளி விலை",
+    "hi": "Silver Rate / चांदी भाव",
+    "te": "Silver Rate / వెండి ధర",
+    "kn": "Silver Rate / ಬೆಳ್ಳಿ ದರ",
+    "ml": "Silver Rate / വെള്ളി നിരക്ക്",
+}
+
 RASIS = [
     ("mesham", "Mesham", {"en": "Mesham", "ta": "மேஷம் (Mesham)", "hi": "मेष (Mesham)", "te": "మేషం (Mesham)", "kn": "ಮೇಷ (Mesham)", "ml": "മേടം (Mesham)"}),
     ("rishabam", "Rishabam", {"en": "Rishabam", "ta": "ரிஷபம் (Rishabam)", "hi": "वृषभ (Rishabam)", "te": "వృషభం (Rishabam)", "kn": "ವೃಷಭ (Rishabam)", "ml": "ഇടവം (Rishabam)"}),
@@ -96,10 +123,10 @@ WELCOME_COPY = {
     "en": {
         "greeting": "Namaskaram, <b>{name}</b> 🙏",
         "schedule": "Every morning at <b>04:30 AM IST</b>, receive one calm and divine message to start your day with <b>Ashirvad:</b>",
-        "b1": "• 🪔 Daily Blessing + 🛕 Temple &amp; Occasion Alerts",
+        "b1": "• 🪔 {blessing_with} + 🛕 Temple &amp; Occasion Alerts",
         "b2": "• ⏳ Auspicious Timing",
         "b3": "• ✨ {wow}",
-        "b4": "• 🟡 Gold &amp; ⚪ Silver Rates",
+        "b4": "• 🟡 {gold_rate} &amp; ⚪ {silver_rate}",
         "b5": "• 🌦 Weather [Plan Your Day]",
         "step1": "<b>Step 1 of 3</b> — Enter your Date of Birth (e.g., <code>15-08-1985</code>):",
         "invalid_dob": "Please enter a valid Date of Birth in <code>DD-MM-YYYY</code> format (e.g., <code>15-08-1985</code>):",
@@ -127,11 +154,12 @@ WELCOME_COPY = {
         "btn_profile": "👤 Profile",
         "btn_settings": "⚙️ Settings",
         "btn_other": "✨ Other Services",
+        "btn_12pillars": "🏛️ 12 Pillars View",
         "btn_pay": "🙏 Support / Dakshina",
         "btn_help": "💬 Help & Feedback",
         "btn_translate": "🌐 Translate [ENG]",
         "btn_privacy": "🔒 Privacy & Data (DPDPA)",
-        "btn_delete": "🗑️ DELETE",
+        "btn_delete": "🗑️ Delete My Data (DPDPA)",
         "btn_edit_name": "✏️ Edit Name",
         "btn_edit_dob": "🎂 Edit Date of Birth",
         "btn_edit_lang": "🌐 Edit Language",
@@ -140,12 +168,12 @@ WELCOME_COPY = {
         "profile_title": "👤 <b>Your Profile</b>",
         "settings_title": "⚙️ <b>Settings &amp; Preferences</b>",
         "other_title": "✨ <b>Other Services</b>",
-        "other_body": "• Daily Panchang, Rasi &amp; Local Weather telemetry.\n• Tap below to return to your daily card.",
+        "other_body": "• Daily Panchang, Rasi, Gold Rate / Silver Rate &amp; Local Weather telemetry.\n• Tap below to return to your daily card.",
         "dpdpa_title": "🔒 <b>Privacy &amp; Data (DPDPA 2023)</b>",
         "dpdpa_body": (
             "• <b>Data Stored:</b> Name, Preferred Language, Date of Birth, Locality/City, and Rasi.\n"
             "• <b>Purpose:</b> Personalizing your daily 04:30 AM IST AURA card and support responses.\n"
-            "• <b>Your Rights:</b> Edit details anytime in Profile or Settings, or erase all records permanently via <b>🗑️ DELETE</b> or /delete_data."
+            "• <b>Your Rights:</b> Edit details anytime in Profile or Settings, or erase all records permanently via <b>Delete My Data (DPDPA)</b> or /delete_data."
         ),
         "erased_msg": "🗑️ Your profile, preferences, and ratings have been permanently erased under DPDPA 2023. Tap /start anytime to begin again.",
         "saved_msg": "✅ Updated: <b>{val}</b>",
@@ -153,10 +181,10 @@ WELCOME_COPY = {
     "ta": {
         "greeting": "நமஸ்காரம், <b>{name}</b> 🙏",
         "schedule": "தினமும் காலை <b>04:30 AM IST</b> மணிக்கு, உங்கள் நாளை அமைதியுடனும் தெய்வீக அருளுடனும் தொடங்க <b>ஆசீர்வாதத்துடன்</b> ஒரு தெய்வீகச் செய்தி:",
-        "b1": "• 🪔 தினசரி ஆசீர்வாதம் + 🛕 கோவில் &amp; விசேஷ அறிவிப்புகள்",
+        "b1": "• 🪔 {blessing_with} + 🛕 கோவில் &amp; விசேஷ அறிவிப்புகள்",
         "b2": "• ⏳ நல்ல நேரம்",
         "b3": "• ✨ {wow}",
-        "b4": "• 🟡 தங்கம் &amp; ⚪ வெள்ளி விலைகள்",
+        "b4": "• 🟡 {gold_rate} &amp; ⚪ {silver_rate}",
         "b5": "• 🌦 வானிலை [உங்கள் நாளைத் திட்டமிடுங்கள்]",
         "step1": "<b>படி 1 / 3</b> — உங்கள் பிறந்த தேதியை உள்ளிடவும் (உதா: <code>15-08-1985</code>):",
         "invalid_dob": "சரியான பிறந்த தேதியை <code>DD-MM-YYYY</code> வடிவில் உள்ளிடவும் (உதா: <code>15-08-1985</code>):",
@@ -184,11 +212,12 @@ WELCOME_COPY = {
         "btn_profile": "👤 சுயவிவரம்",
         "btn_settings": "⚙️ அமைப்புகள்",
         "btn_other": "✨ மற்ற சேவைகள்",
+        "btn_12pillars": "🏛️ 12 தூண்கள் பார்வை",
         "btn_pay": "🙏 ஆதரவு / தட்சிணை",
         "btn_help": "💬 உதவி &amp; கருத்து",
         "btn_translate": "🌐 Translate [ENG]",
-        "btn_privacy": "🔒 Privacy & Data (DPDPA)",
-        "btn_delete": "🗑️ DELETE",
+        "btn_privacy": "🔒 தனியுரிமை &amp; தரவு (DPDPA)",
+        "btn_delete": "🗑️ என் தரவை நீக்கு (DPDPA)",
         "btn_edit_name": "✏️ பெயரை மாற்றுக",
         "btn_edit_dob": "🎂 பிறந்த தேதியை மாற்றுக",
         "btn_edit_lang": "🌐 மொழியை மாற்றுக",
@@ -197,12 +226,12 @@ WELCOME_COPY = {
         "profile_title": "👤 <b>உங்கள் சுயவிவரம்</b>",
         "settings_title": "⚙️ <b>அமைப்புகள் &amp; விருப்பங்கள்</b>",
         "other_title": "✨ <b>மற்ற சேவைகள்</b>",
-        "other_body": "• தினசரி பஞ்சாங்கம், ராசி &amp; உள்ளூர் வானிலை விவரங்கள்.\n• அட்டைக்குத் திரும்ப கீழே உள்ள பொத்தானைத் தட்டவும்.",
-        "dpdpa_title": "🔒 <b>Privacy &amp; Data (DPDPA 2023)</b>",
+        "other_body": "• தினசரி பஞ்சாங்கம், ராசி, Gold Rate / Silver Rate &amp; உள்ளூர் வானிலை விவரங்கள்.\n• அட்டைக்குத் திரும்ப கீழே உள்ள பொத்தானைத் தட்டவும்.",
+        "dpdpa_title": "🔒 <b>தனியுரிமை &amp; தரவு (DPDPA 2023)</b>",
         "dpdpa_body": (
             "• <b>சேமிக்கப்படும் விவரங்கள்:</b> பெயர், விருப்ப மொழி, பிறந்த தேதி, பகுதி/நகரம் மற்றும் ராசி.\n"
             "• <b>நோக்கம்:</b> காலை 04:30 AM IST AURA செய்தியைத் தனிப்பயனாக்கவும் உதவி வழங்கவும்.\n"
-            "• <b>உங்கள் உரிமை:</b> சுயவிவரம் அல்லது அமைப்புகளில் விவரங்களை மாற்றலாம்; <b>🗑️ DELETE</b> அல்லது /delete_data மூலம் நிரந்தரமாக நீக்கலாம்."
+            "• <b>உங்கள் உரிமை:</b> சுயவிவரம் அல்லது அமைப்புகளில் விவரங்களை மாற்றலாம்; <b>என் தரவை நீக்கு (DPDPA)</b> அல்லது /delete_data மூலம் நிரந்தரமாக நீக்கலாம்."
         ),
         "erased_msg": "🗑️ DPDPA 2023 விதிகளின்படி உங்கள் விவரங்கள் நிரந்தரமாக நீக்கப்பட்டன. மீண்டும் தொடங்க /start தட்டவும்.",
         "saved_msg": "✅ புதுப்பிக்கப்பட்டது: <b>{val}</b>",
@@ -210,10 +239,10 @@ WELCOME_COPY = {
     "hi": {
         "greeting": "नमस्कार, <b>{name}</b> 🙏",
         "schedule": "हर सुबह <b>04:30 AM IST</b> पर, अपने दिन की शांत और दिव्य शुरुआत के लिए <b>आशीर्वाद</b> के साथ एक पावन संदेश प्राप्त करें:",
-        "b1": "• 🪔 दैनिक आशीर्वाद + 🛕 मंदिर व विशेष पर्व अलर्ट",
+        "b1": "• 🪔 {blessing_with} + 🛕 मंदिर व विशेष पर्व अलर्ट",
         "b2": "• ⏳ शुभ समय",
         "b3": "• ✨ {wow}",
-        "b4": "• 🟡 सोना व ⚪ चांदी के भाव",
+        "b4": "• 🟡 {gold_rate} व ⚪ {silver_rate}",
         "b5": "• 🌦 मौसम [दिन की योजना]",
         "step1": "<b>चरण 1 / 3</b> — अपनी जन्म तिथि दर्ज करें (उदा: <code>15-08-1985</code>):",
         "invalid_dob": "कृपया <code>DD-MM-YYYY</code> प्रारूप में मान्य जन्म तिथि दर्ज करें (उदा: <code>15-08-1985</code>):",
@@ -241,11 +270,12 @@ WELCOME_COPY = {
         "btn_profile": "👤 प्रोफ़ाइल",
         "btn_settings": "⚙️ सेटिंग्स",
         "btn_other": "✨ अन्य सेवाएं",
+        "btn_12pillars": "🏛️ 12 पिलर्स दृश्य",
         "btn_pay": "🙏 सहयोग / दक्षिणा",
         "btn_help": "💬 सहायता व प्रतिक्रिया",
         "btn_translate": "🌐 Translate [ENG]",
-        "btn_privacy": "🔒 Privacy & Data (DPDPA)",
-        "btn_delete": "🗑️ DELETE",
+        "btn_privacy": "🔒 गोपनीयता व डेटा (DPDPA)",
+        "btn_delete": "🗑️ मेरा डेटा हटाएं (DPDPA)",
         "btn_edit_name": "✏️ नाम बदलें",
         "btn_edit_dob": "🎂 जन्म तिथि बदलें",
         "btn_edit_lang": "🌐 भाषा बदलें",
@@ -254,12 +284,12 @@ WELCOME_COPY = {
         "profile_title": "👤 <b>आपकी प्रोफ़ाइल</b>",
         "settings_title": "⚙️ <b>सेटिंग्स व प्राथमिकताएं</b>",
         "other_title": "✨ <b>अन्य सेवाएं</b>",
-        "other_body": "• दैनिक पंचांग, राशि और स्थानीय मौसम जानकारी।",
-        "dpdpa_title": "🔒 <b>Privacy &amp; Data (DPDPA 2023)</b>",
+        "other_body": "• दैनिक पंचांग, राशि, Gold Rate / Silver Rate और स्थानीय मौसम जानकारी।",
+        "dpdpa_title": "🔒 <b>गोपनीयता व डेटा (DPDPA 2023)</b>",
         "dpdpa_body": (
             "• <b>संग्रहीत विवरण:</b> नाम, भाषा, जन्म तिथि, क्षेत्र/शहर और राशि।\n"
             "• <b>उद्देश्य:</b> प्रातः 04:30 AM IST AURA संदेश को व्यक्तिगत बनाने और सहायता के लिए।\n"
-            "• <b>आपके अधिकार:</b> प्रोफ़ाइल या सेटिंग्स में विवरण बदलें या <b>🗑️ DELETE</b> / /delete_data से स्थायी रूप से हटाएं।"
+            "• <b>आपके अधिकार:</b> प्रोफ़ाइल या सेटिंग्स में विवरण बदलें या <b>मेरा डेटा हटाएं (DPDPA)</b> / /delete_data से स्थायी रूप से हटाएं।"
         ),
         "erased_msg": "🗑️ DPDPA 2023 के तहत आपका डेटा स्थायी रूप से हटा दिया गया है। दोबारा शुरू करने के लिए /start भेजें।",
         "saved_msg": "✅ सहेजा गया: <b>{val}</b>",
@@ -267,10 +297,10 @@ WELCOME_COPY = {
     "te": {
         "greeting": "నమస్కారం, <b>{name}</b> 🙏",
         "schedule": "ప్రతిరోజూ ఉదయం <b>04:30 AM IST</b> గంటలకు, మీ రోజును ప్రశాంతంగా మరియు దైవికంగా ప్రారంభించడానికి <b>ఆశీర్వాదంతో</b> ఒక దివ్య సందేశం:",
-        "b1": "• 🪔 రోజువారీ ఆశీర్వాదం + 🛕 ఆలయ &amp; ప్రత్యేక విశేషాలు",
+        "b1": "• 🪔 {blessing_with} + 🛕 ఆలయ &amp; ప్రత్యేక విశేషాలు",
         "b2": "• ⏳ శుభ సమయం",
         "b3": "• ✨ {wow}",
-        "b4": "• 🟡 బంగారం &amp; ⚪ వెండి ధరలు",
+        "b4": "• 🟡 {gold_rate} &amp; ⚪ {silver_rate}",
         "b5": "• 🌦 వాతావరణం [రోజు ప్రణాళిక]",
         "step1": "<b>దశ 1 / 3</b> — మీ పుట్టిన తేదీని నమోదు చేయండి (ఉదా: <code>15-08-1985</code>):",
         "invalid_dob": "దయచేసి <code>DD-MM-YYYY</code> రూపంలో సరైన పుట్టిన తేదీని నమోదు చేయండి (ఉదా: <code>15-08-1985</code>):",
@@ -298,11 +328,12 @@ WELCOME_COPY = {
         "btn_profile": "👤 ప్రొఫైల్",
         "btn_settings": "⚙️ సెట్టింగ్స్",
         "btn_other": "✨ ఇతర సేవలు",
+        "btn_12pillars": "🏛️ 12 పిల్లర్స్ వీక్షణ",
         "btn_pay": "🙏 సహకారం / దక్షిణ",
         "btn_help": "💬 సహాయం &amp; అభిప్రాయం",
         "btn_translate": "🌐 Translate [ENG]",
-        "btn_privacy": "🔒 Privacy & Data (DPDPA)",
-        "btn_delete": "🗑️ DELETE",
+        "btn_privacy": "🔒 గోప్యత &amp; డేటా (DPDPA)",
+        "btn_delete": "🗑️ నా డేటా తొలగించండి (DPDPA)",
         "btn_edit_name": "✏️ పేరు మార్చండి",
         "btn_edit_dob": "🎂 పుట్టిన తేదీ మార్చండి",
         "btn_edit_lang": "🌐 భాష మార్చండి",
@@ -311,12 +342,12 @@ WELCOME_COPY = {
         "profile_title": "👤 <b>మీ ప్రొఫైల్</b>",
         "settings_title": "⚙️ <b>సెట్టింగ్స్ &amp; ప్రాధాన్యతలు</b>",
         "other_title": "✨ <b>ఇతర సేవలు</b>",
-        "other_body": "• రోజువారీ పంచాంగం, రాశి &amp; స్థానిక వాతావరణ సమాచారం.",
-        "dpdpa_title": "🔒 <b>Privacy &amp; Data (DPDPA 2023)</b>",
+        "other_body": "• రోజువారీ పంచాంగం, రాశి, Gold Rate / Silver Rate &amp; స్థానిక వాతావరణ సమాచారం.",
+        "dpdpa_title": "🔒 <b>గోప్యత &amp; డేటా (DPDPA 2023)</b>",
         "dpdpa_body": (
             "• <b>నిల్వ చేసే వివరాలు:</b> పేరు, భాష, పుట్టిన తేదీ, ప్రాంతం/నగరం మరియు రాశి.\n"
             "• <b>ఉద్దేశం:</b> ఉదయం 04:30 AM IST AURA సందేశాన్ని వ్యక్తిగతీకరించడానికి మరియు సహాయం కోసం.\n"
-            "• <b>మీ హక్కులు:</b> ప్రొఫైల్ లేదా సెట్టింగ్స్‌లో మార్చవచ్చు లేదా <b>🗑️ DELETE</b> / /delete_data ద్వారా శాశ్వతంగా తొలగించవచ్చు."
+            "• <b>మీ హక్కులు:</b> ప్రొఫైల్ లేదా సెట్టింగ్స్‌లో మార్చవచ్చు లేదా <b>నా డేటా తొలగించండి (DPDPA)</b> / /delete_data ద్వారా శాశ్వతంగా తొలగించవచ్చు."
         ),
         "erased_msg": "🗑️ DPDPA 2023 ప్రకారం మీ డేటా శాశ్వతంగా తొలగించబడింది. మళ్లీ ప్రారంభించడానికి /start నొక్కండి.",
         "saved_msg": "✅ నవీకరించబడింది: <b>{val}</b>",
@@ -324,10 +355,10 @@ WELCOME_COPY = {
     "kn": {
         "greeting": "ನಮಸ್ಕಾರ, <b>{name}</b> 🙏",
         "schedule": "ಪ್ರತಿದಿನ ಬೆಳಿಗ್ಗೆ <b>04:30 AM IST</b> ಗಂಟೆಗೆ, ನಿಮ್ಮ ದಿನವನ್ನು ಶಾಂತವಾಗಿ ಮತ್ತು ದೈವಿಕವಾಗಿ ಆರಂಭಿಸಲು <b>ಆಶೀರ್ವಾದದೊಂದಿಗೆ</b> ಒಂದು ದಿವ್ಯ ಸಂದೇಶ:",
-        "b1": "• 🪔 ದೈನಂದಿನ ಆಶೀರ್ವಾದ + 🛕 ದೇವಾಲಯ &amp; ವಿಶೇಷ ಮಾಹಿತಿ",
+        "b1": "• 🪔 {blessing_with} + 🛕 ದೇವಾಲಯ &amp; ವಿಶೇಷ ಮಾಹಿತಿ",
         "b2": "• ⏳ ಶುಭ ಸಮಯ",
         "b3": "• ✨ {wow}",
-        "b4": "• 🟡 ಚಿನ್ನ ಮತ್ತು ⚪ ಬೆಳ್ಳಿ ದರಗಳು",
+        "b4": "• 🟡 {gold_rate} ಮತ್ತು ⚪ {silver_rate}",
         "b5": "• 🌦 ಹವಾಮಾನ [ದಿನದ ಯೋಜನೆ]",
         "step1": "<b>ಹಂತ 1 / 3</b> — ನಿಮ್ಮ ಜನ್ಮ ದಿನಾಂಕವನ್ನು ನಮೂದಿಸಿ (ಉದಾ: <code>15-08-1985</code>):",
         "invalid_dob": "ದಯವಿಟ್ಟು <code>DD-MM-YYYY</code> ನಮೂನೆಯಲ್ಲಿ ಸರಿಯಾದ ಜನ್ಮ ದಿನಾಂಕವನ್ನು ನಮೂದಿಸಿ (ಉದಾ: <code>15-08-1985</code>):",
@@ -355,11 +386,12 @@ WELCOME_COPY = {
         "btn_profile": "👤 ಪ್ರೊಫೈಲ್",
         "btn_settings": "⚙️ ಸೆಟ್ಟಿಂಗ್ಸ್",
         "btn_other": "✨ ಇತರೆ ಸೇವೆಗಳು",
+        "btn_12pillars": "🏛️ 12 ಪಿಲ್ಲರ್ಸ್ ವೀಕ್ಷಣೆ",
         "btn_pay": "🙏 ಸಹಾಯ / ದಕ್ಷಿಣೆ",
         "btn_help": "💬 ಬೆಂಬಲ &amp; ಪ್ರತಿಕ್ರಿಯೆ",
         "btn_translate": "🌐 Translate [ENG]",
-        "btn_privacy": "🔒 Privacy & Data (DPDPA)",
-        "btn_delete": "🗑️ DELETE",
+        "btn_privacy": "🔒 ಗೌಪ್ಯತೆ ಮತ್ತು ಡೇಟಾ (DPDPA)",
+        "btn_delete": "🗑️ ನನ್ನ ಡೇಟಾ ಅಳಿಸಿ (DPDPA)",
         "btn_edit_name": "✏️ ಹೆಸರು ಬದಲಿಸಿ",
         "btn_edit_dob": "🎂 ಜನ್ಮ ದಿನಾಂಕ ಬದಲಿಸಿ",
         "btn_edit_lang": "🌐 ಭಾಷೆ ಬದಲಿಸಿ",
@@ -368,12 +400,12 @@ WELCOME_COPY = {
         "profile_title": "👤 <b>ನಿಮ್ಮ ಪ್ರೊಫೈಲ್</b>",
         "settings_title": "⚙️ <b>ಸೆಟ್ಟಿಂಗ್ಸ್ ಮತ್ತು ಆದ್ಯತೆಗಳು</b>",
         "other_title": "✨ <b>ಇತರೆ ಸೇವೆಗಳು</b>",
-        "other_body": "• ದೈನಂದಿನ ಪಂಚಾಂಗ, ರಾಶಿ ಮತ್ತು ಸ್ಥಳೀಯ ಹವಾಮಾನ ಮಾಹಿತಿ.",
-        "dpdpa_title": "🔒 <b>Privacy &amp; Data (DPDPA 2023)</b>",
+        "other_body": "• ದೈನಂದಿನ ಪಂಚಾಂಗ, ರಾಶಿ, Gold Rate / Silver Rate ಮತ್ತು ಸ್ಥಳೀಯ ಹವಾಮಾನ ಮಾಹಿತಿ.",
+        "dpdpa_title": "🔒 <b>ಗೌಪ್ಯತೆ ಮತ್ತು ಡೇಟಾ (DPDPA 2023)</b>",
         "dpdpa_body": (
             "• <b>ಉಳಿಸಲಾದ ಮಾಹಿತಿ:</b> ಹೆಸರು, ಭಾಷೆ, ಜನ್ಮ ದಿನಾಂಕ, ಪ್ರದೇಶ/ನಗರ ಮತ್ತು ರಾಶಿ.\n"
             "• <b>ಉದ್ದೇಶ:</b> ಬೆಳಿಗ್ಗೆ 04:30 AM IST AURA ಕಾರ್ಡ್ ವೈಯಕ್ತೀಕರಣ ಮತ್ತು ಬೆಂಬಲಕ್ಕಾಗಿ.\n"
-            "• <b>ನಿಮ್ಮ ಹಕ್ಕುಗಳು:</b> ಪ್ರೊಫೈಲ್ ಅಥವಾ ಸೆಟ್ಟಿಂಗ್ಸ್‌ನಲ್ಲಿ ಬದಲಿಸಿ ಅಥವಾ <b>🗑️ DELETE</b> / /delete_data ಮೂಲಕ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಿ."
+            "• <b>ನಿಮ್ಮ ಹಕ್ಕುಗಳು:</b> ಪ್ರೊಫೈಲ್ ಅಥವಾ ಸೆಟ್ಟಿಂಗ್ಸ್‌ನಲ್ಲಿ ಬದಲಿಸಿ ಅಥವಾ <b>ನನ್ನ ಡೇಟಾ ಅಳಿಸಿ (DPDPA)</b> / /delete_data ಮೂಲಕ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಿ."
         ),
         "erased_msg": "🗑️ DPDPA 2023 ಪ್ರಕಾರ ನಿಮ್ಮ ಡೇಟಾ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಲಾಗಿದೆ. ಮತ್ತೆ ಆರಂಭಿಸಲು /start ಒತ್ತಿರಿ.",
         "saved_msg": "✅ ಉಳಿಸಲಾಗಿದೆ: <b>{val}</b>",
@@ -381,10 +413,10 @@ WELCOME_COPY = {
     "ml": {
         "greeting": "നമസ്കാരം, <b>{name}</b> 🙏",
         "schedule": "എല്ലാ ദിവസവും രാവിലെ <b>04:30 AM IST</b>-ന്, നിങ്ങളുടെ ദിവസം ശാന്തമായും ദൈവികമായും ആരംഭിക്കാൻ <b>ആശീർവാദത്തോടെ</b> ഒരു ദിവ്യ സന്ദേശം:",
-        "b1": "• 🪔 ദൈനംദിന അനുഗ്രഹം + 🛕 ക്ഷേത്ര &amp; വിശേഷ അറിയിപ്പുകൾ",
+        "b1": "• 🪔 {blessing_with} + 🛕 ക്ഷേത്ര &amp; വിശേഷ അറിയിപ്പുകൾ",
         "b2": "• ⏳ ശുഭ സമയം",
         "b3": "• ✨ {wow}",
-        "b4": "• 🟡 സ്വർണ്ണം &amp; ⚪ വെള്ളി നിരക്കുകൾ",
+        "b4": "• 🟡 {gold_rate} &amp; ⚪ {silver_rate}",
         "b5": "• 🌦 കാലാവസ്ഥ [ദിവസ ആസൂത്രണം]",
         "step1": "<b>ഘട്ടം 1 / 3</b> — നിങ്ങളുടെ ജനനത്തീയതി നൽകുക (ഉദാ: <code>15-08-1985</code>):",
         "invalid_dob": "ദയവായി <code>DD-MM-YYYY</code> മാതൃകയിൽ ശരിയായ ജനനത്തീയതി നൽകുക (ഉദാ: <code>15-08-1985</code>):",
@@ -412,11 +444,12 @@ WELCOME_COPY = {
         "btn_profile": "👤 പ്രൊഫൈൽ",
         "btn_settings": "⚙️ ക്രമീകരണങ്ങൾ",
         "btn_other": "✨ മറ്റ് സേവനങ്ങൾ",
+        "btn_12pillars": "🏛️ 12 പില്ലേഴ്സ് കാഴ്ച",
         "btn_pay": "🙏 സഹായം / ദക്ഷിണ",
         "btn_help": "💬 സഹായവും പ്രതികരണവും",
         "btn_translate": "🌐 Translate [ENG]",
-        "btn_privacy": "🔒 Privacy & Data (DPDPA)",
-        "btn_delete": "🗑️ DELETE",
+        "btn_privacy": "🔒 സ്വകാര്യത &amp; ഡാറ്റ (DPDPA)",
+        "btn_delete": "🗑️ എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക (DPDPA)",
         "btn_edit_name": "✏️ പേര് മാറ്റുക",
         "btn_edit_dob": "🎂 ജനനത്തീയതി മാറ്റുക",
         "btn_edit_lang": "🌐 ഭാഷ മാറ്റുക",
@@ -425,12 +458,12 @@ WELCOME_COPY = {
         "profile_title": "👤 <b>നിങ്ങളുടെ പ്രൊഫൈൽ</b>",
         "settings_title": "⚙️ <b>ക്രമീകരണങ്ങളും മുൻഗണനകളും</b>",
         "other_title": "✨ <b>മറ്റ് സേവനങ്ങൾ</b>",
-        "other_body": "• ദൈനംദിന പഞ്ചാംഗം, രാശി &amp; പ്രാദേശിക കാലാവസ്ഥ വിവരങ്ങൾ.",
-        "dpdpa_title": "🔒 <b>Privacy &amp; Data (DPDPA 2023)</b>",
+        "other_body": "• ദൈനംദിന പഞ്ചാംഗം, രാശി, Gold Rate / Silver Rate &amp; പ്രാദേശിക കാലാവസ്ഥ വിവരങ്ങൾ.",
+        "dpdpa_title": "🔒 <b>സ്വകാര്യത &amp; ഡാറ്റ (DPDPA 2023)</b>",
         "dpdpa_body": (
-            "• <b>സൂക്ഷിക്കുന്ന വിവരങ്ങൾ:</b> പേര്, ഭാഷ, ജനനത്തീയതി, പ്രദേശം/നഗരം, രാശി.\n"
+            "• <b>സൂക്ഷിക്കുന്ന വിവരങ്ങൾ:</b> പേര്, ഭാಷ, ജനനത്തീയതി, പ്രദേശം/നഗരം, രാശി.\n"
             "• <b>ഉദ്ദേശ്യം:</b> രാവിലെ 04:30 AM IST AURA കാർഡ് വ്യക്തിഗതമാക്കുന്നതിനും സഹായത്തിനും.\n"
-            "• <b>നിങ്ങളുടെ അവകാശങ്ങൾ:</b> പ്രൊഫൈൽ അല്ലെങ്കിൽ ക്രമീകരണങ്ങളിൽ മാറ്റാം അല്ലെങ്കിൽ <b>🗑️ DELETE</b> / /delete_data വഴി പൂർണ്ണമായി നീക്കം ചെയ്യാം."
+            "• <b>നിങ്ങളുടെ അവകാശങ്ങൾ:</b> പ്രൊഫൈൽ അല്ലെങ്കിൽ ക്രമീകരണങ്ങളിൽ മാറ്റാം അല്ലെങ്കിൽ <b>എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക (DPDPA)</b> / /delete_data വഴി പൂർണ്ണമായി നീക്കം ചെയ്യാം."
         ),
         "erased_msg": "🗑️ DPDPA 2023 പ്രകാരം നിങ്ങളുടെ ഡാറ്റ പൂർണ്ണമായി നീക്കം ചെയ്തു. വീണ്ടും തുടങ്ങാൻ /start അമർത്തുക.",
         "saved_msg": "✅ അപ്ഡേറ്റ് ചെയ്തു: <b>{val}</b>",
@@ -447,6 +480,18 @@ def copy_for(lang: Optional[str]) -> dict:
 
 def get_wow_label(lang: Optional[str]) -> str:
     return WOW_LABELS.get(lang or "en") or WOW_LABELS["en"]
+
+
+def get_blessing_with_label(lang: Optional[str]) -> str:
+    return BLESSING_WITH_LABELS.get(lang or "en") or BLESSING_WITH_LABELS["en"]
+
+
+def get_gold_rate_label(lang: Optional[str]) -> str:
+    return GOLD_RATE_LABELS.get(lang or "en") or GOLD_RATE_LABELS["en"]
+
+
+def get_silver_rate_label(lang: Optional[str]) -> str:
+    return SILVER_RATE_LABELS.get(lang or "en") or SILVER_RATE_LABELS["en"]
 
 
 def get_rasi_display(rasi_code: Optional[str], lang: str = "en") -> str:
@@ -637,7 +682,10 @@ def parse_payload_dict(raw_payload) -> dict:
     if isinstance(raw_payload, dict):
         return raw_payload
     if isinstance(raw_payload, str):
-        return json.loads(raw_payload)
+        try:
+            return json.loads(raw_payload)
+        except Exception:
+            return {}
     return {}
 
 
@@ -739,15 +787,18 @@ def build_language_prompt_text() -> str:
 def build_welcome_dob_text(first_name: str, lang: str = "en") -> str:
     c = copy_for(lang)
     wow = get_wow_label(lang)
+    blessing_with = get_blessing_with_label(lang)
+    gold_rate = get_gold_rate_label(lang)
+    silver_rate = get_silver_rate_label(lang)
     safe_name = first_name or "Friend"
     return (
         f"{CARD_HEADER}"
         f"{c['greeting'].format(name=safe_name)}\n\n"
         f"{c['schedule']}\n\n"
-        f"{c['b1']}\n\n"
+        f"{c['b1'].format(blessing_with=blessing_with)}\n\n"
         f"{c['b2']}\n\n"
         f"{c['b3'].format(wow=wow)}\n\n"
-        f"{c['b4']}\n\n"
+        f"{c['b4'].format(gold_rate=gold_rate, silver_rate=silver_rate)}\n\n"
         f"{c['b5']}\n\n"
         f"{c['step1']}"
     )
@@ -1053,7 +1104,7 @@ async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
             ],
             [
                 InlineKeyboardButton(c["btn_settings"], callback_data="panel:settings"),
-                InlineKeyboardButton(c["back_card"], callback_data="send_sample_now"),
+                InlineKeyboardButton(c["back_card"], callback_data="back:card"),
             ],
         ]
     )
@@ -1098,7 +1149,7 @@ async def open_settings_panel(update: Update, context: ContextTypes.DEFAULT_TYPE
             ],
             [
                 InlineKeyboardButton(c["btn_privacy"], callback_data="panel:dpdpa"),
-                InlineKeyboardButton(c["back_card"], callback_data="send_sample_now"),
+                InlineKeyboardButton(c["back_card"], callback_data="back:card"),
             ],
         ]
     )
@@ -1112,9 +1163,21 @@ async def open_other_services_panel(update: Update, context: ContextTypes.DEFAUL
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
 
-    text = f"{CARD_HEADER}{c['other_title']}\n\n{c['other_body']}"
-    kb = InlineKeyboardMarkup([[InlineKeyboardButton(c["back_card"], callback_data="send_sample_now")]])
+    pillars_mode = bool(context.user_data.get("12pillars_view", False))
+    mode_status = "ON" if pillars_mode else "OFF"
+    text = f"{CARD_HEADER}{c['other_title']}\n\n{c['other_body']}\n\n• <b>12 Pillars Mode:</b> {mode_status}"
+    kb = InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton(f"{c['btn_12pillars']} ({mode_status})", callback_data="menu:12pillars_toggle")],
+            [InlineKeyboardButton(c["back_card"], callback_data="back:card")],
+        ]
+    )
     await safe_edit_or_reply(update, context, text, reply_markup=kb)
+
+
+async def toggle_12pillars_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    context.user_data["12pillars_view"] = not bool(context.user_data.get("12pillars_view", False))
+    await open_other_services_panel(update, context)
 
 
 async def open_dpdpa_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1128,7 +1191,7 @@ async def open_dpdpa_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     kb = InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(c["btn_delete"], callback_data="action:delete_data")],
-            [InlineKeyboardButton(c["back_settings"], callback_data="panel:settings")],
+            [InlineKeyboardButton(c["back_settings"], callback_data="back:settings")],
         ]
     )
     await safe_edit_or_reply(update, context, text, reply_markup=kb)
@@ -1144,7 +1207,7 @@ async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
 
-    back_target = "panel:profile" if field in ("first_name", "dob") else "panel:settings"
+    back_target = "back:profile" if field in ("first_name", "dob") else "back:settings"
     back_label = c["back_profile"] if field in ("first_name", "dob") else c["back_settings"]
 
     if field == "preferred_language":
@@ -1198,7 +1261,7 @@ async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYP
                 InlineKeyboardButton(c["btn_profile"], callback_data="panel:profile"),
                 InlineKeyboardButton(c["btn_settings"], callback_data="panel:settings"),
             ],
-            [InlineKeyboardButton(c["back_card"], callback_data="send_sample_now")],
+            [InlineKeyboardButton(c["back_card"], callback_data="back:card")],
         ]
     )
     await safe_edit_or_reply(
@@ -1217,7 +1280,7 @@ async def finish_edit_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
-    back_target = "panel:profile" if field in ("first_name", "dob") else "panel:settings"
+    back_target = "back:profile" if field in ("first_name", "dob") else "back:settings"
     back_label = c["back_profile"] if field in ("first_name", "dob") else c["back_settings"]
     retry_kb = InlineKeyboardMarkup([[InlineKeyboardButton(back_label, callback_data=back_target)]])
 
@@ -1253,7 +1316,7 @@ async def finish_edit_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 InlineKeyboardButton(c["btn_profile"], callback_data="panel:profile"),
                 InlineKeyboardButton(c["btn_settings"], callback_data="panel:settings"),
             ],
-            [InlineKeyboardButton(c["back_card"], callback_data="send_sample_now")],
+            [InlineKeyboardButton(c["back_card"], callback_data="back:card")],
         ]
     )
     await update.message.reply_text(
@@ -1272,6 +1335,20 @@ async def back_navigation_callback(update: Update, context: ContextTypes.DEFAULT
     await query.answer()
 
     target = query.data.split(":", 1)[1]
+    context.user_data.pop("editing_field", None)
+
+    if target == "profile":
+        await open_profile_panel(update, context)
+        return ConversationHandler.END
+
+    if target == "settings":
+        await open_settings_panel(update, context)
+        return ConversationHandler.END
+
+    if target == "card":
+        await send_sample_card_callback(update, context)
+        return ConversationHandler.END
+
     chat_id = query.message.chat_id
     current_msg_id = query.message.message_id
     lang = context.user_data.get("lang", "en")
@@ -1321,9 +1398,55 @@ async def back_navigation_callback(update: Update, context: ContextTypes.DEFAULT
 # ---------------------------------------------------------------------------
 # Instant Sample Card, Rating, Translate & Data Erasure Handlers
 # ---------------------------------------------------------------------------
+def _build_card_message_from_cache(
+    cache: dict,
+    lang: str,
+    rasi: str,
+    city: str,
+    today_ist: date,
+) -> str:
+    wow = get_wow_label(lang)
+    blessing_with = get_blessing_with_label(lang)
+    gold_rate = get_gold_rate_label(lang)
+    silver_rate = get_silver_rate_label(lang)
+
+    deity_block = (cache.get(("DEITY_DAY", "TODAY")) or {}).get(lang) or (
+        cache.get(("DEITY_DAY", "TODAY")) or {}
+    ).get("en", f"🪔 <b>{blessing_with}:</b> Om Namah Shivaya")
+    rasi_block = (cache.get(("RASI", rasi)) or {}).get(lang) or (
+        cache.get(("RASI", rasi)) or {}
+    ).get("en", "🌟 <b>Rasi Guidance:</b> Stay steady and focused today.")
+    ausp_block = (cache.get(("AUSPICIOUS", city)) or cache.get(("AUSPICIOUS", "chennai")) or {}).get(
+        lang, "⏳ <b>Auspicious Timing:</b> Morning 06:00–07:30 AM"
+    )
+    gold_block = (cache.get(("GOLD_INR", "INDIA")) or {}).get(
+        lang, f"🟡 <b>{gold_rate} &amp; ⚪ {silver_rate} [As of {today_ist.strftime('%d %b %Y')}]:</b> Updating shortly"
+    )
+    weather_block = (cache.get(("WEATHER", city)) or cache.get(("WEATHER", "chennai")) or {}).get(
+        lang, "🌦 <b>Weather [Plan Your Day]:</b> Pleasant morning breeze"
+    )
+    quote_block = (cache.get(("QUOTE", "TODAY")) or {}).get(lang) or (
+        cache.get(("QUOTE", "TODAY")) or {}
+    ).get(
+        "en",
+        f'✨ <b>{wow}:</b>\n"You have a right to perform your prescribed duty, but never to its fruits." — <i>Bhagavad Gita (2.47)</i>',
+    )
+
+    return (
+        f"{CARD_HEADER}"
+        f"{deity_block}\n\n"
+        f"{rasi_block}\n\n"
+        f"{ausp_block}\n\n"
+        f"{gold_block}\n\n"
+        f"{weather_block}\n\n"
+        f"{quote_block}"
+    )
+
+
 async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
-    await query.answer()
+    if query:
+        await query.answer()
     context.user_data.pop("editing_field", None)
 
     telegram_id = update.effective_user.id
@@ -1333,52 +1456,21 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
         pool = await get_db_pool()
         async with pool.acquire() as conn:
             sub = await conn.fetchrow("SELECT * FROM subscribers WHERE telegram_id = $1;", telegram_id)
-            if not sub:
-                await query.message.reply_text("Please complete /start setup first.")
-                return
             rows = await conn.fetch(
                 "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache WHERE edition_date = $1;",
                 today_ist,
             )
+            if not rows:
+                rows = await conn.fetch(
+                    "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache ORDER BY edition_date DESC LIMIT 30;"
+                )
 
-        lang = sub["preferred_language"] or "en"
-        wow = get_wow_label(lang)
-        rasi = sub["rasi"] or "mesham"
-        city = (sub["city"] or "chennai").lower()
+        lang = (sub["preferred_language"] if sub and sub["preferred_language"] else None) or context.user_data.get("lang") or "en"
+        rasi = ((sub["rasi"] if sub and sub["rasi"] else None) or "mesham").lower()
+        city = ((sub["city"] if sub and sub["city"] else None) or "chennai").lower()
 
         cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
-
-        deity_block = (cache.get(("DEITY_DAY", "TODAY")) or {}).get(lang) or (
-            cache.get(("DEITY_DAY", "TODAY")) or {}
-        ).get("en", "🪔 <b>Daily Blessing:</b> Om Namah Shivaya")
-        rasi_block = (cache.get(("RASI", rasi)) or {}).get(lang) or (
-            cache.get(("RASI", rasi)) or {}
-        ).get("en", "🌟 <b>Rasi Guidance:</b> Stay steady and focused today.")
-        ausp_block = (cache.get(("AUSPICIOUS", city)) or cache.get(("AUSPICIOUS", "chennai")) or {}).get(
-            lang, "⏳ <b>Auspicious Timing:</b> Morning 06:00–07:30 AM"
-        )
-        gold_block = (cache.get(("GOLD_INR", "INDIA")) or {}).get(
-            lang, f"🟡 Gold &amp; ⚪ Silver Rates [As of {today_ist.strftime('%d %b %Y')}]: Updating shortly"
-        )
-        weather_block = (cache.get(("WEATHER", city)) or cache.get(("WEATHER", "chennai")) or {}).get(
-            lang, "🌦 <b>Weather:</b> Pleasant morning breeze"
-        )
-        quote_block = (cache.get(("QUOTE", "TODAY")) or {}).get(lang) or (
-            cache.get(("QUOTE", "TODAY")) or {}
-        ).get(
-            "en",
-            f'✨ <b>{wow}:</b>\n"You have a right to perform your prescribed duty, but never to its fruits." — <i>Bhagavad Gita (2.47)</i>',
-        )
-
-        message_text = (
-            f"{CARD_HEADER}"
-            f"{deity_block}\n\n"
-            f"{rasi_block}\n\n"
-            f"{ausp_block}\n\n"
-            f"{gold_block}\n\n"
-            f"{weather_block}\n\n"
-            f"{quote_block}"
-        )
+        message_text = _build_card_message_from_cache(cache, lang, rasi, city, today_ist)
 
         await safe_edit_or_reply(
             update,
@@ -1434,19 +1526,11 @@ async def translate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
             edition_date,
         )
 
-    rasi = (sub["rasi"] if sub else None) or "mesham"
-    city = ((sub["city"] if sub else None) or "chennai").lower()
+    rasi = ((sub["rasi"] if sub and sub["rasi"] else None) or "mesham").lower()
+    city = ((sub["city"] if sub and sub["city"] else None) or "chennai").lower()
     cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
 
-    en_text = (
-        f"{CARD_HEADER}"
-        f"{(cache.get(('DEITY_DAY', 'TODAY')) or {}).get('en', '')}\n\n"
-        f"{(cache.get(('RASI', rasi)) or {}).get('en', '')}\n\n"
-        f"{(cache.get(('AUSPICIOUS', city)) or cache.get(('AUSPICIOUS', 'chennai')) or {}).get('en', '')}\n\n"
-        f"{(cache.get(('GOLD_INR', 'INDIA')) or {}).get('en', '')}\n\n"
-        f"{(cache.get(('WEATHER', city)) or cache.get(('WEATHER', 'chennai')) or {}).get('en', '')}\n\n"
-        f"{(cache.get(('QUOTE', 'TODAY')) or {}).get('en', '')}"
-    )
+    en_text = _build_card_message_from_cache(cache, "en", rasi, city, edition_date)
     await query.message.reply_text(en_text, parse_mode=ParseMode.HTML)
 
 
@@ -1501,6 +1585,7 @@ def build_application() -> Application:
     app.add_handler(CallbackQueryHandler(open_profile_panel, pattern=r"^panel:profile$"))
     app.add_handler(CallbackQueryHandler(open_settings_panel, pattern=r"^panel:settings$"))
     app.add_handler(CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"))
+    app.add_handler(CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"))
     app.add_handler(CallbackQueryHandler(open_dpdpa_panel, pattern=r"^panel:dpdpa$"))
     app.add_handler(CallbackQueryHandler(start_edit_field, pattern=r"^editfield:"))
     app.add_handler(CallbackQueryHandler(finish_edit_callback, pattern=r"^editval_(lang|rasi):"))
@@ -1531,6 +1616,11 @@ def build_application() -> Application:
             ],
             EDIT_VALUE: [
                 CallbackQueryHandler(finish_edit_callback, pattern=r"^editval_(lang|rasi):"),
+                CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"),
+                CallbackQueryHandler(open_profile_panel, pattern=r"^panel:profile$"),
+                CallbackQueryHandler(open_settings_panel, pattern=r"^panel:settings$"),
+                CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"),
+                CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, finish_edit_text),
             ],
         },
@@ -1538,6 +1628,10 @@ def build_application() -> Application:
             CommandHandler("start", start_onboarding),
             CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"),
             CallbackQueryHandler(set_rasi_callback, pattern=r"^rasi:"),
+            CallbackQueryHandler(open_profile_panel, pattern=r"^panel:profile$"),
+            CallbackQueryHandler(open_settings_panel, pattern=r"^panel:settings$"),
+            CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"),
+            CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"),
         ],
         per_message=False,
     )
