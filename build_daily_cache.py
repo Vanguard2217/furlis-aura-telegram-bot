@@ -176,12 +176,12 @@ def build_bullion_payload(now_ist: datetime) -> Dict[str, str]:
     silver = "₹91.50/g"
 
     return {
-        "en": f"🟡 <b>Gold &amp; ⚪ Silver Rates [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪ Silver: {silver}",
-        "ta": f"🟡 <b>தங்கம் &amp; ⚪ வெள்ளி விலை [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪ வெள்ளி: {silver}",
-        "hi": f"🟡 <b>सोना एवं ⚪ चाँदी भाव [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪ चाँदी: {silver}",
-        "te": f"🟡 <b>బంగారం &amp; ⚪ వెండి ధరలు [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪ వెండి: {silver}",
-        "kn": f"🟡 <b>ಚಿನ್ನ ಮತ್ತು ⚪ ಬೆಳ್ಳಿ ದರ [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪ ಬೆಳ್ಳಿ: {silver}",
-        "ml": f"🟡 <b>സ്വർണ്ണം &amp; ⚪ വെള്ളി നിരക്ക് [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪ വെള്ളി: {silver}",
+        "en": f"🟡 <b>Gold Rate ⚪️ Silver Rate [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ Silver: {silver}",
+        "ta": f"🟡 <b>Gold Rate / தங்கம் விலை ⚪️ Silver Rate / வெள்ளி விலை [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ வெள்ளி: {silver}",
+        "hi": f"🟡 <b>Gold Rate / सोना भाव ⚪️ Silver Rate / चांदी भाव [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ चांदी: {silver}",
+        "te": f"🟡 <b>Gold Rate / బంగారం ధర ⚪️ Silver Rate / వెండి ధర [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ వెండి: {silver}",
+        "kn": f"🟡 <b>Gold Rate / ಚಿನ್ನ ದರ ⚪️ Silver Rate / ಬೆಳ್ಳಿ ದರ [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ ಬೆಳ್ಳಿ: {silver}",
+        "ml": f"🟡 <b>Gold Rate / സ്വർണ്ണ നിരക്ക് ⚪️ Silver Rate / വെള്ളി നിരക്ക് [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ വെള്ളി: {silver}",
     }
 
 
@@ -281,7 +281,7 @@ async def main() -> None:
 
     auspicious_chennai = {
         lang: (
-            "⏳ <b>Auspicious Timing:</b>\n"
+            "⏳ <b>Auspicious Timing [Plan Your Decisions]:</b>\n"
             "• Nalla Neram: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
             "• Rahukalam: 12:00 PM – 01:30 PM"
         )
