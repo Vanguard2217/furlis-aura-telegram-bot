@@ -1,4 +1,5 @@
 import os
+import re
 import csv
 import io
 import json
@@ -68,7 +69,7 @@ BUILT_IN_DEITY_7DAY: Dict[str, Dict[str, str]] = {
         "hi": "🪔 <b>शुक्रवार — माँ महालक्ष्मी एवं पराशक्ति आशीर्वाद:</b>\n<i>ॐ श्रीं महालक्ष्म्यै नमः</i> — सुख, समृद्धि और सौभाग्य से आपका घर-आँगन आलोकित रहे।",
         "te": "🪔 <b>శుక్రవారం — శ్రీ మహాలక్ష్మి &amp; పరాశక్తి ఆశీస్సులు:</b>\n<i>ఓం శ్రీం మహాలక్ష్మ్యై నమః</i> — ఐశ్వర్యం, అనుగ్రహం మరియు కుటుంబ సౌభాగ్యం నేడు మీ ఇంట వెల్లివిరియాలి.",
         "kn": "🪔 <b>ಶುಕ್ರವಾರ — ಶ್ರೀ ಮಹಾಲಕ್ಷ್ಮಿ &amp; ಪರಾಶಕ್ತಿ ಆಶೀರ್ವಾದ:</b>\n<i>ಓಂ ಶ್ರೀಂ ಮಹಾಲಕ್ಷ್ಮ್ಯೈ ನಮಃ</i> — ಐಶ್ವರ್ಯ, ಅನುಗ್ರಹ ಮತ್ತು ಕುಟುಂಬದ ಸೌಭಾಗ್ಯ ಇಂದು ನಿಮ್ಮದಾಗಲಿ.",
-        "ml": "🪔 <b>വെള്ളി — ശ്രീ മഹാലക്ഷ്മി &amp; പരാശക്തി അനുഗ്രഹം:</b>\n<i>ഓം ശ്രീം മഹാലക്ഷ്മ്യൈ നമഃ</i> — ഐശ്വര്യവും അനുഗ്രഹവും കുടുംബസൗഖ്യവും ഇന്ന് നിങ്ങളുടെ ഭവനത്തിൽ നിറയട്ടെ.",
+        "ml": "🪔 <b>വെള്ളി — ശ്രീ മഹാലക്ഷ്മി &amp; പരാശക്തി അനുഗ്രഹം:</b>\n<i>ഓം ശ്രീം മഹാലక్ష్്മ്യൈ നമഃ</i> — ഐശ്വര്യവും അനുഗ്രഹവും കുടുംബസൗഖ്യവും ഇന്ന് നിങ്ങളുടെ ഭവനത്തിൽ നിറയട്ടെ.",
     },
     "SAT": {
         "en": "🪔 <b>Saturday — Lord Venkateswara (Thirumal) Blessing:</b>\n<i>Om Namo Venkatesaya</i> — May Govinda's compassion steady your efforts and bless your perseverance with lasting peace.",
@@ -257,6 +258,12 @@ def build_bullion_payload(now_ist: datetime) -> Dict[str, str]:
     }
 
 
+def normalize_city_key(raw_loc: str) -> str:
+    city_part = raw_loc.split(",")[-1].strip().lower() if raw_loc else "chennai"
+    cleaned = re.sub(r"[^a-z0-9]+", "_", city_part).strip("_")
+    return cleaned or "chennai"
+
+
 # ---------------------------------------------------------------------------
 # 4. Async Google Sheet CSV Reader (Plug-and-Play When Ready)
 # ---------------------------------------------------------------------------
@@ -386,8 +393,8 @@ async def main() -> None:
         (today_ist, "DEITY_DAY", "TODAY", json.dumps(deity_payload)),
         (today_ist, "QUOTE", "TODAY", json.dumps(quote_payload)),
         (today_ist, "GOLD_INR", "INDIA", json.dumps(bullion_payload)),
-        (today_ist, "AUSPICIOUS", "chennai", json.dumps(auspicious_chennai)),
-        (today_ist, "WEATHER", "chennai", json.dumps(weather_chennai)),
+        (today_ist, "AUSPICIOUS", normalize_city_key("chennai"), json.dumps(auspicious_chennai)),
+        (today_ist, "WEATHER", normalize_city_key("chennai"), json.dumps(weather_chennai)),
     ]
     for rasi_key, payload in wow_map.items():
         records.append((today_ist, "RASI", rasi_key, json.dumps(payload)))
