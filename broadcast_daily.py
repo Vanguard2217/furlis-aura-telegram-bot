@@ -31,7 +31,7 @@ SHORT_DISCLAIMER = (
 
 CARD_LABELS = {
     "en": {
-        "blessing_with": "Daily Blessing With",
+        "blessing_with": "Daily Blessing",
         "gold_rate": "Gold Rate",
         "silver_rate": "Silver Rate",
         "auspicious": "Auspicious Timing [Plan Your Decisions]",
@@ -54,12 +54,12 @@ CARD_LABELS = {
         "btn_translate": "🌐 Translate [ENG]",
     },
     "ta": {
-        "blessing_with": "தினசரி ஆசீர்வாதம் — உடன்",
-        "gold_rate": "Gold Rate / தங்கம் விலை",
-        "silver_rate": "Silver Rate / வெள்ளி விலை",
+        "blessing_with": "தினசரி ஆசீர்வாதம்",
+        "gold_rate": "தங்கம் விலை",
+        "silver_rate": "வெள்ளி விலை",
         "auspicious": "நல்ல நேரம் [உங்கள் முடிவுகளைத் திட்டமிடுங்கள்]",
         "wow": "WoW [ஞான மொழிகள்]",
-        "quote": "Quote / பொன்மொழி",
+        "quote": "பொன்மொழி",
         "weather": "வானிலை [உங்கள் நாளைத் திட்டமிடுங்கள்]",
         "rain_suffix": " • {pct}% மழை வாய்ப்பு",
         "caution": "⚠️ <b>எச்சரிக்கை:</b> கனமழை / பனி / குறைந்த பார்வை வாய்ப்பு—கவனமாக பயணிக்கவும்.",
@@ -71,18 +71,18 @@ CARD_LABELS = {
         "btn_other": "📣 மற்ற சேவைகள்",
         "btn_12pillars": "🏛️ 12 தூண்கள் பார்வை",
         "btn_pay": "🛒 Shop",
-        "btn_support": "💬 உதவி &amp; கருத்து",
-        "btn_privacy": "🔒 தனியுரிமை &amp; தரவு (DPDPA)",
+        "btn_support": "💬 உதவி & கருத்து",
+        "btn_privacy": "🔒 தனியுரிமை & தரவு (DPDPA)",
         "btn_delete": "🗑️ என் தரவை நீக்கு (DPDPA)",
         "btn_translate": "🌐 Translate [ENG]",
     },
     "hi": {
-        "blessing_with": "दैनिक आशीर्वाद — साथ में",
-        "gold_rate": "Gold Rate / सोना भाव",
-        "silver_rate": "Silver Rate / चांदी भाव",
+        "blessing_with": "दैनिक आशीर्वाद",
+        "gold_rate": "सोना भाव",
+        "silver_rate": "चांदी भाव",
         "auspicious": "शुभ समय [अपने निर्णयों की योजना बनाएं]",
         "wow": "WoW [ज्ञान की बातें]",
-        "quote": "Quote / अनमोल वचन",
+        "quote": "अनमोल वचन",
         "weather": "मौसम [दिन की योजना]",
         "rain_suffix": " • {pct}% बारिश की संभावना",
         "caution": "⚠️ <b>सावधानी:</b> भारी बारिश / कोहरा संभव—यात्रा में अतिरिक्त समय रखें।",
@@ -100,12 +100,12 @@ CARD_LABELS = {
         "btn_translate": "🌐 Translate [ENG]",
     },
     "te": {
-        "blessing_with": "రోజువారీ ఆశీర్వాదం — తో",
-        "gold_rate": "Gold Rate / బంగారం ధర",
-        "silver_rate": "Silver Rate / వెండి ధర",
+        "blessing_with": "రోజువారీ ఆశీర్వాదం",
+        "gold_rate": "బంగారం ధర",
+        "silver_rate": "వెండి ధర",
         "auspicious": "శుభ సమయం [మీ నిర్ణయాలను ప్రణాళిక చేయండి]",
         "wow": "WoW [జ్ఞాన వాక్కులు]",
-        "quote": "Quote / సూక్తి",
+        "quote": "సూక్తి",
         "weather": "వాతావరణం [రోజు ప్రణాళిక]",
         "rain_suffix": " • {pct}% వర్షం అవకాశం",
         "caution": "⚠️ <b>జాగ్రత్త:</b> భారీ వర్షం / పొగమంచు అవకాశం—జాగ్రత్తగా ప్రయాణించండి.",
@@ -117,18 +117,18 @@ CARD_LABELS = {
         "btn_other": "📣 ఇతర సేవలు",
         "btn_12pillars": "🏛️ 12 పిల్లర్స్ వీక్షణ",
         "btn_pay": "🛒 Shop",
-        "btn_support": "💬 సహాయం &amp; అభిప్రాయం",
-        "btn_privacy": "🔒 గోప్యత &amp; డేటా (DPDPA)",
+        "btn_support": "💬 సహాయం & అభిప్రాయం",
+        "btn_privacy": "🔒 గోప్యత & డేటా (DPDPA)",
         "btn_delete": "🗑️ నా డేటా తొలగించండి (DPDPA)",
         "btn_translate": "🌐 Translate [ENG]",
     },
     "kn": {
-        "blessing_with": "ದೈನಂದಿನ ಆಶೀರ್ವಾದ — ಜೊತೆಗೆ",
-        "gold_rate": "Gold Rate / ಚಿನ್ನ ದರ",
-        "silver_rate": "Silver Rate / ಬೆಳ್ಳಿ ದರ",
+        "blessing_with": "ದೈನಂದಿನ ಆಶೀರ್ವಾದ",
+        "gold_rate": "ಚಿನ್ನ ದರ",
+        "silver_rate": "ಬೆಳ್ಳಿ ದರ",
         "auspicious": "ಶುಭ ಸಮಯ [ನಿಮ್ಮ ನಿರ್ಧಾರಗಳನ್ನು ಯೋಜಿಸಿ]",
         "wow": "WoW [ಜ್ಞಾನದ ಮಾತುಗಳು]",
-        "quote": "Quote / ನುಡಿಮುತ್ತು",
+        "quote": "ನುಡಿಮುತ್ತು",
         "weather": "ಹವಾಮಾನ [ದಿನದ ಯೋಜನೆ]",
         "rain_suffix": " • {pct}% ಮಳೆ ಸಾಧ್ಯತೆ",
         "caution": "⚠️ <b>ಎಚ್ಚರಿಕೆ:</b> ಭಾರೀ ಮಳೆ / ಮಂಜು ಸಾಧ್ಯತೆ—ಜಾಗರೂಕತೆಯಿಂದ ಪ್ರಯಾಣಿಸಿ.",
@@ -140,18 +140,18 @@ CARD_LABELS = {
         "btn_other": "📣 ಇತರೆ ಸೇವೆಗಳು",
         "btn_12pillars": "🏛️ 12 ಪಿಲ್ಲರ್ಸ್ ವೀಕ್ಷಣೆ",
         "btn_pay": "🛒 Shop",
-        "btn_support": "💬 ಬೆಂಬಲ &amp; ಪ್ರತಿಕ್ರಿಯೆ",
+        "btn_support": "💬 ಬೆಂಬಲ & ಪ್ರತಿಕ್ರಿಯೆ",
         "btn_privacy": "🔒 ಗೌಪ್ಯತೆ ಮತ್ತು ಡೇಟಾ (DPDPA)",
         "btn_delete": "🗑️ ನನ್ನ ಡೇಟಾ ಅಳಿಸಿ (DPDPA)",
         "btn_translate": "🌐 Translate [ENG]",
     },
     "ml": {
-        "blessing_with": "ദൈനംദിന അനുഗ്രഹം — ഒപ്പം",
-        "gold_rate": "Gold Rate / സ്വർണ്ണ നിരക്ക്",
-        "silver_rate": "Silver Rate / വെള്ളി നിരക്ക്",
+        "blessing_with": "ദൈനംദിന അനുഗ്രഹം",
+        "gold_rate": "സ്വർണ്ണ നിരക്ക്",
+        "silver_rate": "വെള്ളി നിരക്ക്",
         "auspicious": "ശുഭ സമയം [തീരുമാനങ്ങൾ ആസൂത്രണം ചെയ്യുക]",
         "wow": "WoW [ജ്ഞാനവാക്കുകൾ]",
-        "quote": "Quote / സന്ദേശം",
+        "quote": "സന്ദേശം",
         "weather": "കാലാവസ്ഥ [ദിവസ ആസൂത്രണം]",
         "rain_suffix": " • {pct}% മഴ സാധ്യത",
         "caution": "⚠️ <b>ജാഗ്രത:</b> കനത്ത മഴ / മൂടൽമഞ്ഞ് സാധ്യത—യാത്രയിൽ ശ്രദ്ധിക്കുക.",
@@ -164,9 +164,60 @@ CARD_LABELS = {
         "btn_12pillars": "🏛️ 12 പില്ലേഴ്സ് കാഴ്ച",
         "btn_pay": "🛒 Shop",
         "btn_support": "💬 സഹായവും പ്രതികരണവും",
-        "btn_privacy": "🔒 സ്വകാര്യത &amp; ഡാറ്റ (DPDPA)",
+        "btn_privacy": "🔒 സ്വകാര്യത & ഡാറ്റ (DPDPA)",
         "btn_delete": "🗑️ എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക (DPDPA)",
         "btn_translate": "🌐 Translate [ENG]",
+    },
+}
+
+LOCALIZED_FALLBACK_BLOCKS = {
+    "en": {
+        "deity": "🪔 <b>Daily Blessing:</b> Om Namah Shivaya",
+        "wow": "✨ <b>WoW [Words of Wisdom]:</b> Stay steady and focused today.",
+        "ausp": "⏰ <b>Auspicious Timing [Plan Your Decisions]:</b> Morning 06:00–07:30 AM",
+        "gold": "🟡 <b>Gold Rate ⚪️ Silver Rate [As of {date}]:</b> Updating shortly",
+        "weather": "🌦 <b>Weather [Plan Your Day]:</b> Pleasant morning breeze",
+        "quote": "🌟 <b>Quote:</b> Stay calm and mindful today.",
+    },
+    "ta": {
+        "deity": "🪔 <b>தினசரி ஆசீர்வாதம்:</b> ஓம் நம சிவாய",
+        "wow": "✨ <b>WoW [ஞான மொழிகள்]:</b> இன்று அமைதியுடனும் தெளிவான கவனத்துடனும் செயல்படுங்கள்.",
+        "ausp": "⏰ <b>நல்ல நேரம் [உங்கள் முடிவுகளைத் திட்டமிடுங்கள்]:</b> காலை 06:00–07:30 AM",
+        "gold": "🟡 <b>தங்கம் விலை ⚪️ வெள்ளி விலை [{date} நிலவரப்படி]:</b> விரைவில் புதுப்பிக்கப்படும்",
+        "weather": "🌦 <b>வானிலை [உங்கள் நாளைத் திட்டமிடுங்கள்]:</b> இனிமையான காலை தென்றல்",
+        "quote": "🌟 <b>பொன்மொழி:</b> இன்று அமைதியுடனும் விழிப்புணர்வுடனும் செயல்படுங்கள்.",
+    },
+    "hi": {
+        "deity": "🪔 <b>दैनिक आशीर्वाद:</b> ॐ नमः शिवाय",
+        "wow": "✨ <b>WoW [ज्ञान की बातें]:</b> आज शांत मन और एकाग्रता के साथ आगे बढ़ें।",
+        "ausp": "⏰ <b>शुभ समय [अपने निर्णयों की योजना बनाएं]:</b> प्रातः 06:00–07:30 AM",
+        "gold": "🟡 <b>सोना भाव ⚪️ चांदी भाव [{date} तक]:</b> शीघ्र अपडेट हो रहा है",
+        "weather": "🌦 <b>मौसम [दिन की योजना]:</b> सुहावनी सुबह की हवा",
+        "quote": "🌟 <b>अनमोल वचन:</b> आज शांत और सजग रहें।",
+    },
+    "te": {
+        "deity": "🪔 <b>రోజువారీ ఆశీర్వాదం:</b> ఓం నమః శివాయ",
+        "wow": "✨ <b>WoW [జ్ఞాన వాక్కులు]:</b> నేడు ప్రశాంతంగా మరియు స్పష్టమైన దృష్టితో ముందుకు సాగండి.",
+        "ausp": "⏰ <b>శుభ సమయం [మీ నిర్ణయాలను ప్రణాళిక చేయండి]:</b> ఉదయం 06:00–07:30 AM",
+        "gold": "🟡 <b>బంగారం ధర ⚪️ వెండి ధర [{date} నాటికి]:</b> త్వరలో నవీకరించబడుతుంది",
+        "weather": "🌦 <b>వాతావరణం [రోజు ప్రణాళిక]:</b> ఆహ్లాదకరమైన ఉదయపు గాలి",
+        "quote": "🌟 <b>సూక్తి:</b> నేడు ప్రశాంతంగా, ఏకాగ్రతతో ఉండండి.",
+    },
+    "kn": {
+        "deity": "🪔 <b>ದೈನಂದಿನ ಆಶೀರ್ವಾದ:</b> ಓಂ ನಮಃ ಶಿವಾಯ",
+        "wow": "✨ <b>WoW [ಜ್ಞಾನದ ಮಾತುಗಳು]:</b> ಇಂದು ಶಾಂತವಾಗಿ ಮತ್ತು ಸ್ಪಷ್ಟ ಗಮನದಿಂದ ಮುನ್ನಡೆಯಿರಿ.",
+        "ausp": "⏰ <b>ಶುಭ ಸಮಯ [ನಿಮ್ಮ ನಿರ್ಧಾರಗಳನ್ನು ಯೋಜಿಸಿ]:</b> ಬೆಳಿಗ್ಗೆ 06:00–07:30 AM",
+        "gold": "🟡 <b>ಚಿನ್ನ ದರ ⚪️ ಬೆಳ್ಳಿ ದರ [{date} ರಂತೆ]:</b> ಶೀಘ್ರದಲ್ಲೇ ನವೀಕರಿಸಲಾಗುವುದು",
+        "weather": "🌦 <b>ಹವಾಮಾನ [ದಿನದ ಯೋಜನೆ]:</b> ಆಹ್ಲಾದಕರ ಮುಂಜಾನೆಯ ಗಾಳಿ",
+        "quote": "🌟 <b>ನುಡಿಮುತ್ತು:</b> ಇಂದು ಶಾಂತವಾಗಿ ಮತ್ತು ಜಾಗರೂಕರಾಗಿರಿ.",
+    },
+    "ml": {
+        "deity": "🪔 <b>ദൈനംദിന അനുഗ്രഹം:</b> ഓം നമഃ ശിവായ",
+        "wow": "✨ <b>WoW [ജ്ഞാനവാക്കുകൾ]:</b> ഇന്ന് ശാന്തമായും വ്യക്തമായ ശ്രദ്ധയോടെയും മുന്നോട്ട് പോകുക.",
+        "ausp": "⏰ <b>ശുഭ സമയം [തീരുമാനങ്ങൾ ആസൂത്രണം ചെയ്യുക]:</b> രാവിലെ 06:00–07:30 AM",
+        "gold": "🟡 <b>സ്വർണ്ണ നിരക്ക് ⚪️ വെള്ളി നിരക്ക് [{date} പ്രകാരം]:</b> ഉടൻ അപ്‌ഡേറ്റ് ചെയ്യുന്നതാണ്",
+        "weather": "🌦 <b>കാലാവസ്ഥ [ദിവസ ആസൂത്രണം]:</b> പ്രസന്നമായ പ്രഭാത കാറ്റ്",
+        "quote": "🌟 <b>സന്ദേശം:</b> ഇന്ന് ശാന്തതയോടെയും ശ്രദ്ധയോടെയും മുന്നോട്ട് നീങ്ങുക.",
     },
 }
 
@@ -224,23 +275,20 @@ def render_message(
     L = lbl(lang)
     wow = L["wow"]
     quote = L["quote"]
-    blessing_with = L["blessing_with"]
-    gold_rate = L["gold_rate"]
-    silver_rate = L["silver_rate"]
-    auspicious = L["auspicious"]
+    defaults = LOCALIZED_FALLBACK_BLOCKS.get(lang) or LOCALIZED_FALLBACK_BLOCKS["en"]
 
-    deity_block = deity_payload.get(lang) or deity_payload.get("en") or f"🪔 <b>{blessing_with}:</b> Om Namah Shivaya"
+    deity_block = deity_payload.get(lang) or defaults["deity"]
 
-    raw_wow = rasi_payload.get(lang) or rasi_payload.get("en") or f"✨ <b>{wow}:</b> Stay steady and focused today."
+    raw_wow = rasi_payload.get(lang) or defaults["wow"]
     wow_block = raw_wow.replace("🌟 <b>Rasi Guidance:</b>", f"✨ <b>{wow}:</b>")
 
-    raw_ausp = ausp_payload.get(lang) or ausp_payload.get("en") or f"⏰ <b>{auspicious}:</b> Morning 06:00–07:30 AM"
+    raw_ausp = ausp_payload.get(lang) or defaults["ausp"]
     ausp_block = raw_ausp.replace("⏳ <b>Auspicious Timing", "⏰ <b>Auspicious Timing")
 
-    gold_block = gold_payload.get(lang) or gold_payload.get("en") or f"🟡 <b>{gold_rate} ⚪️ {silver_rate} [As of {edition_date}]</b>"
-    weather_block = weather_payload.get(lang) or weather_payload.get("en") or f"🌦 <b>{L['weather']}:</b> Pleasant morning breeze"
+    gold_block = gold_payload.get(lang) or defaults["gold"].format(date=edition_date)
+    weather_block = weather_payload.get(lang) or defaults["weather"]
 
-    raw_quote = quote_payload.get(lang) or quote_payload.get("en") or f"🌟 <b>{quote}:</b> Stay calm and mindful today."
+    raw_quote = quote_payload.get(lang) or defaults["quote"]
     quote_block = raw_quote.replace(f"✨ <b>{wow}:</b>", f"🌟 <b>{quote}:</b>").replace(
         "✨ <b>WoW [Words of Wisdom]:</b>", f"🌟 <b>{quote}:</b>"
     )
