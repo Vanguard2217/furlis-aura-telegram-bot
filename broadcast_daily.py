@@ -34,6 +34,9 @@ SHORT_DISCLAIMER = (
 
 CARD_LABELS = {
     "en": {
+        "blessing_with": "Daily Blessing With",
+        "gold_rate": "Gold Rate",
+        "silver_rate": "Silver Rate",
         "wow": "WoW [Words of Wisdom]",
         "weather": "Weather [Plan Your Day]",
         "rain_suffix": " • {pct}% rain chance",
@@ -45,11 +48,17 @@ CARD_LABELS = {
         "btn_profile": "👤 Profile",
         "btn_settings": "⚙️ Settings",
         "btn_other": "✨ Other Services",
+        "btn_12pillars": "🏛️ 12 Pillars View",
         "btn_pay": "🙏 Support / Dakshina",
         "btn_support": "💬 Help & Feedback",
+        "btn_privacy": "🔒 Privacy & Data (DPDPA)",
+        "btn_delete": "🗑️ Delete My Data (DPDPA)",
         "btn_translate": "🌐 Translate [ENG]",
     },
     "ta": {
+        "blessing_with": "தினசரி ஆசீர்வாதம் — உடன்",
+        "gold_rate": "Gold Rate / தங்கம் விலை",
+        "silver_rate": "Silver Rate / வெள்ளி விலை",
         "wow": "WoW [ஞான மொழிகள்]",
         "weather": "வானிலை [உங்கள் நாளைத் திட்டமிடுங்கள்]",
         "rain_suffix": " • {pct}% மழை வாய்ப்பு",
@@ -61,11 +70,17 @@ CARD_LABELS = {
         "btn_profile": "👤 சுயவிவரம்",
         "btn_settings": "⚙️ அமைப்புகள்",
         "btn_other": "✨ மற்ற சேவைகள்",
+        "btn_12pillars": "🏛️ 12 தூண்கள் பார்வை",
         "btn_pay": "🙏 ஆதரவு / தட்சிணை",
         "btn_support": "💬 உதவி &amp; கருத்து",
+        "btn_privacy": "🔒 தனியுரிமை &amp; தரவு (DPDPA)",
+        "btn_delete": "🗑️ என் தரவை நீக்கு (DPDPA)",
         "btn_translate": "🌐 Translate [ENG]",
     },
     "hi": {
+        "blessing_with": "दैनिक आशीर्वाद — साथ में",
+        "gold_rate": "Gold Rate / सोना भाव",
+        "silver_rate": "Silver Rate / चांदी भाव",
         "wow": "WoW [ज्ञान की बातें]",
         "weather": "मौसम [दिन की योजना]",
         "rain_suffix": " • {pct}% बारिश की संभावना",
@@ -77,11 +92,17 @@ CARD_LABELS = {
         "btn_profile": "👤 प्रोफ़ाइल",
         "btn_settings": "⚙️ सेटिंग्स",
         "btn_other": "✨ अन्य सेवाएं",
+        "btn_12pillars": "🏛️ 12 पिलर्स दृश्य",
         "btn_pay": "🙏 सहयोग / दक्षिणा",
         "btn_support": "💬 सहायता व प्रतिक्रिया",
+        "btn_privacy": "🔒 गोपनीयता व डेटा (DPDPA)",
+        "btn_delete": "🗑️ मेरा डेटा हटाएं (DPDPA)",
         "btn_translate": "🌐 Translate [ENG]",
     },
     "te": {
+        "blessing_with": "రోజువారీ ఆశీర్వాదం — తో",
+        "gold_rate": "Gold Rate / బంగారం ధర",
+        "silver_rate": "Silver Rate / వెండి ధర",
         "wow": "WoW [జ్ఞాన వాక్కులు]",
         "weather": "వాతావరణం [రోజు ప్రణాళిక]",
         "rain_suffix": " • {pct}% వర్షం అవకాశం",
@@ -93,11 +114,17 @@ CARD_LABELS = {
         "btn_profile": "👤 ప్రొఫైల్",
         "btn_settings": "⚙️ సెట్టింగ్స్",
         "btn_other": "✨ ఇతర సేవలు",
+        "btn_12pillars": "🏛️ 12 పిల్లర్స్ వీక్షణ",
         "btn_pay": "🙏 సహకారం / దక్షిణ",
         "btn_support": "💬 సహాయం &amp; అభిప్రాయం",
+        "btn_privacy": "🔒 గోప్యత &amp; డేటా (DPDPA)",
+        "btn_delete": "🗑️ నా డేటా తొలగించండి (DPDPA)",
         "btn_translate": "🌐 Translate [ENG]",
     },
     "kn": {
+        "blessing_with": "ದೈನಂದಿನ ಆಶೀರ್ವಾದ — ಜೊತೆಗೆ",
+        "gold_rate": "Gold Rate / ಚಿನ್ನ ದರ",
+        "silver_rate": "Silver Rate / ಬೆಳ್ಳಿ ದರ",
         "wow": "WoW [ಜ್ಞಾನದ ಮಾತುಗಳು]",
         "weather": "ಹವಾಮಾನ [ದಿನದ ಯೋಜನೆ]",
         "rain_suffix": " • {pct}% ಮಳೆ ಸಾಧ್ಯತೆ",
@@ -109,11 +136,17 @@ CARD_LABELS = {
         "btn_profile": "👤 ಪ್ರೊಫೈಲ್",
         "btn_settings": "⚙️ ಸೆಟ್ಟಿಂಗ್ಸ್",
         "btn_other": "✨ ಇತರೆ ಸೇವೆಗಳು",
+        "btn_12pillars": "🏛️ 12 ಪಿಲ್ಲರ್ಸ್ ವೀಕ್ಷಣೆ",
         "btn_pay": "🙏 ಸಹಾಯ / ದಕ್ಷಿಣೆ",
         "btn_support": "💬 ಬೆಂಬಲ &amp; ಪ್ರತಿಕ್ರಿಯೆ",
+        "btn_privacy": "🔒 ಗೌಪ್ಯತೆ ಮತ್ತು ಡೇಟಾ (DPDPA)",
+        "btn_delete": "🗑️ ನನ್ನ ಡೇಟಾ ಅಳಿಸಿ (DPDPA)",
         "btn_translate": "🌐 Translate [ENG]",
     },
     "ml": {
+        "blessing_with": "ദൈനംദിന അനുഗ്രഹം — ഒപ്പം",
+        "gold_rate": "Gold Rate / സ്വർണ്ണ നിരക്ക്",
+        "silver_rate": "Silver Rate / വെള്ളി നിരക്ക്",
         "wow": "WoW [ജ്ഞാനവാക്കുകൾ]",
         "weather": "കാലാവസ്ഥ [ദിവസ ആസൂത്രണം]",
         "rain_suffix": " • {pct}% മഴ സാധ്യത",
@@ -125,8 +158,11 @@ CARD_LABELS = {
         "btn_profile": "👤 പ്രൊഫൈൽ",
         "btn_settings": "⚙️ ക്രമീകരണങ്ങൾ",
         "btn_other": "✨ മറ്റ് സേവനങ്ങൾ",
+        "btn_12pillars": "🏛️ 12 പില്ലേഴ്സ് കാഴ്ച",
         "btn_pay": "🙏 സഹായം / ദക്ഷിണ",
         "btn_support": "💬 സഹായവും പ്രതികരണവും",
+        "btn_privacy": "🔒 സ്വകാര്യത &amp; ഡാറ്റ (DPDPA)",
+        "btn_delete": "🗑️ എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക (DPDPA)",
         "btn_translate": "🌐 Translate [ENG]",
     },
 }
@@ -187,11 +223,14 @@ def render_message(
 ) -> str:
     L = lbl(lang)
     wow = L["wow"]
+    blessing_with = L["blessing_with"]
+    gold_rate = L["gold_rate"]
+    silver_rate = L["silver_rate"]
 
-    deity_block = deity_payload.get(lang) or deity_payload.get("en") or "🪔 <b>Daily Blessing:</b> Om Namah Shivaya"
+    deity_block = deity_payload.get(lang) or deity_payload.get("en") or f"🪔 <b>{blessing_with}:</b> Om Namah Shivaya"
     rasi_block = rasi_payload.get(lang) or rasi_payload.get("en") or "🌟 <b>Rasi Guidance:</b> Stay steady and focused today."
     ausp_block = ausp_payload.get(lang) or ausp_payload.get("en") or "⏳ <b>Auspicious Timing:</b> Morning 06:00–07:30 AM"
-    gold_block = gold_payload.get(lang) or gold_payload.get("en") or f"🟡 Gold &amp; ⚪ Silver Rates [As of {edition_date}]"
+    gold_block = gold_payload.get(lang) or gold_payload.get("en") or f"🟡 <b>{gold_rate} &amp; ⚪ {silver_rate} [As of {edition_date}]</b>"
     weather_block = weather_payload.get(lang) or weather_payload.get("en") or f"🌦 <b>{L['weather']}:</b> Pleasant morning breeze"
     quote_block = quote_payload.get(lang) or quote_payload.get("en") or f"✨ <b>{wow}:</b> Stay calm and mindful today."
 
