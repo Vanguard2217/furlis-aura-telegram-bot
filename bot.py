@@ -123,10 +123,10 @@ WELCOME_COPY = {
     "en": {
         "greeting": "Namaskaram, <b>{name}</b> 🙏",
         "schedule": "Every morning at <b>04:30 AM IST</b>, receive one calm and divine message to start your day with <b>Ashirvad:</b>",
-        "b1": "• 🪔 {blessing_with} + 🛕 Temple &amp; Occasion Alerts",
-        "b2": "• ⏳ Auspicious Timing",
+        "b1": "• 🪔 {blessing_with} 🛕 Temple &amp; Occasion Alerts",
+        "b2": "• ⏳ Auspicious Timing [Plan Your Decisions]",
         "b3": "• ✨ {wow}",
-        "b4": "• 🟡 {gold_rate} &amp; ⚪ {silver_rate}",
+        "b4": "• 🟡 {gold_rate} ⚪️ {silver_rate}",
         "b5": "• 🌦 Weather [Plan Your Day]",
         "step1": "<b>Step 1 of 3</b> — Enter your Date of Birth (e.g., <code>15-08-1985</code>):",
         "invalid_dob": "Please enter a valid Date of Birth in <code>DD-MM-YYYY</code> format (e.g., <code>15-08-1985</code>):",
@@ -160,6 +160,7 @@ WELCOME_COPY = {
         "btn_translate": "🌐 Translate [ENG]",
         "btn_privacy": "🔒 Privacy & Data (DPDPA)",
         "btn_delete": "🗑️ Delete My Data (DPDPA)",
+        "btn_confirm_delete": "⚠️ Confirm Permanent Erasure",
         "btn_edit_name": "✏️ Edit Name",
         "btn_edit_dob": "🎂 Edit Date of Birth",
         "btn_edit_lang": "🌐 Edit Language",
@@ -175,16 +176,17 @@ WELCOME_COPY = {
             "• <b>Purpose:</b> Personalizing your daily 04:30 AM IST AURA card and support responses.\n"
             "• <b>Your Rights:</b> Edit details anytime in Profile or Settings, or erase all records permanently via <b>Delete My Data (DPDPA)</b> or /delete_data."
         ),
+        "confirm_delete_body": "⚠️ <b>Confirm Data Deletion (DPDPA 2023):</b>\nThis permanently removes your saved profile, preferences, and ratings.",
         "erased_msg": "🗑️ Your profile, preferences, and ratings have been permanently erased under DPDPA 2023. Tap /start anytime to begin again.",
         "saved_msg": "✅ Updated: <b>{val}</b>",
     },
     "ta": {
         "greeting": "நமஸ்காரம், <b>{name}</b> 🙏",
         "schedule": "தினமும் காலை <b>04:30 AM IST</b> மணிக்கு, உங்கள் நாளை அமைதியுடனும் தெய்வீக அருளுடனும் தொடங்க <b>ஆசீர்வாதத்துடன்</b> ஒரு தெய்வீகச் செய்தி:",
-        "b1": "• 🪔 {blessing_with} + 🛕 கோவில் &amp; விசேஷ அறிவிப்புகள்",
-        "b2": "• ⏳ நல்ல நேரம்",
+        "b1": "• 🪔 {blessing_with} 🛕 கோவில் &amp; விசேஷ அறிவிப்புகள்",
+        "b2": "• ⏳ நல்ல நேரம் [உங்கள் முடிவுகளைத் திட்டமிடுங்கள்]",
         "b3": "• ✨ {wow}",
-        "b4": "• 🟡 {gold_rate} &amp; ⚪ {silver_rate}",
+        "b4": "• 🟡 {gold_rate} ⚪️ {silver_rate}",
         "b5": "• 🌦 வானிலை [உங்கள் நாளைத் திட்டமிடுங்கள்]",
         "step1": "<b>படி 1 / 3</b> — உங்கள் பிறந்த தேதியை உள்ளிடவும் (உதா: <code>15-08-1985</code>):",
         "invalid_dob": "சரியான பிறந்த தேதியை <code>DD-MM-YYYY</code> வடிவில் உள்ளிடவும் (உதா: <code>15-08-1985</code>):",
@@ -218,6 +220,7 @@ WELCOME_COPY = {
         "btn_translate": "🌐 Translate [ENG]",
         "btn_privacy": "🔒 தனியுரிமை &amp; தரவு (DPDPA)",
         "btn_delete": "🗑️ என் தரவை நீக்கு (DPDPA)",
+        "btn_confirm_delete": "⚠️ நிரந்தர நீக்கத்தை உறுதி செய்க",
         "btn_edit_name": "✏️ பெயரை மாற்றுக",
         "btn_edit_dob": "🎂 பிறந்த தேதியை மாற்றுக",
         "btn_edit_lang": "🌐 மொழியை மாற்றுக",
@@ -233,16 +236,17 @@ WELCOME_COPY = {
             "• <b>நோக்கம்:</b> காலை 04:30 AM IST AURA செய்தியைத் தனிப்பயனாக்கவும் உதவி வழங்கவும்.\n"
             "• <b>உங்கள் உரிமை:</b> சுயவிவரம் அல்லது அமைப்புகளில் விவரங்களை மாற்றலாம்; <b>என் தரவை நீக்கு (DPDPA)</b> அல்லது /delete_data மூலம் நிரந்தரமாக நீக்கலாம்."
         ),
+        "confirm_delete_body": "⚠️ <b>தரவு நீக்க உறுதி (DPDPA 2023):</b>\nஉங்கள் சுயவிவரம், விருப்பங்கள் மற்றும் மதிப்பீடுகள் நிரந்தரமாக நீக்கப்படும்.",
         "erased_msg": "🗑️ DPDPA 2023 விதிகளின்படி உங்கள் விவரங்கள் நிரந்தரமாக நீக்கப்பட்டன. மீண்டும் தொடங்க /start தட்டவும்.",
         "saved_msg": "✅ புதுப்பிக்கப்பட்டது: <b>{val}</b>",
     },
     "hi": {
         "greeting": "नमस्कार, <b>{name}</b> 🙏",
         "schedule": "हर सुबह <b>04:30 AM IST</b> पर, अपने दिन की शांत और दिव्य शुरुआत के लिए <b>आशीर्वाद</b> के साथ एक पावन संदेश प्राप्त करें:",
-        "b1": "• 🪔 {blessing_with} + 🛕 मंदिर व विशेष पर्व अलर्ट",
-        "b2": "• ⏳ शुभ समय",
+        "b1": "• 🪔 {blessing_with} 🛕 मंदिर व विशेष पर्व अलर्ट",
+        "b2": "• ⏳ शुभ समय [अपने निर्णयों की योजना बनाएं]",
         "b3": "• ✨ {wow}",
-        "b4": "• 🟡 {gold_rate} व ⚪ {silver_rate}",
+        "b4": "• 🟡 {gold_rate} ⚪️ {silver_rate}",
         "b5": "• 🌦 मौसम [दिन की योजना]",
         "step1": "<b>चरण 1 / 3</b> — अपनी जन्म तिथि दर्ज करें (उदा: <code>15-08-1985</code>):",
         "invalid_dob": "कृपया <code>DD-MM-YYYY</code> प्रारूप में मान्य जन्म तिथि दर्ज करें (उदा: <code>15-08-1985</code>):",
@@ -276,6 +280,7 @@ WELCOME_COPY = {
         "btn_translate": "🌐 Translate [ENG]",
         "btn_privacy": "🔒 गोपनीयता व डेटा (DPDPA)",
         "btn_delete": "🗑️ मेरा डेटा हटाएं (DPDPA)",
+        "btn_confirm_delete": "⚠️ स्थायी रूप से हटाने की पुष्टि करें",
         "btn_edit_name": "✏️ नाम बदलें",
         "btn_edit_dob": "🎂 जन्म तिथि बदलें",
         "btn_edit_lang": "🌐 भाषा बदलें",
@@ -291,16 +296,17 @@ WELCOME_COPY = {
             "• <b>उद्देश्य:</b> प्रातः 04:30 AM IST AURA संदेश को व्यक्तिगत बनाने और सहायता के लिए।\n"
             "• <b>आपके अधिकार:</b> प्रोफ़ाइल या सेटिंग्स में विवरण बदलें या <b>मेरा डेटा हटाएं (DPDPA)</b> / /delete_data से स्थायी रूप से हटाएं।"
         ),
+        "confirm_delete_body": "⚠️ <b>डेटा हटाने की पुष्टि (DPDPA 2023):</b>\nआपकी प्रोफ़ाइल, प्राथमिकताएं और रेटिंग स्थायी रूप से हटा दी जाएंगी।",
         "erased_msg": "🗑️ DPDPA 2023 के तहत आपका डेटा स्थायी रूप से हटा दिया गया है। दोबारा शुरू करने के लिए /start भेजें।",
         "saved_msg": "✅ सहेजा गया: <b>{val}</b>",
     },
     "te": {
         "greeting": "నమస్కారం, <b>{name}</b> 🙏",
         "schedule": "ప్రతిరోజూ ఉదయం <b>04:30 AM IST</b> గంటలకు, మీ రోజును ప్రశాంతంగా మరియు దైవికంగా ప్రారంభించడానికి <b>ఆశీర్వాదంతో</b> ఒక దివ్య సందేశం:",
-        "b1": "• 🪔 {blessing_with} + 🛕 ఆలయ &amp; ప్రత్యేక విశేషాలు",
-        "b2": "• ⏳ శుభ సమయం",
+        "b1": "• 🪔 {blessing_with} 🛕 ఆలయ &amp; ప్రత్యేక విశేషాలు",
+        "b2": "• ⏳ శుభ సమయం [మీ నిర్ణయాలను ప్రణాళిక చేయండి]",
         "b3": "• ✨ {wow}",
-        "b4": "• 🟡 {gold_rate} &amp; ⚪ {silver_rate}",
+        "b4": "• 🟡 {gold_rate} ⚪️ {silver_rate}",
         "b5": "• 🌦 వాతావరణం [రోజు ప్రణాళిక]",
         "step1": "<b>దశ 1 / 3</b> — మీ పుట్టిన తేదీని నమోదు చేయండి (ఉదా: <code>15-08-1985</code>):",
         "invalid_dob": "దయచేసి <code>DD-MM-YYYY</code> రూపంలో సరైన పుట్టిన తేదీని నమోదు చేయండి (ఉదా: <code>15-08-1985</code>):",
@@ -334,6 +340,7 @@ WELCOME_COPY = {
         "btn_translate": "🌐 Translate [ENG]",
         "btn_privacy": "🔒 గోప్యత &amp; డేటా (DPDPA)",
         "btn_delete": "🗑️ నా డేటా తొలగించండి (DPDPA)",
+        "btn_confirm_delete": "⚠️ శాశ్వత తొలగింపును నిర్ధారించండి",
         "btn_edit_name": "✏️ పేరు మార్చండి",
         "btn_edit_dob": "🎂 పుట్టిన తేదీ మార్చండి",
         "btn_edit_lang": "🌐 భాష మార్చండి",
@@ -349,16 +356,17 @@ WELCOME_COPY = {
             "• <b>ఉద్దేశం:</b> ఉదయం 04:30 AM IST AURA సందేశాన్ని వ్యక్తిగతీకరించడానికి మరియు సహాయం కోసం.\n"
             "• <b>మీ హక్కులు:</b> ప్రొఫైల్ లేదా సెట్టింగ్స్‌లో మార్చవచ్చు లేదా <b>నా డేటా తొలగించండి (DPDPA)</b> / /delete_data ద్వారా శాశ్వతంగా తొలగించవచ్చు."
         ),
+        "confirm_delete_body": "⚠️ <b>డేటా తొలగింపు నిర్ధారణ (DPDPA 2023):</b>\nమీ ప్రొఫైల్, ప్రాధాన్యతలు మరియు రేటింగ్‌లు శాశ్వతంగా తొలగించబడతాయి.",
         "erased_msg": "🗑️ DPDPA 2023 ప్రకారం మీ డేటా శాశ్వతంగా తొలగించబడింది. మళ్లీ ప్రారంభించడానికి /start నొక్కండి.",
         "saved_msg": "✅ నవీకరించబడింది: <b>{val}</b>",
     },
     "kn": {
         "greeting": "ನಮಸ್ಕಾರ, <b>{name}</b> 🙏",
         "schedule": "ಪ್ರತಿದಿನ ಬೆಳಿಗ್ಗೆ <b>04:30 AM IST</b> ಗಂಟೆಗೆ, ನಿಮ್ಮ ದಿನವನ್ನು ಶಾಂತವಾಗಿ ಮತ್ತು ದೈವಿಕವಾಗಿ ಆರಂಭಿಸಲು <b>ಆಶೀರ್ವಾದದೊಂದಿಗೆ</b> ಒಂದು ದಿವ್ಯ ಸಂದೇಶ:",
-        "b1": "• 🪔 {blessing_with} + 🛕 ದೇವಾಲಯ &amp; ವಿಶೇಷ ಮಾಹಿತಿ",
-        "b2": "• ⏳ ಶುಭ ಸಮಯ",
+        "b1": "• 🪔 {blessing_with} 🛕 ದೇವಾಲಯ &amp; ವಿಶೇಷ ಮಾಹಿತಿ",
+        "b2": "• ⏳ ಶುಭ ಸಮಯ [ನಿಮ್ಮ ನಿರ್ಧಾರಗಳನ್ನು ಯೋಜಿಸಿ]",
         "b3": "• ✨ {wow}",
-        "b4": "• 🟡 {gold_rate} ಮತ್ತು ⚪ {silver_rate}",
+        "b4": "• 🟡 {gold_rate} ⚪️ {silver_rate}",
         "b5": "• 🌦 ಹವಾಮಾನ [ದಿನದ ಯೋಜನೆ]",
         "step1": "<b>ಹಂತ 1 / 3</b> — ನಿಮ್ಮ ಜನ್ಮ ದಿನಾಂಕವನ್ನು ನಮೂದಿಸಿ (ಉದಾ: <code>15-08-1985</code>):",
         "invalid_dob": "ದಯವಿಟ್ಟು <code>DD-MM-YYYY</code> ನಮೂನೆಯಲ್ಲಿ ಸರಿಯಾದ ಜನ್ಮ ದಿನಾಂಕವನ್ನು ನಮೂದಿಸಿ (ಉದಾ: <code>15-08-1985</code>):",
@@ -392,6 +400,7 @@ WELCOME_COPY = {
         "btn_translate": "🌐 Translate [ENG]",
         "btn_privacy": "🔒 ಗೌಪ್ಯತೆ ಮತ್ತು ಡೇಟಾ (DPDPA)",
         "btn_delete": "🗑️ ನನ್ನ ಡೇಟಾ ಅಳಿಸಿ (DPDPA)",
+        "btn_confirm_delete": "⚠️ ಶಾಶ್ವತ ಅಳಿಸುವಿಕೆಯನ್ನು ದೃಢೀಕರಿಸಿ",
         "btn_edit_name": "✏️ ಹೆಸರು ಬದಲಿಸಿ",
         "btn_edit_dob": "🎂 ಜನ್ಮ ದಿನಾಂಕ ಬದಲಿಸಿ",
         "btn_edit_lang": "🌐 ಭಾಷೆ ಬದಲಿಸಿ",
@@ -407,16 +416,17 @@ WELCOME_COPY = {
             "• <b>ಉದ್ದೇಶ:</b> ಬೆಳಿಗ್ಗೆ 04:30 AM IST AURA ಕಾರ್ಡ್ ವೈಯಕ್ತೀಕರಣ ಮತ್ತು ಬೆಂಬಲಕ್ಕಾಗಿ.\n"
             "• <b>ನಿಮ್ಮ ಹಕ್ಕುಗಳು:</b> ಪ್ರೊಫೈಲ್ ಅಥವಾ ಸೆಟ್ಟಿಂಗ್ಸ್‌ನಲ್ಲಿ ಬದಲಿಸಿ ಅಥವಾ <b>ನನ್ನ ಡೇಟಾ ಅಳಿಸಿ (DPDPA)</b> / /delete_data ಮೂಲಕ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಿ."
         ),
+        "confirm_delete_body": "⚠️ <b>ಡೇಟಾ ಅಳಿಸುವಿಕೆ ದೃಢೀಕರಣ (DPDPA 2023):</b>\nನಿಮ್ಮ ಪ್ರೊಫೈಲ್, ಆದ್ಯತೆಗಳು ಮತ್ತು ರೇಟಿಂಗ್‌ಗಳನ್ನು ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಲಾಗುತ್ತದೆ.",
         "erased_msg": "🗑️ DPDPA 2023 ಪ್ರಕಾರ ನಿಮ್ಮ ಡೇಟಾ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಲಾಗಿದೆ. ಮತ್ತೆ ಆರಂಭಿಸಲು /start ಒತ್ತಿರಿ.",
         "saved_msg": "✅ ಉಳಿಸಲಾಗಿದೆ: <b>{val}</b>",
     },
     "ml": {
         "greeting": "നമസ്കാരം, <b>{name}</b> 🙏",
         "schedule": "എല്ലാ ദിവസവും രാവിലെ <b>04:30 AM IST</b>-ന്, നിങ്ങളുടെ ദിവസം ശാന്തമായും ദൈവികമായും ആരംഭിക്കാൻ <b>ആശീർവാദത്തോടെ</b> ഒരു ദിവ്യ സന്ദേശം:",
-        "b1": "• 🪔 {blessing_with} + 🛕 ക്ഷേത്ര &amp; വിശേഷ അറിയിപ്പുകൾ",
-        "b2": "• ⏳ ശുഭ സമയം",
+        "b1": "• 🪔 {blessing_with} 🛕 ക്ഷേത്ര &amp; വിശേഷ അറിയിപ്പുകൾ",
+        "b2": "• ⏳ ശുഭ സമയം [തീരുമാനങ്ങൾ ആസൂത്രണം ചെയ്യുക]",
         "b3": "• ✨ {wow}",
-        "b4": "• 🟡 {gold_rate} &amp; ⚪ {silver_rate}",
+        "b4": "• 🟡 {gold_rate} ⚪️ {silver_rate}",
         "b5": "• 🌦 കാലാവസ്ഥ [ദിവസ ആസൂത്രണം]",
         "step1": "<b>ഘട്ടം 1 / 3</b> — നിങ്ങളുടെ ജനനത്തീയതി നൽകുക (ഉദാ: <code>15-08-1985</code>):",
         "invalid_dob": "ദയവായി <code>DD-MM-YYYY</code> മാതൃകയിൽ ശരിയായ ജനനത്തീയതി നൽകുക (ഉദാ: <code>15-08-1985</code>):",
@@ -450,6 +460,7 @@ WELCOME_COPY = {
         "btn_translate": "🌐 Translate [ENG]",
         "btn_privacy": "🔒 സ്വകാര്യത &amp; ഡാറ്റ (DPDPA)",
         "btn_delete": "🗑️ എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക (DPDPA)",
+        "btn_confirm_delete": "⚠️ ശാശ്വത നീക്കം സ്ഥിരീകരിക്കുക",
         "btn_edit_name": "✏️ പേര് മാറ്റുക",
         "btn_edit_dob": "🎂 ജനനത്തീയതി മാറ്റുക",
         "btn_edit_lang": "🌐 ഭാഷ മാറ്റുക",
@@ -465,6 +476,7 @@ WELCOME_COPY = {
             "• <b>ഉദ്ദേശ്യം:</b> രാവിലെ 04:30 AM IST AURA കാർഡ് വ്യക്തിഗതമാക്കുന്നതിനും സഹായത്തിനും.\n"
             "• <b>നിങ്ങളുടെ അവകാശങ്ങൾ:</b> പ്രൊഫൈൽ അല്ലെങ്കിൽ ക്രമീകരണങ്ങളിൽ മാറ്റാം അല്ലെങ്കിൽ <b>എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക (DPDPA)</b> / /delete_data വഴി പൂർണ്ണമായി നീക്കം ചെയ്യാം."
         ),
+        "confirm_delete_body": "⚠️ <b>ഡാറ്റ നീക്കം സ്ഥിരീകരണം (DPDPA 2023):</b>\nനിങ്ങളുടെ പ്രൊഫൈൽ, മുൻഗണനകൾ, റേറ്റിംഗുകൾ എന്നിവ ശാശ്വതമായി നീക്കം ചെയ്യപ്പെടും.",
         "erased_msg": "🗑️ DPDPA 2023 പ്രകാരം നിങ്ങളുടെ ഡാറ്റ പൂർണ്ണമായി നീക്കം ചെയ്തു. വീണ്ടും തുടങ്ങാൻ /start അമർത്തുക.",
         "saved_msg": "✅ അപ്ഡേറ്റ് ചെയ്തു: <b>{val}</b>",
     },
@@ -507,7 +519,7 @@ def get_rasi_display(rasi_code: Optional[str], lang: str = "en") -> str:
 # ---------------------------------------------------------------------------
 async def get_db_pool() -> asyncpg.Pool:
     global DB_POOL
-    if DB_POOL is None:
+    if DB_POOL is None or DB_POOL._closed:
         DB_POOL = await asyncpg.create_pool(dsn=DATABASE_URL, min_size=1, max_size=5)
     return DB_POOL
 
@@ -727,16 +739,24 @@ async def safe_edit_or_reply(
     query = update.callback_query
     if query and query.message:
         msg = query.message
-        has_media = bool(getattr(msg, "photo", None)) or bool(getattr(msg, "video", None)) or bool(getattr(msg, "animation", None))
+        has_media = (
+            bool(getattr(msg, "photo", None))
+            or bool(getattr(msg, "video", None))
+            or bool(getattr(msg, "animation", None))
+        )
         try:
             if has_media:
-                await msg.delete()
-                await context.bot.send_message(
+                try:
+                    await msg.delete()
+                except Exception:
+                    pass
+                sent = await context.bot.send_message(
                     chat_id=msg.chat_id,
                     text=text,
                     parse_mode=ParseMode.HTML,
                     reply_markup=reply_markup,
                 )
+                track_onboarding_msg(context, sent.message_id)
             else:
                 await query.edit_message_text(
                     text=text,
@@ -748,12 +768,13 @@ async def safe_edit_or_reply(
             logger.debug("safe_edit_or_reply fallback to send_message: %s", exc)
 
     if update.effective_chat:
-        await context.bot.send_message(
+        sent = await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=text,
             parse_mode=ParseMode.HTML,
             reply_markup=reply_markup,
         )
+        track_onboarding_msg(context, sent.message_id)
 
 
 # ---------------------------------------------------------------------------
@@ -884,6 +905,8 @@ async def send_welcome_video_top(update: Update, context: ContextTypes.DEFAULT_T
                 width=WELCOME_VIDEO_WIDTH,
                 height=WELCOME_VIDEO_HEIGHT,
                 supports_streaming=True,
+                read_timeout=90,
+                write_timeout=90,
             )
             track_onboarding_msg(context, vid.message_id)
             return
@@ -895,16 +918,19 @@ async def send_welcome_video_top(update: Update, context: ContextTypes.DEFAULT_T
                     width=WELCOME_VIDEO_WIDTH,
                     height=WELCOME_VIDEO_HEIGHT,
                     supports_streaming=True,
+                    read_timeout=120,
+                    write_timeout=120,
                 )
             track_onboarding_msg(context, vid.message_id)
             if vid.video and vid.video.file_id:
                 CACHED_WELCOME_VIDEO_ID = vid.video.file_id
+                logger.info("Cached welcome video file_id for fast future sends.")
     except Exception as exc:
         logger.warning("Welcome video skipped: %s", exc)
 
 
 # ---------------------------------------------------------------------------
-# Onboarding Handlers
+# Onboarding Handlers (With Stage Status Feedback During Video/Startup)
 # ---------------------------------------------------------------------------
 async def start_onboarding(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_chat.id
@@ -914,7 +940,21 @@ async def start_onboarding(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if update.message:
         track_onboarding_msg(context, update.message.message_id)
 
+    status_msg = await update.effective_message.reply_text(
+        f"{CARD_HEADER}⏳ <b>Step 1/2:</b> Warming up morning grace &amp; welcome video…",
+        parse_mode=ParseMode.HTML,
+    )
+    track_onboarding_msg(context, status_msg.message_id)
+
     await send_welcome_video_top(update, context)
+
+    try:
+        await status_msg.edit_text(
+            f"{CARD_HEADER}✨ <b>Step 2/2:</b> Preparing language choices…",
+            parse_mode=ParseMode.HTML,
+        )
+    except Exception:
+        pass
 
     sent = await update.effective_message.reply_text(
         build_language_prompt_text(),
@@ -922,6 +962,12 @@ async def start_onboarding(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         reply_markup=build_language_keyboard("lang"),
     )
     track_onboarding_msg(context, sent.message_id)
+
+    try:
+        await status_msg.delete()
+    except Exception:
+        pass
+
     return LANG
 
 
@@ -1120,6 +1166,8 @@ async def open_settings_panel(update: Update, context: ContextTypes.DEFAULT_TYPE
     lang, sub = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
 
+    name_val = (sub["first_name"] if sub and sub["first_name"] else None) or query.from_user.first_name or "Friend"
+    dob_val = (sub["dob"] if sub and sub["dob"] else None) or context.user_data.get("dob") or "Not set"
     lang_label = LANGUAGES.get(lang, "English")
     loc_val = (
         (sub["locality"] if sub and sub["locality"] else None)
@@ -1129,13 +1177,17 @@ async def open_settings_panel(update: Update, context: ContextTypes.DEFAULT_TYPE
     )
     rasi_code = (sub["rasi"] if sub and sub["rasi"] else None) or "mesham"
     rasi_display = get_rasi_display(rasi_code, lang)
+    pillars_status = "ON" if context.user_data.get("12pillars_view", False) else "OFF"
 
     text = (
         f"{CARD_HEADER}"
         f"{c['settings_title']}\n\n"
+        f"• <b>{c['lbl_name']}:</b> {name_val}\n"
+        f"• <b>{c['lbl_dob']}:</b> {dob_val}\n"
         f"• <b>{c['lbl_lang']}:</b> {lang_label}\n"
         f"• <b>{c['lbl_loc']}:</b> {loc_val}\n"
-        f"• <b>{c['lbl_rasi']}:</b> {rasi_display}"
+        f"• <b>{c['lbl_rasi']}:</b> {rasi_display}\n"
+        f"• <b>12 Pillars Mode:</b> {pillars_status}"
     )
     kb = InlineKeyboardMarkup(
         [
@@ -1145,10 +1197,18 @@ async def open_settings_panel(update: Update, context: ContextTypes.DEFAULT_TYPE
             ],
             [
                 InlineKeyboardButton(c["btn_edit_rasi"], callback_data="editfield:rasi"),
-                InlineKeyboardButton(c["btn_profile"], callback_data="panel:profile"),
+                InlineKeyboardButton(c["btn_edit_name"], callback_data="editfield:first_name"),
+            ],
+            [
+                InlineKeyboardButton(c["btn_edit_dob"], callback_data="editfield:dob"),
+                InlineKeyboardButton(f"{c['btn_12pillars']} ({pillars_status})", callback_data="menu:12pillars_toggle"),
             ],
             [
                 InlineKeyboardButton(c["btn_privacy"], callback_data="panel:dpdpa"),
+                InlineKeyboardButton(c["btn_delete"], callback_data="action:confirm_delete"),
+            ],
+            [
+                InlineKeyboardButton(c["btn_profile"], callback_data="panel:profile"),
                 InlineKeyboardButton(c["back_card"], callback_data="back:card"),
             ],
         ]
@@ -1177,7 +1237,7 @@ async def open_other_services_panel(update: Update, context: ContextTypes.DEFAUL
 
 async def toggle_12pillars_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     context.user_data["12pillars_view"] = not bool(context.user_data.get("12pillars_view", False))
-    await open_other_services_panel(update, context)
+    await open_settings_panel(update, context)
 
 
 async def open_dpdpa_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1190,11 +1250,27 @@ async def open_dpdpa_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     text = f"{CARD_HEADER}{c['dpdpa_title']}\n\n{c['dpdpa_body']}"
     kb = InlineKeyboardMarkup(
         [
-            [InlineKeyboardButton(c["btn_delete"], callback_data="action:delete_data")],
+            [InlineKeyboardButton(c["btn_delete"], callback_data="action:confirm_delete")],
             [InlineKeyboardButton(c["back_settings"], callback_data="back:settings")],
         ]
     )
     await safe_edit_or_reply(update, context, text, reply_markup=kb)
+
+
+async def confirm_delete_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+    telegram_id = query.from_user.id
+    lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
+    c = copy_for(lang)
+
+    kb = InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton(c["btn_confirm_delete"], callback_data="action:delete_data")],
+            [InlineKeyboardButton(c["back_settings"], callback_data="back:settings")],
+        ]
+    )
+    await safe_edit_or_reply(update, context, f"{CARD_HEADER}{c['confirm_delete_body']}", reply_markup=kb)
 
 
 async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -1417,10 +1493,10 @@ def _build_card_message_from_cache(
         cache.get(("RASI", rasi)) or {}
     ).get("en", "🌟 <b>Rasi Guidance:</b> Stay steady and focused today.")
     ausp_block = (cache.get(("AUSPICIOUS", city)) or cache.get(("AUSPICIOUS", "chennai")) or {}).get(
-        lang, "⏳ <b>Auspicious Timing:</b> Morning 06:00–07:30 AM"
+        lang, "⏳ <b>Auspicious Timing [Plan Your Decisions]:</b> Morning 06:00–07:30 AM"
     )
     gold_block = (cache.get(("GOLD_INR", "INDIA")) or {}).get(
-        lang, f"🟡 <b>{gold_rate} &amp; ⚪ {silver_rate} [As of {today_ist.strftime('%d %b %Y')}]:</b> Updating shortly"
+        lang, f"🟡 <b>{gold_rate} ⚪️ {silver_rate} [As of {today_ist.strftime('%d %b %Y')}]:</b> Updating shortly"
     )
     weather_block = (cache.get(("WEATHER", city)) or cache.get(("WEATHER", "chennai")) or {}).get(
         lang, "🌦 <b>Weather [Plan Your Day]:</b> Pleasant morning breeze"
@@ -1452,6 +1528,8 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
     telegram_id = update.effective_user.id
     today_ist = datetime.now(IST).date()
 
+    sub = None
+    rows = []
     try:
         pool = await get_db_pool()
         async with pool.acquire() as conn:
@@ -1464,27 +1542,22 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
                 rows = await conn.fetch(
                     "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache ORDER BY edition_date DESC LIMIT 30;"
                 )
-
-        lang = (sub["preferred_language"] if sub and sub["preferred_language"] else None) or context.user_data.get("lang") or "en"
-        rasi = ((sub["rasi"] if sub and sub["rasi"] else None) or "mesham").lower()
-        city = ((sub["city"] if sub and sub["city"] else None) or "chennai").lower()
-
-        cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
-        message_text = _build_card_message_from_cache(cache, lang, rasi, city, today_ist)
-
-        await safe_edit_or_reply(
-            update,
-            context,
-            message_text,
-            reply_markup=build_daily_action_keyboard(telegram_id, lang, str(today_ist)),
-        )
     except Exception as exc:
-        logger.exception("Error in send_sample_card_callback: %s", exc)
-        await safe_edit_or_reply(
-            update,
-            context,
-            f"{CARD_HEADER}⚠️ We hit a temporary snag generating today's card. Please try again in a moment.",
-        )
+        logger.warning("Cache/DB lookup fallback in send_sample_card_callback: %s", exc)
+
+    lang = (sub["preferred_language"] if sub and sub["preferred_language"] else None) or context.user_data.get("lang") or "en"
+    rasi = ((sub["rasi"] if sub and sub["rasi"] else None) or "mesham").lower()
+    city = ((sub["city"] if sub and sub["city"] else None) or "chennai").lower()
+
+    cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
+    message_text = _build_card_message_from_cache(cache, lang, rasi, city, today_ist)
+
+    await safe_edit_or_reply(
+        update,
+        context,
+        message_text,
+        reply_markup=build_daily_action_keyboard(telegram_id, lang, str(today_ist)),
+    )
 
 
 async def rating_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1518,13 +1591,18 @@ async def translate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
     edition_date = date.fromisoformat(edition_date_str)
     telegram_id = update.effective_user.id
 
-    pool = await get_db_pool()
-    async with pool.acquire() as conn:
-        sub = await conn.fetchrow("SELECT * FROM subscribers WHERE telegram_id = $1;", telegram_id)
-        rows = await conn.fetch(
-            "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache WHERE edition_date = $1;",
-            edition_date,
-        )
+    sub = None
+    rows = []
+    try:
+        pool = await get_db_pool()
+        async with pool.acquire() as conn:
+            sub = await conn.fetchrow("SELECT * FROM subscribers WHERE telegram_id = $1;", telegram_id)
+            rows = await conn.fetch(
+                "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache WHERE edition_date = $1;",
+                edition_date,
+            )
+    except Exception as exc:
+        logger.warning("Translate lookup fallback: %s", exc)
 
     rasi = ((sub["rasi"] if sub and sub["rasi"] else None) or "mesham").lower()
     city = ((sub["city"] if sub and sub["city"] else None) or "chennai").lower()
@@ -1537,11 +1615,15 @@ async def translate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def delete_data_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     telegram_id = update.effective_user.id
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
-    pool = await get_db_pool()
-    async with pool.acquire() as conn:
-        await conn.execute("DELETE FROM subscribers WHERE telegram_id = $1;", telegram_id)
-        await conn.execute("DELETE FROM message_ratings WHERE telegram_id = $1;", telegram_id)
+    try:
+        pool = await get_db_pool()
+        async with pool.acquire() as conn:
+            await conn.execute("DELETE FROM subscribers WHERE telegram_id = $1;", telegram_id)
+            await conn.execute("DELETE FROM message_ratings WHERE telegram_id = $1;", telegram_id)
+    except Exception as exc:
+        logger.warning("Delete data command DB error: %s", exc)
 
+    context.user_data.clear()
     c = copy_for(lang)
     await update.message.reply_text(f"{CARD_HEADER}{c['erased_msg']}", parse_mode=ParseMode.HTML)
 
@@ -1551,11 +1633,15 @@ async def delete_data_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     await query.answer()
     telegram_id = query.from_user.id
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
-    pool = await get_db_pool()
-    async with pool.acquire() as conn:
-        await conn.execute("DELETE FROM subscribers WHERE telegram_id = $1;", telegram_id)
-        await conn.execute("DELETE FROM message_ratings WHERE telegram_id = $1;", telegram_id)
+    try:
+        pool = await get_db_pool()
+        async with pool.acquire() as conn:
+            await conn.execute("DELETE FROM subscribers WHERE telegram_id = $1;", telegram_id)
+            await conn.execute("DELETE FROM message_ratings WHERE telegram_id = $1;", telegram_id)
+    except Exception as exc:
+        logger.warning("Delete data callback DB error: %s", exc)
 
+    context.user_data.clear()
     c = copy_for(lang)
     await safe_edit_or_reply(update, context, f"{CARD_HEADER}{c['erased_msg']}")
 
@@ -1575,8 +1661,8 @@ def build_application() -> Application:
     app = (
         ApplicationBuilder()
         .token(BOT_TOKEN)
-        .read_timeout(60)
-        .write_timeout(60)
+        .read_timeout(90)
+        .write_timeout(90)
         .connect_timeout(30)
         .post_init(post_init)
         .build()
@@ -1587,6 +1673,7 @@ def build_application() -> Application:
     app.add_handler(CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"))
     app.add_handler(CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"))
     app.add_handler(CallbackQueryHandler(open_dpdpa_panel, pattern=r"^panel:dpdpa$"))
+    app.add_handler(CallbackQueryHandler(confirm_delete_callback, pattern=r"^action:confirm_delete$"))
     app.add_handler(CallbackQueryHandler(start_edit_field, pattern=r"^editfield:"))
     app.add_handler(CallbackQueryHandler(finish_edit_callback, pattern=r"^editval_(lang|rasi):"))
     app.add_handler(CallbackQueryHandler(delete_data_callback, pattern=r"^action:delete_data$"))
@@ -1621,6 +1708,7 @@ def build_application() -> Application:
                 CallbackQueryHandler(open_settings_panel, pattern=r"^panel:settings$"),
                 CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"),
                 CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"),
+                CallbackQueryHandler(confirm_delete_callback, pattern=r"^action:confirm_delete$"),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, finish_edit_text),
             ],
         },
@@ -1632,6 +1720,7 @@ def build_application() -> Application:
             CallbackQueryHandler(open_settings_panel, pattern=r"^panel:settings$"),
             CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"),
             CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"),
+            CallbackQueryHandler(confirm_delete_callback, pattern=r"^action:confirm_delete$"),
         ],
         per_message=False,
     )
