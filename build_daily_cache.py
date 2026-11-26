@@ -159,11 +159,11 @@ BUILT_IN_SCRIPTURE_QUOTES: List[Dict[str, str]] = [
 
 QUOTE_HEADERS = {
     "en": "🌟 <b>Quote:</b>",
-    "ta": "🌟 <b>Quote / பொன்மொழி:</b>",
-    "hi": "🌟 <b>Quote / अनमोल वचन:</b>",
-    "te": "🌟 <b>Quote / సూక్తి:</b>",
-    "kn": "🌟 <b>Quote / ನುಡಿಮುತ್ತು:</b>",
-    "ml": "🌟 <b>Quote / സന്ദേശം:</b>",
+    "ta": "🌟 <b>பொன்மொழி:</b>",
+    "hi": "🌟 <b>अनमोल वचन:</b>",
+    "te": "🌟 <b>సూక్తి:</b>",
+    "kn": "🌟 <b>ನುಡಿಮುತ್ತು:</b>",
+    "ml": "🌟 <b>സന്ദേശം:</b>",
 }
 
 WOW_HEADERS = {
@@ -173,6 +173,60 @@ WOW_HEADERS = {
     "te": "✨ <b>WoW [జ్ఞాన వాక్కులు]:</b>",
     "kn": "✨ <b>WoW [ಜ್ಞಾನದ ಮಾತುಗಳು]:</b>",
     "ml": "✨ <b>WoW [ജ്ഞാനവാക്കുകൾ]:</b>",
+}
+
+RASI_DISPLAY_NAMES: Dict[str, Dict[str, str]] = {
+    "mesham": {"en": "Mesham", "ta": "மேஷம்", "hi": "मेष", "te": "మేషం", "kn": "ಮೇಷ", "ml": "മേടം"},
+    "rishabam": {"en": "Rishabam", "ta": "ரிஷபம்", "hi": "वृषभ", "te": "వృషభం", "kn": "ವೃಷಭ", "ml": "ഇടവം"},
+    "mithunam": {"en": "Mithunam", "ta": "மிதுனம்", "hi": "मिथुन", "te": "మిథునం", "kn": "ಮಿಥುನ", "ml": "മിഥുനം"},
+    "kadagam": {"en": "Kadagam", "ta": "கடகம்", "hi": "कर्क", "te": "కర్కాటకం", "kn": "ಕಟಕ", "ml": "കർക്കിടകം"},
+    "simmam": {"en": "Simmam", "ta": "சிம்மம்", "hi": "सिंह", "te": "సింహం", "kn": "ಸಿಂಹ", "ml": "ചിങ്ങം"},
+    "kanni": {"en": "Kanni", "ta": "கன்னி", "hi": "कन्या", "te": "కన్య", "kn": "ಕನ್ಯಾ", "ml": "കന്നി"},
+    "thulam": {"en": "Thulam", "ta": "துலாம்", "hi": "तुला", "te": "తుల", "kn": "ತುಲಾ", "ml": "തുലാം"},
+    "vrischikam": {"en": "Vrischikam", "ta": "விருச்சிகம்", "hi": "वृश्चिक", "te": "వృశ్చికం", "kn": "ವೃಶ್ಚಿಕ", "ml": "വൃശ്ചികം"},
+    "dhanusu": {"en": "Dhanusu", "ta": "தனுசு", "hi": "धनु", "te": "ధనుస్సు", "kn": "ಧನುಸ್ಸು", "ml": "ധനു"},
+    "magaram": {"en": "Magaram", "ta": "மகரம்", "hi": "मकर", "te": "మకరం", "kn": "ಮಕರ", "ml": "മകരം"},
+    "kumbam": {"en": "Kumbam", "ta": "கும்பம்", "hi": "कुंभ", "te": "కుంభం", "kn": "ಕುಂಭ", "ml": "കുംഭം"},
+    "meenam": {"en": "Meenam", "ta": "மீனம்", "hi": "मीन", "te": "మీనం", "kn": "ಮೀನ", "ml": "മീനം"},
+}
+
+WOW_LOCALIZED_BODIES: Dict[str, str] = {
+    "en": (
+        "• <b>{rasi} — 3 Positives Today:</b>\n"
+        "1. Clear focus on key priorities\n"
+        "2. Supportive conversations with family &amp; peers\n"
+        "3. Steady progress through patient effort"
+    ),
+    "ta": (
+        "• <b>{rasi} — இன்றைய 3 நற்பலன்கள்:</b>\n"
+        "1. முக்கியப் பணிகளில் தெளிவான கவனம்\n"
+        "2. குடும்பத்தினர் மற்றும் சக ஊழியர்களின் ஆதரவு\n"
+        "3. பொறுமையான முயற்சியால் நிலையான முன்னேற்றம்"
+    ),
+    "hi": (
+        "• <b>{rasi} — आज के 3 सकारात्मक संकेत:</b>\n"
+        "1. प्रमुख कार्यों पर स्पष्ट ध्यान\n"
+        "2. परिवार और सहकर्मियों से सहयोगपूर्ण संवाद\n"
+        "3. धैर्यपूर्ण प्रयास से निरंतर प्रगति"
+    ),
+    "te": (
+        "• <b>{rasi} — నేటి 3 శుభ ఫలితాలు:</b>\n"
+        "1. ముఖ్యమైన పనులపై స్పష్టమైన దృష్టి\n"
+        "2. కుటుంబం మరియు సహచరులతో సానుకూల సంభాషణలు\n"
+        "3. ఓర్పుతో కూడిన ప్రయత్నంతో స్థిరమైన పురోగతి"
+    ),
+    "kn": (
+        "• <b>{rasi} — ಇಂದಿನ 3 ಸಕಾರಾತ್ಮಕ ಅಂಶಗಳು:</b>\n"
+        "1. ಪ್ರಮುಖ ಕೆಲಸಗಳ ಮೇಲೆ ಸ್ಪಷ್ಟ ಗಮನ\n"
+        "2. ಕುಟುಂಬ ಮತ್ತು ಸಹೋದ್ಯೋಗಿಗಳೊಂದಿಗೆ ಉತ್ತಮ ಮಾತುಕತೆ\n"
+        "3. ತಾಳ್ಮೆಯ ಪ್ರಯತ್ನದಿಂದ ಸ್ಥಿರ ಪ್ರಗತಿ"
+    ),
+    "ml": (
+        "• <b>{rasi} — ഇന്നത്തെ 3 അനുകൂല ഫലങ്ങൾ:</b>\n"
+        "1. പ്രധാന കാര്യങ്ങളിൽ വ്യക്തമായ ശ്രദ്ധ\n"
+        "2. കുടുംബാംഗങ്ങളുമായും സഹപ്രവർത്തകരുമായും സൗഹാർദ്ദപരമായ ആശയവിനിമയം\n"
+        "3. ക്ഷമയോടെയുള്ള പരിശ്രമത്തിലൂടെ സ്ഥിരമായ പുരോഗതി"
+    ),
 }
 
 # ---------------------------------------------------------------------------
@@ -195,11 +249,11 @@ def build_bullion_payload(now_ist: datetime) -> Dict[str, str]:
 
     return {
         "en": f"🟡 <b>Gold Rate ⚪️ Silver Rate [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ Silver: {silver}",
-        "ta": f"🟡 <b>Gold Rate / தங்கம் விலை ⚪️ Silver Rate / வெள்ளி விலை [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ வெள்ளி: {silver}",
-        "hi": f"🟡 <b>Gold Rate / सोना भाव ⚪️ Silver Rate / चांदी भाव [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ चांदी: {silver}",
-        "te": f"🟡 <b>Gold Rate / బంగారం ధర ⚪️ Silver Rate / వెండి ధర [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ వెండి: {silver}",
-        "kn": f"🟡 <b>Gold Rate / ಚಿನ್ನ ದರ ⚪️ Silver Rate / ಬೆಳ್ಳಿ ದರ [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ ಬೆಳ್ಳಿ: {silver}",
-        "ml": f"🟡 <b>Gold Rate / സ്വർണ്ണ നിരക്ക് ⚪️ Silver Rate / വെള്ളി നിരക്ക് [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ വെള്ളി: {silver}",
+        "ta": f"🟡 <b>தங்கம் விலை ⚪️ வெள்ளி விலை [{as_of_str} நிலவரப்படி]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ வெள்ளி: {silver}",
+        "hi": f"🟡 <b>सोना भाव ⚪️ चांदी भाव [{as_of_str} तक]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ चांदी: {silver}",
+        "te": f"🟡 <b>బంగారం ధర ⚪️ వెండి ధర [{as_of_str} నాటికి]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ వెండి: {silver}",
+        "kn": f"🟡 <b>ಚಿನ್ನ ದರ ⚪️ ಬೆಳ್ಳಿ ದರ [{as_of_str} ರಂತೆ]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ ಬೆಳ್ಳಿ: {silver}",
+        "ml": f"🟡 <b>സ്വർണ്ണ നിരക്ക് ⚪️ വെള്ളി നിരക്ക് [{as_of_str} പ്രകാരം]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ വെള്ളി: {silver}",
     }
 
 
@@ -228,7 +282,7 @@ async def select_today_deity(session: aiohttp.ClientSession, today_ist: date) ->
             row.get("key_code") or ""
         ).strip().upper() == day_code:
             return {
-                lang: f"🪔 <b>{row.get('title_en', 'Daily Blessing')}:</b>\n{row.get(f'body_{lang}') or row.get('body_en', '')}"
+                lang: f"🪔 <b>{row.get(f'title_{lang}') or row.get('title_en', 'Daily Blessing')}:</b>\n{row.get(f'body_{lang}') or row.get('body_en', '')}"
                 for lang in LANGS
             }
     return BUILT_IN_DEITY_7DAY[day_code]
@@ -263,21 +317,10 @@ async def select_today_scripture(session: aiohttp.ClientSession, today_ist: date
 
 
 def build_wow_defaults() -> Dict[str, Dict[str, str]]:
-    rasi_names = [
-        "mesham", "rishabam", "mithunam", "kadagam", "simmam", "kanni",
-        "thulam", "vrischikam", "dhanusu", "magaram", "kumbam", "meenam",
-    ]
     out: Dict[str, Dict[str, str]] = {}
-    for rasi in rasi_names:
-        title = rasi.title()
+    for rasi, rasi_labels in RASI_DISPLAY_NAMES.items():
         out[rasi] = {
-            lang: (
-                f"{WOW_HEADERS[lang]}\n"
-                f"• <b>{title} — 3 Positives Today:</b>\n"
-                "1. Clear focus on key priorities\n"
-                "2. Supportive conversations with family &amp; peers\n"
-                "3. Steady progress through patient effort"
-            )
+            lang: f"{WOW_HEADERS[lang]}\n{WOW_LOCALIZED_BODIES[lang].format(rasi=rasi_labels[lang])}"
             for lang in LANGS
         }
     return out
@@ -299,16 +342,44 @@ async def main() -> None:
     wow_map = build_wow_defaults()
 
     auspicious_chennai = {
-        lang: (
+        "en": (
             "⏰ <b>Auspicious Timing [Plan Your Decisions]:</b>\n"
             "• Nalla Neram: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
             "• Rahukalam: 12:00 PM – 01:30 PM"
-        )
-        for lang in LANGS
+        ),
+        "ta": (
+            "⏰ <b>நல்ல நேரம் [உங்கள் முடிவுகளைத் திட்டமிடுங்கள்]:</b>\n"
+            "• நல்ல நேரம்: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
+            "• ராகு காலம்: 12:00 PM – 01:30 PM"
+        ),
+        "hi": (
+            "⏰ <b>शुभ समय [अपने निर्णयों की योजना बनाएं]:</b>\n"
+            "• शुभ मुहूर्त: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
+            "• राहुकाल: 12:00 PM – 01:30 PM"
+        ),
+        "te": (
+            "⏰ <b>శుభ సమయం [మీ నిర్ణయాలను ప్రణాళిక చేయండి]:</b>\n"
+            "• శుభ సమయం: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
+            "• రాహుకాలం: 12:00 PM – 01:30 PM"
+        ),
+        "kn": (
+            "⏰ <b>ಶುಭ ಸಮಯ [ನಿಮ್ಮ ನಿರ್ಧಾರಗಳನ್ನು ಯೋಜಿಸಿ]:</b>\n"
+            "• ಶುಭ ಸಮಯ: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
+            "• ರಾಹುಕಾಲ: 12:00 PM – 01:30 PM"
+        ),
+        "ml": (
+            "⏰ <b>ശുഭ സമയം [തീരുമാനങ്ങൾ ആസൂത്രണം ചെയ്യുക]:</b>\n"
+            "• ശുഭ സമയം: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
+            "• രാഹുകാലം: 12:00 PM – 01:30 PM"
+        ),
     }
     weather_chennai = {
-        lang: "🌦 <b>Weather [Plan Your Day]:</b>\n27°C • Partly cloudy morning, light coastal breeze"
-        for lang in LANGS
+        "en": "🌦 <b>Weather [Plan Your Day]:</b>\n27°C • Partly cloudy morning, light coastal breeze",
+        "ta": "🌦 <b>வானிலை [உங்கள் நாளைத் திட்டமிடுங்கள்]:</b>\n27°C • லேசான மேகமூட்டத்துடன் இனிமையான காலை தென்றல்",
+        "hi": "🌦 <b>मौसम [दिन की योजना]:</b>\n27°C • हल्के बादल और सुहावनी सुबह की हवा",
+        "te": "🌦 <b>వాతావరణం [రోజు ప్రణాళిక]:</b>\n27°C • పాక్షిక మేఘావృతమైన ఉదయం, తేలికపాటి గాలి",
+        "kn": "🌦 <b>ಹವಾಮಾನ [ದಿನದ ಯೋಜನೆ]:</b>\n27°C • ಭಾಗಶಃ ಮೋಡ ಕವಿದ ಮುಂಜಾನೆ, ತಂಪಾದ ಗಾಳಿ",
+        "ml": "🌦 <b>കാലാവസ്ഥ [ദിവസ ആസൂത്രണം]:</b>\n27°C • ഭാഗികമായി മേഘാവൃതമായ പ്രഭാതം, ഇളം കാറ്റ്",
     }
 
     records = [
