@@ -564,7 +564,7 @@ WELCOME_COPY = {
             "• <b>ഉദ്ദേശ്യം:</b> രാവിലെ 04:30 AM IST AURA കാർഡ് വ്യക്തിഗതമാക്കുന്നതിനും സഹായത്തിനും.\n"
             "• <b>നിങ്ങളുടെ അവകാശങ്ങൾ:</b> പ്രൊഫైലിൽ മാറ്റാം അല്ലെങ്കിൽ <b>എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക</b> / /delete_data വഴി പൂർണ്ണമായി നീക്കം ചെയ്യാം."
         ),
-        "confirm_delete_body": "⚠️ <b>ഡാറ്റ നീക്കം സ്ഥിരീകരണം (DPDPA 2023):</b>\nനിങ്ങളുടെ പ്രൊഫೈൽ, മുൻഗണനകൾ, രേഖകൾ എന്നിവ ശാശ്വതമായി നീക്കം ചെയ്യപ്പെടും.",
+        "confirm_delete_body": "⚠️ <b>ഡാറ്റ നീക്കം സ്ഥിരീകരണം (DPDPA 2023):</b>\nനിങ്ങളുടെ പ്രൊഫൈൽ, മുൻഗണനകൾ, രേഖകൾ എന്നിവ ശാശ്വതമായി നീക്കം ചെയ്യപ്പെടും.",
         "erased_msg": "🗑️ DPDPA 2023 പ്രകാരം നിങ്ങളുടെ ഡാറ്റ പൂർണ്ണമായി നീക്കം ചെയ്തു. വീണ്ടും തുടങ്ങാൻ /start അമർത്തുക.",
         "saved_msg": "✅ അപ്ഡേറ്റ് ചെയ്തു: <b>{val}</b>",
     },
@@ -573,7 +573,23 @@ WELCOME_COPY = {
 DB_POOL: Optional[asyncpg.Pool] = None
 CACHED_WELCOME_VIDEO_ID: Optional[str] = os.environ.get("WELCOME_VIDEO_FILE_ID", "").strip() or None
 CACHED_DEITY_PHOTO_IDS: dict[str, str] = {}
+SUBSCRIBERS_COLUMNS: Optional[set[str]] = None
 HAS_LOCALITY_COLUMN: Optional[bool] = None
+
+EXPECTED_SUBSCRIBER_DDL_COLUMNS = [
+    ("first_name", "TEXT"),
+    ("username", "TEXT"),
+    ("preferred_language", "VARCHAR(8) DEFAULT 'en'"),
+    ("dob", "VARCHAR(20)"),
+    ("locality", "TEXT"),
+    ("city", "TEXT"),
+    ("rasi", "VARCHAR(32)"),
+    ("frequency", "SMALLINT DEFAULT 1"),
+    ("is_active", "BOOLEAN DEFAULT TRUE"),
+    ("consent_given_at", "TIMESTAMPTZ DEFAULT NOW()"),
+    ("created_at", "TIMESTAMPTZ DEFAULT NOW()"),
+    ("updated_at", "TIMESTAMPTZ DEFAULT NOW()"),
+]
 
 
 def get_card_header(lang: Optional[str] = "en") -> str:
@@ -660,48 +676,57 @@ def resolve_deity_image_path(target_date: Optional[date] = None) -> Optional[Pat
 
 
 # ---------------------------------------------------------------------------
-# Database Helpers (asyncpg)
+# Database Helpers (asyncpg with Dynamic Schema Introspection & Self-Healing)
 # ---------------------------------------------------------------------------
 async def get_db_pool() -> asyncpg.Pool:
     global DB_POOL
     if DB_POOL is None or DB_POOL._closed:
-        DB_POOL = await asyncpg.create_pool(dsn=DATABASE_URL, min_size=1, max_size=5)
+        DB_POOL = await asyncpg.create_pool(
+            dsn=DATABASE_URL,
+            min_size=1,
+            max_size=5,
+            statement_cache_size=0,
+        )
     return DB_POOL
 
 
+async def _fetch_subscribers_columns(conn: asyncpg.Connection) -> set[str]:
+    global SUBSCRIBERS_COLUMNS, HAS_LOCALITY_COLUMN
+    rows = await conn.fetch(
+        """
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'subscribers';
+        """
+    )
+    cols = {str(r["column_name"]) for r in rows}
+    if cols:
+        SUBSCRIBERS_COLUMNS = cols
+        HAS_LOCALITY_COLUMN = "locality" in cols
+    return cols
+
+
+async def _reconcile_subscribers_columns(conn: asyncpg.Connection, force_refresh: bool = False) -> set[str]:
+    global SUBSCRIBERS_COLUMNS, HAS_LOCALITY_COLUMN
+    if SUBSCRIBERS_COLUMNS is not None and not force_refresh:
+        return SUBSCRIBERS_COLUMNS
+
+    for col_name, col_type in EXPECTED_SUBSCRIBER_DDL_COLUMNS:
+        try:
+            await conn.execute(
+                f"ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS {col_name} {col_type};"
+            )
+        except Exception as exc:
+            logger.debug("Column add skipped for %s: %s", col_name, exc)
+
+    cols = await _fetch_subscribers_columns(conn)
+    return cols
+
+
 async def _ensure_locality_column(conn: asyncpg.Connection) -> bool:
-    global HAS_LOCALITY_COLUMN
-    try:
-        await conn.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS locality TEXT;")
-        await conn.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS city TEXT;")
-        col_exists = await conn.fetchval(
-            """
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.columns
-                WHERE table_schema = 'public'
-                  AND table_name = 'subscribers'
-                  AND column_name = 'locality'
-            );
-            """
-        )
-        HAS_LOCALITY_COLUMN = bool(col_exists)
-        return HAS_LOCALITY_COLUMN
-    except Exception as exc:
-        logger.warning("Could not verify/add locality column automatically: %s", exc)
-        col_exists = await conn.fetchval(
-            """
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.columns
-                WHERE table_schema = 'public'
-                  AND table_name = 'subscribers'
-                  AND column_name = 'locality'
-            );
-            """
-        )
-        HAS_LOCALITY_COLUMN = bool(col_exists)
-        return HAS_LOCALITY_COLUMN
+    cols = await _reconcile_subscribers_columns(conn, force_refresh=True)
+    return "locality" in cols
 
 
 async def ensure_subscribers_schema() -> None:
@@ -723,17 +748,6 @@ async def ensure_subscribers_schema() -> None:
             updated_at TIMESTAMPTZ DEFAULT NOW()
         );
         """,
-        "ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS first_name TEXT;",
-        "ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS username TEXT;",
-        "ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS preferred_language VARCHAR(8) DEFAULT 'en';",
-        "ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS dob VARCHAR(20);",
-        "ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS locality TEXT;",
-        "ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS city TEXT;",
-        "ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS rasi VARCHAR(32);",
-        "ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS frequency SMALLINT DEFAULT 1;",
-        "ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;",
-        "ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS consent_given_at TIMESTAMPTZ DEFAULT NOW();",
-        "ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();",
         """
         CREATE TABLE IF NOT EXISTS daily_shared_cache (
             edition_date DATE NOT NULL,
@@ -770,14 +784,15 @@ async def ensure_subscribers_schema() -> None:
         async with pool.acquire() as conn:
             for stmt in ddl_statements:
                 await conn.execute(stmt)
-            await _ensure_locality_column(conn)
-        logger.info("Database schema verified successfully.")
+            cols = await _reconcile_subscribers_columns(conn, force_refresh=True)
+        logger.info("Database schema verified successfully. subscribers columns=%s", sorted(cols))
     except Exception as exc:
         logger.warning("Schema check notice: %s", exc)
 
 
-async def _execute_upsert_with_locality(
+async def _execute_dynamic_subscriber_upsert(
     conn: asyncpg.Connection,
+    cols: set[str],
     telegram_id: int,
     first_name: str,
     username: str,
@@ -787,68 +802,55 @@ async def _execute_upsert_with_locality(
     city_part: str,
     rasi: str,
 ) -> None:
-    await conn.execute(
-        """
-        INSERT INTO subscribers (
-            telegram_id, first_name, username, preferred_language,
-            dob, locality, city, rasi, frequency, is_active,
-            consent_given_at, updated_at
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 1, TRUE, NOW(), NOW())
-        ON CONFLICT (telegram_id) DO UPDATE SET
-            first_name = EXCLUDED.first_name,
-            username = EXCLUDED.username,
-            preferred_language = EXCLUDED.preferred_language,
-            dob = EXCLUDED.dob,
-            locality = EXCLUDED.locality,
-            city = EXCLUDED.city,
-            rasi = EXCLUDED.rasi,
-            frequency = 1,
-            is_active = TRUE,
-            updated_at = NOW();
-        """,
-        telegram_id,
-        first_name,
-        username,
-        lang,
-        dob,
-        locality,
-        city_part,
-        rasi,
-    )
+    candidate_values = {
+        "telegram_id": telegram_id,
+        "first_name": first_name,
+        "username": username,
+        "preferred_language": lang,
+        "dob": dob,
+        "locality": locality,
+        "city": city_part,
+        "rasi": rasi,
+        "frequency": 1,
+        "is_active": True,
+    }
 
+    insert_cols: list[str] = []
+    placeholders: list[str] = []
+    params: list[object] = []
 
-async def _execute_upsert_city_only(
-    conn: asyncpg.Connection,
-    telegram_id: int,
-    first_name: str,
-    lang: str,
-    dob: str,
-    city_part: str,
-    rasi: str,
-) -> None:
-    await conn.execute(
-        """
-        INSERT INTO subscribers (
-            telegram_id, first_name, preferred_language,
-            dob, city, rasi, is_active
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, TRUE)
-        ON CONFLICT (telegram_id) DO UPDATE SET
-            first_name = EXCLUDED.first_name,
-            preferred_language = EXCLUDED.preferred_language,
-            dob = EXCLUDED.dob,
-            city = EXCLUDED.city,
-            rasi = EXCLUDED.rasi,
-            is_active = TRUE;
-        """,
-        telegram_id,
-        first_name,
-        lang,
-        dob,
-        city_part,
-        rasi,
-    )
+    for col_name, val in candidate_values.items():
+        if col_name == "telegram_id" or col_name in cols:
+            insert_cols.append(col_name)
+            params.append(val)
+            placeholders.append(f"${len(params)}")
+
+    if "consent_given_at" in cols:
+        insert_cols.append("consent_given_at")
+        placeholders.append("NOW()")
+    if "created_at" in cols:
+        insert_cols.append("created_at")
+        placeholders.append("NOW()")
+    if "updated_at" in cols:
+        insert_cols.append("updated_at")
+        placeholders.append("NOW()")
+
+    update_assignments: list[str] = []
+    for col_name in insert_cols:
+        if col_name in ("telegram_id", "consent_given_at", "created_at"):
+            continue
+        if col_name == "updated_at":
+            update_assignments.append("updated_at = NOW()")
+        else:
+            update_assignments.append(f"{col_name} = EXCLUDED.{col_name}")
+
+    insert_sql = f"INSERT INTO subscribers ({', '.join(insert_cols)}) VALUES ({', '.join(placeholders)})"
+    if update_assignments:
+        sql = f"{insert_sql} ON CONFLICT (telegram_id) DO UPDATE SET {', '.join(update_assignments)};"
+    else:
+        sql = f"{insert_sql} ON CONFLICT (telegram_id) DO NOTHING;"
+
+    await conn.execute(sql, *params)
 
 
 async def upsert_subscriber_profile(
@@ -860,16 +862,14 @@ async def upsert_subscriber_profile(
     locality: str,
     rasi: str,
 ) -> None:
-    global HAS_LOCALITY_COLUMN
     city_part = locality.split(",")[-1].strip() if "," in locality else locality.strip()
     pool = await get_db_pool()
     async with pool.acquire() as conn:
-        if HAS_LOCALITY_COLUMN is False:
-            await _ensure_locality_column(conn)
-
+        cols = await _reconcile_subscribers_columns(conn, force_refresh=False)
         try:
-            await _execute_upsert_with_locality(
+            await _execute_dynamic_subscriber_upsert(
                 conn,
+                cols,
                 telegram_id,
                 first_name,
                 username,
@@ -879,98 +879,70 @@ async def upsert_subscriber_profile(
                 city_part,
                 rasi,
             )
-            HAS_LOCALITY_COLUMN = True
-        except asyncpg.exceptions.UndefinedColumnError:
-            logger.warning("UndefinedColumnError on upsert; attempting self-healing ALTER TABLE.")
-            has_col = await _ensure_locality_column(conn)
-            if has_col:
-                await _execute_upsert_with_locality(
-                    conn,
-                    telegram_id,
-                    first_name,
-                    username,
-                    lang,
-                    dob,
-                    locality,
-                    city_part,
-                    rasi,
-                )
-            else:
-                await _execute_upsert_city_only(
-                    conn,
-                    telegram_id,
-                    first_name,
-                    lang,
-                    dob,
-                    city_part,
-                    rasi,
-                )
-        except Exception as full_err:
-            logger.warning("Full upsert fallback triggered: %s", full_err)
-            await _execute_upsert_city_only(
+        except asyncpg.exceptions.UndefinedColumnError as col_err:
+            logger.warning("UndefinedColumnError on upsert (%s); refreshing column map and retrying.", col_err)
+            refreshed_cols = await _reconcile_subscribers_columns(conn, force_refresh=True)
+            await _execute_dynamic_subscriber_upsert(
                 conn,
+                refreshed_cols,
                 telegram_id,
                 first_name,
+                username,
                 lang,
                 dob,
+                locality,
                 city_part,
                 rasi,
             )
 
 
 async def update_single_field(telegram_id: int, field: str, value: str) -> None:
-    global HAS_LOCALITY_COLUMN
     pool = await get_db_pool()
     async with pool.acquire() as conn:
-        if field == "preferred_language":
-            await conn.execute(
-                "UPDATE subscribers SET preferred_language = $1, updated_at = NOW() WHERE telegram_id = $2;",
-                value,
-                telegram_id,
-            )
-        elif field == "first_name":
-            await conn.execute(
-                "UPDATE subscribers SET first_name = $1, updated_at = NOW() WHERE telegram_id = $2;",
-                value,
-                telegram_id,
-            )
-        elif field == "dob":
-            await conn.execute(
-                "UPDATE subscribers SET dob = $1, updated_at = NOW() WHERE telegram_id = $2;",
-                value,
-                telegram_id,
-            )
-        elif field == "locality":
+        cols = await _reconcile_subscribers_columns(conn, force_refresh=False)
+
+        updates: dict[str, object] = {}
+        if field == "locality":
             city_part = value.split(",")[-1].strip() if "," in value else value.strip()
-            try:
-                await conn.execute(
-                    "UPDATE subscribers SET locality = $1, city = $2, updated_at = NOW() WHERE telegram_id = $3;",
-                    value,
-                    city_part,
-                    telegram_id,
-                )
-                HAS_LOCALITY_COLUMN = True
-            except asyncpg.exceptions.UndefinedColumnError:
-                has_col = await _ensure_locality_column(conn)
-                if has_col:
-                    await conn.execute(
-                        "UPDATE subscribers SET locality = $1, city = $2, updated_at = NOW() WHERE telegram_id = $3;",
-                        value,
-                        city_part,
-                        telegram_id,
-                    )
-                else:
-                    await conn.execute(
-                        "UPDATE subscribers SET city = $1, updated_at = NOW() WHERE telegram_id = $2;",
-                        city_part,
-                        telegram_id,
-                    )
-        elif field == "rasi":
-            await conn.execute(
-                "UPDATE subscribers SET rasi = $1, updated_at = NOW() WHERE telegram_id = $2;",
-                value,
-                telegram_id,
-            )
+            if "locality" in cols:
+                updates["locality"] = value
+            if "city" in cols:
+                updates["city"] = city_part
+        elif field in cols:
+            updates[field] = value
+
+        if not updates:
+            logger.warning("No matching column found for field=%s in subscribers (cols=%s)", field, sorted(cols))
+            return
+
+        set_clauses: list[str] = []
+        params: list[object] = []
+        for col_name, val in updates.items():
+            params.append(val)
+            set_clauses.append(f"{col_name} = ${len(params)}")
+        if "updated_at" in cols:
+            set_clauses.append("updated_at = NOW()")
+
+        params.append(telegram_id)
+        sql = f"UPDATE subscribers SET {', '.join(set_clauses)} WHERE telegram_id = ${len(params)};"
+
+        try:
+            await conn.execute(sql, *params)
+        except asyncpg.exceptions.UndefinedColumnError as col_err:
+            logger.warning("UndefinedColumnError on update_single_field (%s); refreshing columns.", col_err)
+            refreshed = await _reconcile_subscribers_columns(conn, force_refresh=True)
+            filtered_clauses = []
+            filtered_params = []
+            for col_name, val in updates.items():
+                if col_name in refreshed:
+                    filtered_params.append(val)
+                    filtered_clauses.append(f"{col_name} = ${len(filtered_params)}")
+            if "updated_at" in refreshed:
+                filtered_clauses.append("updated_at = NOW()")
+            if filtered_clauses:
+                filtered_params.append(telegram_id)
+                retry_sql = f"UPDATE subscribers SET {', '.join(filtered_clauses)} WHERE telegram_id = ${len(filtered_params)};"
+                await conn.execute(retry_sql, *filtered_params)
 
 
 def parse_payload_dict(raw_payload) -> dict:
@@ -1300,8 +1272,6 @@ async def send_welcome_video_top(update: Update, context: ContextTypes.DEFAULT_T
 async def start_onboarding(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_chat.id
     await cleanup_previous_messages(context, chat_id)
-    context.user_data.pop("editing_field", None)
-    context.user_data.pop("awaiting_feedback", None)
     context.user_data.clear()
 
     if update.message:
@@ -1309,8 +1279,9 @@ async def start_onboarding(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
     await send_welcome_video_top(update, context)
 
-    sent = await update.effective_message.reply_text(
-        build_language_prompt_text("en"),
+    sent = await context.bot.send_message(
+        chat_id=chat_id,
+        text=build_language_prompt_text("en"),
         parse_mode=ParseMode.HTML,
         reply_markup=build_language_keyboard("lang"),
     )
@@ -1320,9 +1291,13 @@ async def start_onboarding(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 async def set_language_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
+    if not query or not query.data or ":" not in query.data:
+        return LANG
     await query.answer()
 
     lang_code = query.data.split(":", 1)[1]
+    if lang_code not in LANGUAGES:
+        lang_code = "en"
     context.user_data["lang"] = lang_code
     c = copy_for(lang_code)
 
@@ -1331,7 +1306,8 @@ async def set_language_callback(update: Update, context: ContextTypes.DEFAULT_TY
         [[InlineKeyboardButton(c["back_lang"], callback_data="back:lang")]]
     )
     await safe_edit_or_reply(update, context, build_welcome_dob_text(first_name, lang_code), reply_markup=kb)
-    track_onboarding_msg(context, query.message.message_id)
+    if query.message:
+        track_onboarding_msg(context, query.message.message_id)
     return DOB
 
 
@@ -1394,6 +1370,8 @@ async def set_location_message(update: Update, context: ContextTypes.DEFAULT_TYP
 
 async def set_rasi_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
+    if not query or not query.data or ":" not in query.data:
+        return ConversationHandler.END
     await query.answer()
 
     lang = context.user_data.get("lang", "en")
@@ -1422,11 +1400,12 @@ async def set_rasi_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             rasi=rasi_code,
         )
 
-        await cleanup_previous_messages(
-            context,
-            chat_id=query.message.chat_id,
-            keep_msg_id=query.message.message_id,
-        )
+        if query.message:
+            await cleanup_previous_messages(
+                context,
+                chat_id=query.message.chat_id,
+                keep_msg_id=query.message.message_id,
+            )
 
         confirmation_text = (
             f"{hdr}"
@@ -1534,11 +1513,6 @@ async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await safe_edit_or_reply(update, context, text, reply_markup=kb)
     except Exception as exc:
         logger.exception("Error in open_profile_panel: %s", exc)
-
-
-async def open_profile_panel_end_conv(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await open_profile_panel(update, context)
-    return ConversationHandler.END
 
 
 async def open_other_services_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1677,8 +1651,9 @@ async def confirm_delete_callback(update: Update, context: ContextTypes.DEFAULT_
 
 async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
-    if query:
-        await query.answer()
+    if not query or not query.data or ":" not in query.data:
+        return ConversationHandler.END
+    await query.answer()
     field = query.data.split(":", 1)[1]
     context.user_data.pop("awaiting_feedback", None)
     context.user_data["editing_field"] = field
@@ -1717,6 +1692,8 @@ async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
+    if not query or not query.data or ":" not in query.data:
+        return ConversationHandler.END
     await query.answer()
     prefix, val = query.data.split(":", 1)
     telegram_id = query.from_user.id
@@ -1810,6 +1787,8 @@ async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_T
 # ---------------------------------------------------------------------------
 async def back_navigation_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
+    if not query or not query.data or ":" not in query.data:
+        return ConversationHandler.END
     await query.answer()
 
     target = query.data.split(":", 1)[1]
@@ -1824,8 +1803,8 @@ async def back_navigation_callback(update: Update, context: ContextTypes.DEFAULT
         await send_sample_card_callback(update, context)
         return ConversationHandler.END
 
-    chat_id = query.message.chat_id
-    current_msg_id = query.message.message_id
+    chat_id = query.message.chat_id if query.message else update.effective_chat.id
+    current_msg_id = query.message.message_id if query.message else None
     lang = context.user_data.get("lang", "en")
     c = copy_for(lang)
 
@@ -1966,9 +1945,14 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
 
 async def rating_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
+    if not query or not query.data:
+        return
     await query.answer()
     try:
-        _, edition_date_str, score_str = query.data.split(":", 2)
+        parts = query.data.split(":", 2)
+        if len(parts) != 3:
+            return
+        _, edition_date_str, score_str = parts
         score = int(score_str)
         edition_date = date.fromisoformat(edition_date_str)
         pool = await get_db_pool()
@@ -1990,9 +1974,15 @@ async def rating_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 async def translate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
+    if not query or not query.data or not query.message:
+        return
     await query.answer()
-    _, _, edition_date_str = query.data.split(":")
-    edition_date = date.fromisoformat(edition_date_str)
+    try:
+        _, _, edition_date_str = query.data.split(":")
+        edition_date = date.fromisoformat(edition_date_str)
+    except Exception:
+        edition_date = datetime.now(IST).date()
+
     telegram_id = update.effective_user.id
 
     sub = {}
@@ -2023,6 +2013,8 @@ async def translate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 async def close_translation_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
+    if not query:
+        return
     await query.answer()
     if query.message:
         try:
@@ -2054,6 +2046,8 @@ async def delete_data_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 async def delete_data_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
+    if not query:
+        return
     await query.answer()
     telegram_id = query.from_user.id
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
@@ -2131,7 +2125,6 @@ def build_application() -> Application:
         fallbacks=[
             CommandHandler("start", start_onboarding),
             CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"),
-            CallbackQueryHandler(set_rasi_callback, pattern=r"^rasi:"),
         ],
         per_message=False,
     )
