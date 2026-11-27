@@ -1,5 +1,4 @@
 import os
-import re
 import csv
 import io
 import json
@@ -69,7 +68,7 @@ BUILT_IN_DEITY_7DAY: Dict[str, Dict[str, str]] = {
         "hi": "🪔 <b>शुक्रवार — माँ महालक्ष्मी एवं पराशक्ति आशीर्वाद:</b>\n<i>ॐ श्रीं महालक्ष्म्यै नमः</i> — सुख, समृद्धि और सौभाग्य से आपका घर-आँगन आलोकित रहे।",
         "te": "🪔 <b>శుక్రవారం — శ్రీ మహాలక్ష్మి &amp; పరాశక్తి ఆశీస్సులు:</b>\n<i>ఓం శ్రీం మహాలక్ష్మ్యై నమః</i> — ఐశ్వర్యం, అనుగ్రహం మరియు కుటుంబ సౌభాగ్యం నేడు మీ ఇంట వెల్లివిరియాలి.",
         "kn": "🪔 <b>ಶುಕ್ರವಾರ — ಶ್ರೀ ಮಹಾಲಕ್ಷ್ಮಿ &amp; ಪರಾಶಕ್ತಿ ಆಶೀರ್ವಾದ:</b>\n<i>ಓಂ ಶ್ರೀಂ ಮಹಾಲಕ್ಷ್ಮ್ಯೈ ನಮಃ</i> — ಐಶ್ವರ್ಯ, ಅನುಗ್ರಹ ಮತ್ತು ಕುಟುಂಬದ ಸೌಭಾಗ್ಯ ಇಂದು ನಿಮ್ಮದಾಗಲಿ.",
-        "ml": "🪔 <b>വെള്ളി — ശ്രീ മഹാലക്ഷ്മി &amp; പരാശക്തി അനുഗ്രഹം:</b>\n<i>ഓം ശ്രീം മഹാലక్ష్്മ്യൈ നമഃ</i> — ഐശ്വര്യവും അനുഗ്രഹവും കുടുംബസൗഖ്യവും ഇന്ന് നിങ്ങളുടെ ഭവനത്തിൽ നിറയട്ടെ.",
+        "ml": "🪔 <b>വെള്ളി — ശ്രീ മഹാലക്ഷ്മി &amp; പരാശക്തി അനുഗ്രഹം:</b>\n<i>ഓം ശ്രീം മഹാലക്ഷ്മ്യൈ നമഃ</i> — ഐശ്വര്യവും അനുഗ്രഹവും കുടുംബസൗഖ്യവും ഇന്ന് നിങ്ങളുടെ ഭവനത്തിൽ നിറയട്ടെ.",
     },
     "SAT": {
         "en": "🪔 <b>Saturday — Lord Venkateswara (Thirumal) Blessing:</b>\n<i>Om Namo Venkatesaya</i> — May Govinda's compassion steady your efforts and bless your perseverance with lasting peace.",
@@ -249,19 +248,13 @@ def build_bullion_payload(now_ist: datetime) -> Dict[str, str]:
     silver = "₹91.50/g"
 
     return {
-        "en": f"🟡 <b>Gold Rate ⚪️ Silver Rate [As of {as_of_str}]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ Silver: {silver}",
-        "ta": f"🟡 <b>தங்கம் விலை ⚪️ வெள்ளி விலை [{as_of_str} நிலவரப்படி]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ வெள்ளி: {silver}",
-        "hi": f"🟡 <b>सोना भाव ⚪️ चांदी भाव [{as_of_str} तक]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ चांदी: {silver}",
-        "te": f"🟡 <b>బంగారం ధర ⚪️ వెండి ధర [{as_of_str} నాటికి]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ వెండి: {silver}",
-        "kn": f"🟡 <b>ಚಿನ್ನ ದರ ⚪️ ಬೆಳ್ಳಿ ದರ [{as_of_str} ರಂತೆ]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ ಬೆಳ್ಳಿ: {silver}",
-        "ml": f"🟡 <b>സ്വർണ്ണ നിരക്ക് ⚪️ വെള്ളി നിരക്ക് [{as_of_str} പ്രകാരം]:</b>\n22K: {g22}  |  24K: {g24}  |  ⚪️ വെള്ളി: {silver}",
+        "en": f"🟡 <b>Gold Rate ⚪️ Silver Rate [As of {as_of_str}]:</b>\n22K: {g22} | 24K: {g24} | ⚪️ Silver: {silver}",
+        "ta": f"🟡 <b>தங்கம் விலை ⚪️ வெள்ளி விலை [{as_of_str} நிலவரப்படி]:</b>\n22K: {g22} | 24K: {g24} | ⚪️ வெள்ளி: {silver}",
+        "hi": f"🟡 <b>सोना भाव ⚪️ चांदी भाव [{as_of_str} तक]:</b>\n22K: {g22} | 24K: {g24} | ⚪️ चांदी: {silver}",
+        "te": f"🟡 <b>బంగారం ధర ⚪️ వెండి ధర [{as_of_str} నాటికి]:</b>\n22K: {g22} | 24K: {g24} | ⚪️ వెండి: {silver}",
+        "kn": f"🟡 <b>ಚಿನ್ನ ದರ ⚪️ ಬೆಳ್ಳಿ ದರ [{as_of_str} ರಂತೆ]:</b>\n22K: {g22} | 24K: {g24} | ⚪️ ಬೆಳ್ಳಿ: {silver}",
+        "ml": f"🟡 <b>സ്വർണ്ണ നിരക്ക് ⚪️ വെള്ളി നിരക്ക് [{as_of_str} പ്രകാരം]:</b>\n22K: {g22} | 24K: {g24} | ⚪️ വെള്ളി: {silver}",
     }
-
-
-def normalize_city_key(raw_loc: str) -> str:
-    city_part = raw_loc.split(",")[-1].strip().lower() if raw_loc else "chennai"
-    cleaned = re.sub(r"[^a-z0-9]+", "_", city_part).strip("_")
-    return cleaned or "chennai"
 
 
 # ---------------------------------------------------------------------------
@@ -271,7 +264,8 @@ async def fetch_sheet_rows(session: aiohttp.ClientSession, tab_name: str) -> Lis
     if not GOOGLE_SHEET_CSV_BASE_URL:
         return []
     try:
-        url = f"{GOOGLE_SHEET_CSV_BASE_URL}&sheet={tab_name}"
+        sep = "&" if "?" in GOOGLE_SHEET_CSV_BASE_URL else "?"
+        url = f"{GOOGLE_SHEET_CSV_BASE_URL}{sep}sheet={tab_name}"
         async with session.get(url, timeout=aiohttp.ClientTimeout(total=15)) as resp:
             resp.raise_for_status()
             text = await resp.text()
@@ -286,10 +280,10 @@ async def select_today_deity(session: aiohttp.ClientSession, today_ist: date) ->
     sheet_rows = await fetch_sheet_rows(session, "Rasi_Deity_Templates")
     for row in sheet_rows:
         if (row.get("template_type") or "").strip().upper() == "DEITY_DAY" and (
-            row.get("key_code") or ""
+            row.get("key_code") or row.get("lookup_key") or ""
         ).strip().upper() == day_code:
             return {
-                lang: f"🪔 <b>{row.get(f'title_{lang}') or row.get('title_en', 'Daily Blessing')}:</b>\n{row.get(f'body_{lang}') or row.get('body_en', '')}"
+                lang: f"🪔 <b>{row.get(f'title_{lang}') or row.get('title_en') or row.get('display_name_en') or 'Daily Blessing'}:</b>\n{row.get(f'body_{lang}') or row.get(f'three_words_or_slogan_{lang}') or row.get('body_en') or row.get('three_words_or_slogan_en') or ''}"
                 for lang in LANGS
             }
     return BUILT_IN_DEITY_7DAY[day_code]
@@ -309,7 +303,7 @@ async def select_today_scripture(session: aiohttp.ClientSession, today_ist: date
         return {
             lang: (
                 f"{QUOTE_HEADERS[lang]}\n"
-                f"\"{(chosen.get(f'{lang}_translation') or chosen.get('en_translation', '')).strip()}\" "
+                f'"{(chosen.get(f"{lang}_translation") or chosen.get("en_translation", "")).strip()}" '
                 f"— <i>{src}</i>"
             )
             for lang in LANGS
@@ -318,7 +312,7 @@ async def select_today_scripture(session: aiohttp.ClientSession, today_ist: date
     chosen = BUILT_IN_SCRIPTURE_QUOTES[day_offset % len(BUILT_IN_SCRIPTURE_QUOTES)]
     src = chosen["source"]
     return {
-        lang: f"{QUOTE_HEADERS[lang]}\n\"{chosen.get(lang) or chosen['en']}\" — <i>{src}</i>"
+        lang: f'{QUOTE_HEADERS[lang]}\n"{chosen.get(lang) or chosen["en"]}" — <i>{src}</i>'
         for lang in LANGS
     }
 
@@ -382,7 +376,7 @@ async def main() -> None:
     }
     weather_chennai = {
         "en": "🌦 <b>Weather [Plan Your Day]:</b>\n27°C • Partly cloudy morning, light coastal breeze",
-        "ta": "🌦 <b>வானிலை [உங்கள் நாளைத் திட்டமிடுங்கள்]:</b>\n27°C • லேசான மேகமூட்டத்துடன் இனிமையான காலை தென்றல்",
+        "ta": "🌤 <b>வானிலை [உங்கள் நாளைத் திட்டமிடுங்கள்]:</b>\n27°C • லேசான மேகமூட்டத்துடன் இனிமையான காலை தென்றல்",
         "hi": "🌦 <b>मौसम [दिन की योजना]:</b>\n27°C • हल्के बादल और सुहावनी सुबह की हवा",
         "te": "🌦 <b>వాతావరణం [రోజు ప్రణాళిక]:</b>\n27°C • పాక్షిక మేఘావృతమైన ఉదయం, తేలికపాటి గాలి",
         "kn": "🌦 <b>ಹವಾಮಾನ [ದಿನದ ಯೋಜನೆ]:</b>\n27°C • ಭಾಗಶಃ ಮೋಡ ಕವಿದ ಮುಂಜಾನೆ, ತಂಪಾದ ಗಾಳಿ",
@@ -393,14 +387,26 @@ async def main() -> None:
         (today_ist, "DEITY_DAY", "TODAY", json.dumps(deity_payload)),
         (today_ist, "QUOTE", "TODAY", json.dumps(quote_payload)),
         (today_ist, "GOLD_INR", "INDIA", json.dumps(bullion_payload)),
-        (today_ist, "AUSPICIOUS", normalize_city_key("chennai"), json.dumps(auspicious_chennai)),
-        (today_ist, "WEATHER", normalize_city_key("chennai"), json.dumps(weather_chennai)),
+        (today_ist, "AUSPICIOUS", "chennai", json.dumps(auspicious_chennai)),
+        (today_ist, "WEATHER", "chennai", json.dumps(weather_chennai)),
     ]
     for rasi_key, payload in wow_map.items():
         records.append((today_ist, "RASI", rasi_key, json.dumps(payload)))
 
     conn = await asyncpg.connect(dsn=DATABASE_URL)
     try:
+        await conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS daily_shared_cache (
+                edition_date DATE NOT NULL,
+                bucket_type VARCHAR(32) NOT NULL,
+                bucket_key VARCHAR(128) NOT NULL,
+                payload JSONB NOT NULL,
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                PRIMARY KEY (edition_date, bucket_type, bucket_key)
+            );
+            """
+        )
         for edition_dt, b_type, b_key, payload_json in records:
             await conn.execute(
                 """
