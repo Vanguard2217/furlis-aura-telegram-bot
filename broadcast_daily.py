@@ -21,7 +21,7 @@ IST = timezone(timedelta(hours=5, minutes=30))
 TELEGRAM_API_BASE = f"https://api.telegram.org/bot{BOT_TOKEN}"
 BATCH_CONCURRENCY = 25
 
-AURA_HEADER = "ॐ  AURA  |  Daily Morning Grace &amp; Divine Blessings  ॐ"
+AURA_HEADER = "ॐ AURA | Daily Morning Grace &amp; Divine Blessings ॐ"
 DIVIDER = "━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 SHORT_DISCLAIMER = (
