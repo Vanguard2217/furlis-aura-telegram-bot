@@ -51,6 +51,17 @@ WELCOME_VIDEO_PATH = Path(
 )
 WELCOME_VIDEO_WIDTH = int(os.environ.get("WELCOME_VIDEO_WIDTH", "1280"))
 WELCOME_VIDEO_HEIGHT = int(os.environ.get("WELCOME_VIDEO_HEIGHT", "720"))
+DEITIES_DIR = Path(os.environ.get("DEITIES_DIR", "assets/deities"))
+
+DAY_DEITY_FILENAMES = {
+    0: ["mon_shiva.png", "mon_shiva.jpg", "mon_shiva.jpeg", "mon_shiva.webp"],
+    1: ["tue_murugan.png", "tue_hanuman.png", "tue_deity.png"],
+    2: ["wed_vinayagar.png", "wed_vinayagar.jpg", "wed_vinayagar.jpeg", "wed_vinayagar.webp"],
+    3: ["thu_guru.png", "thu_raghavendra.png", "thu_deity.png"],
+    4: ["fri_amman.png", "fri_amman.jpg", "fri_amman.jpeg", "fri_amman.webp"],
+    5: ["sat_thirumal.png", "sat_thirumal.jpg", "sat_thirumal.jpeg", "sat_thirumal.webp"],
+    6: ["sun_surya.png", "sun_deity.png"],
+}
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
@@ -224,13 +235,12 @@ WELCOME_COPY = {
         "btn_sample": "📨 Send Today's Card Now",
         "btn_profile": "👤 Profile",
         "btn_other": "📣 Other Services",
-        "btn_12pillars": "🏛️ 12 Pillars View",
-        "btn_pay": "🛒 Shop",
+        "btn_pay": "🧺 Shop",
         "btn_help": "💬 Help & Feedback",
         "btn_translate": "🌐 Translate [ENG]",
         "btn_close_translation": "❌ Close Translation",
-        "btn_privacy": "🔒 Privacy & Data (DPDPA)",
-        "btn_delete": "🗑️ Delete My Data (DPDPA)",
+        "btn_privacy": "🔒 Privacy & Data",
+        "btn_delete": "🗑️ Delete My Data",
         "btn_confirm_delete": "⚠️ Confirm Permanent Erasure",
         "btn_edit_name": "✏️ Edit Name",
         "btn_edit_dob": "🎂 Edit Date of Birth",
@@ -247,7 +257,7 @@ WELCOME_COPY = {
         "dpdpa_body": (
             "• <b>Data Stored:</b> Name, Preferred Language, Date of Birth, Locality/City, Rasi, and any support messages you send.\n"
             "• <b>Purpose:</b> Personalizing your daily 04:30 AM IST AURA card and responding to support requests.\n"
-            "• <b>Your Rights:</b> Edit details anytime in Profile, or erase all records permanently via <b>Delete My Data (DPDPA)</b> or /delete_data."
+            "• <b>Your Rights:</b> Edit details anytime in Profile, or erase all records permanently via <b>Delete My Data</b> or /delete_data."
         ),
         "confirm_delete_body": "⚠️ <b>Confirm Data Deletion (DPDPA 2023):</b>\nThis permanently removes your saved profile, preferences, and feedback records.",
         "erased_msg": "🗑️ Your profile, preferences, and records have been permanently erased under DPDPA 2023. Tap /start anytime to begin again.",
@@ -286,13 +296,12 @@ WELCOME_COPY = {
         "btn_sample": "📨 இன்றைய அட்டையை அனுப்புக",
         "btn_profile": "👤 சுயவிவரம்",
         "btn_other": "📣 மற்ற சேவைகள்",
-        "btn_12pillars": "🏛️ 12 தூண்கள் பார்வை",
-        "btn_pay": "🛒 கடை",
+        "btn_pay": "🧺 கடை",
         "btn_help": "💬 உதவி & கருத்து",
         "btn_translate": "🌐 Translate [ENG]",
         "btn_close_translation": "❌ Close Translation",
-        "btn_privacy": "🔒 தனியுரிமை & தரவு (DPDPA)",
-        "btn_delete": "🗑️ என் தரவை நீக்கு (DPDPA)",
+        "btn_privacy": "🔒 தனியுரிமை & தரவு",
+        "btn_delete": "🗑️ என் தரவை நீக்கு",
         "btn_confirm_delete": "⚠️ நிரந்தர நீக்கத்தை உறுதி செய்க",
         "btn_edit_name": "✏️ பெயரை மாற்றுக",
         "btn_edit_dob": "🎂 பிறந்த தேதியை மாற்றுக",
@@ -309,7 +318,7 @@ WELCOME_COPY = {
         "dpdpa_body": (
             "• <b>சேமிக்கப்படும் விவரங்கள்:</b> பெயர், விருப்ப மொழி, பிறந்த தேதி, பகுதி/நகரம், ராசி மற்றும் நீங்கள் அனுப்பும் கருத்துகள்.\n"
             "• <b>நோக்கம்:</b> காலை 04:30 AM IST AURA செய்தியைத் தனிப்பயனாக்கவும் உதவி வழங்கவும்.\n"
-            "• <b>உங்கள் உரிமை:</b> சுயவிவரத்தில் விவரங்களை மாற்றலாம்; <b>என் தரவை நீக்கு (DPDPA)</b> அல்லது /delete_data மூலம் நிரந்தரமாக நீக்கலாம்."
+            "• <b>உங்கள் உரிமை:</b> சுயவிவரத்தில் விவரங்களை மாற்றலாம்; <b>என் தரவை நீக்கு</b> அல்லது /delete_data மூலம் நிரந்தரமாக நீக்கலாம்."
         ),
         "confirm_delete_body": "⚠️ <b>தரவு நீக்க உறுதி (DPDPA 2023):</b>\nஉங்கள் சுயவிவரம், விருப்பங்கள் மற்றும் பதிவுகள் நிரந்தரமாக நீக்கப்படும்.",
         "erased_msg": "🗑️ DPDPA 2023 விதிகளின்படி உங்கள் விவரங்கள் நிரந்தரமாக நீக்கப்பட்டன. மீண்டும் தொடங்க /start தட்டவும்.",
@@ -348,13 +357,12 @@ WELCOME_COPY = {
         "btn_sample": "📨 आज का कार्ड अभी भेजें",
         "btn_profile": "👤 प्रोफ़ाइल",
         "btn_other": "📣 अन्य सेवाएं",
-        "btn_12pillars": "🏛️ 12 पिलर्स दृश्य",
-        "btn_pay": "🛒 शॉप",
+        "btn_pay": "🧺 शॉप",
         "btn_help": "💬 सहायता व प्रतिक्रिया",
         "btn_translate": "🌐 Translate [ENG]",
         "btn_close_translation": "❌ Close Translation",
-        "btn_privacy": "🔒 गोपनीयता व डेटा (DPDPA)",
-        "btn_delete": "🗑️ मेरा डेटा हटाएं (DPDPA)",
+        "btn_privacy": "🔒 गोपनीयता व डेटा",
+        "btn_delete": "🗑️ मेरा डेटा हटाएं",
         "btn_confirm_delete": "⚠️ स्थायी रूप से हटाने की पुष्टि करें",
         "btn_edit_name": "✏️ नाम बदलें",
         "btn_edit_dob": "🎂 जन्म तिथि बदलें",
@@ -371,7 +379,7 @@ WELCOME_COPY = {
         "dpdpa_body": (
             "• <b>संग्रहीत विवरण:</b> नाम, भाषा, जन्म तिथि, क्षेत्र/शहर, राशि और आपके सहायता संदेश।\n"
             "• <b>उद्देश्य:</b> प्रातः 04:30 AM IST AURA संदेश को व्यक्तिगत बनाने और सहायता के लिए।\n"
-            "• <b>आपके अधिकार:</b> प्रोफ़ाइल में विवरण बदलें या <b>मेरा डेटा हटाएं (DPDPA)</b> / /delete_data से स्थायी रूप से हटाएं।"
+            "• <b>आपके अधिकार:</b> प्रोफ़ाइल में विवरण बदलें या <b>मेरा डेटा हटाएं</b> / /delete_data से स्थायी रूप से हटाएं।"
         ),
         "confirm_delete_body": "⚠️ <b>डेटा हटाने की पुष्टि (DPDPA 2023):</b>\nआपकी प्रोफ़ाइल, प्राथमिकताएं और रिकॉर्ड स्थायी रूप से हटा दिए जाएंगे।",
         "erased_msg": "🗑️ DPDPA 2023 के तहत आपका डेटा स्थायी रूप से हटा दिया गया है। दोबारा शुरू करने के लिए /start भेजें।",
@@ -410,13 +418,12 @@ WELCOME_COPY = {
         "btn_sample": "📨 నేటి కార్డ్ ఇప్పుడే పంపండి",
         "btn_profile": "👤 ప్రొఫైల్",
         "btn_other": "📣 ఇతర సేవలు",
-        "btn_12pillars": "🏛️ 12 పిల్లర్స్ వీక్షణ",
-        "btn_pay": "🛒 షాప్",
+        "btn_pay": "🧺 షాప్",
         "btn_help": "💬 సహాయం & అభిప్రాయం",
         "btn_translate": "🌐 Translate [ENG]",
         "btn_close_translation": "❌ Close Translation",
-        "btn_privacy": "🔒 గోప్యత & డేటా (DPDPA)",
-        "btn_delete": "🗑️ నా డేటా తొలగించండి (DPDPA)",
+        "btn_privacy": "🔒 గోప్యత & డేటా",
+        "btn_delete": "🗑️ నా డేటా తొలగించండి",
         "btn_confirm_delete": "⚠️ శాశ్వత తొలగింపును నిర్ధారించండి",
         "btn_edit_name": "✏️ పేరు మార్చండి",
         "btn_edit_dob": "🎂 పుట్టిన తేదీ మార్చండి",
@@ -433,7 +440,7 @@ WELCOME_COPY = {
         "dpdpa_body": (
             "• <b>నిల్వ చేసే వివరాలు:</b> పేరు, భాష, పుట్టిన తేదీ, ప్రాంతం/నగరం, రాశి మరియు మీ సహాయ సందేశాలు.\n"
             "• <b>ఉద్దేశం:</b> ఉదయం 04:30 AM IST AURA సందేశాన్ని వ్యక్తిగతీకరించడానికి మరియు సహాయం కోసం.\n"
-            "• <b>మీ హక్కులు:</b> ప్రొఫైల్‌లో మార్చవచ్చు లేదా <b>నా డేటా తొలగించండి (DPDPA)</b> / /delete_data ద్వారా శాశ్వతంగా తొలగించవచ్చు."
+            "• <b>మీ హక్కులు:</b> ప్రొఫైల్‌లో మార్చవచ్చు లేదా <b>నా డేటా తొలగించండి</b> / /delete_data ద్వారా శాశ్వతంగా తొలగించవచ్చు."
         ),
         "confirm_delete_body": "⚠️ <b>డేటా తొలగింపు నిర్ధారణ (DPDPA 2023):</b>\nమీ ప్రొఫైల్, ప్రాధాన్యతలు మరియు రికార్డులు శాశ్వతంగా తొలగించబడతాయి.",
         "erased_msg": "🗑️ DPDPA 2023 ప్రకారం మీ డేటా శాశ్వతంగా తొలగించబడింది. మళ్లీ ప్రారంభించడానికి /start నొక్కండి.",
@@ -472,13 +479,12 @@ WELCOME_COPY = {
         "btn_sample": "📨 ಇಂದಿನ ಕಾರ್ಡ್ ಈಗ ಕಳುಹಿಸಿ",
         "btn_profile": "👤 ಪ್ರೊಫೈಲ್",
         "btn_other": "📣 ಇತರೆ ಸೇವೆಗಳು",
-        "btn_12pillars": "🏛️ 12 ಪಿಲ್ಲರ್ಸ್ ವೀಕ್ಷಣೆ",
-        "btn_pay": "🛒 ಶಾಪ್",
+        "btn_pay": "🧺 ಶಾಪ್",
         "btn_help": "💬 ಬೆಂಬಲ & ಪ್ರತಿಕ್ರಿಯೆ",
         "btn_translate": "🌐 Translate [ENG]",
         "btn_close_translation": "❌ Close Translation",
-        "btn_privacy": "🔒 ಗೌಪ್ಯತೆ ಮತ್ತು ಡೇಟಾ (DPDPA)",
-        "btn_delete": "🗑️ ನನ್ನ ಡೇಟಾ ಅಳಿಸಿ (DPDPA)",
+        "btn_privacy": "🔒 ಗೌಪ್ಯತೆ ಮತ್ತು ಡೇಟಾ",
+        "btn_delete": "🗑️ ನನ್ನ ಡೇಟಾ ಅಳಿಸಿ",
         "btn_confirm_delete": "⚠️ ಶಾಶ್ವತ ಅಳಿಸುವಿಕೆಯನ್ನು ದೃಢೀಕರಿಸಿ",
         "btn_edit_name": "✏️ ಹೆಸರು ಬದಲಿಸಿ",
         "btn_edit_dob": "🎂 ಜನ್ಮ ದಿನಾಂಕ ಬದಲಿಸಿ",
@@ -495,7 +501,7 @@ WELCOME_COPY = {
         "dpdpa_body": (
             "• <b>ಉಳಿಸಲಾದ ಮಾಹಿತಿ:</b> ಹೆಸರು, ಭಾಷೆ, ಜನ್ಮ ದಿನಾಂಕ, ಪ್ರದೇಶ/ನಗರ, ರಾಶಿ ಮತ್ತು ನಿಮ್ಮ ಬೆಂಬಲ ಸಂದೇಶಗಳು.\n"
             "• <b>ಉದ್ದೇಶ:</b> ಬೆಳಿಗ್ಗೆ 04:30 AM IST AURA ಕಾರ್ಡ್ ವೈಯಕ್ತೀಕರಣ ಮತ್ತು ಬೆಂಬಲಕ್ಕಾಗಿ.\n"
-            "• <b>ನಿಮ್ಮ ಹಕ್ಕುಗಳು:</b> ಪ್ರೊಫೈಲ್‌ನಲ್ಲಿ ಬದಲಿಸಿ ಅಥವಾ <b>ನನ್ನ ಡೇಟಾ ಅಳಿಸಿ (DPDPA)</b> / /delete_data ಮೂಲಕ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಿ."
+            "• <b>ನಿಮ್ಮ ಹಕ್ಕುಗಳು:</b> ಪ್ರೊಫೈಲ್‌ನಲ್ಲಿ ಬದಲಿಸಿ ಅಥವಾ <b>ನನ್ನ ಡೇಟಾ ಅಳಿಸಿ</b> / /delete_data ಮೂಲಕ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಿ."
         ),
         "confirm_delete_body": "⚠️ <b>ಡೇಟಾ ಅಳಿಸುವಿಕೆ ದೃಢೀಕರಣ (DPDPA 2023):</b>\nನಿಮ್ಮ ಪ್ರೊಫೈಲ್, ಆದ್ಯತೆಗಳು ಮತ್ತು ದಾಖಲೆಗಳನ್ನು ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಲಾಗುತ್ತದೆ.",
         "erased_msg": "🗑️ DPDPA 2023 ಪ್ರಕಾರ ನಿಮ್ಮ ಡೇಟಾ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಲಾಗಿದೆ. ಮತ್ತೆ ಆರಂಭಿಸಲು /start ಒತ್ತಿರಿ.",
@@ -534,13 +540,12 @@ WELCOME_COPY = {
         "btn_sample": "📨 ഇന്നത്തെ കാർഡ് ഇപ്പോൾ അയയ്ക്കുക",
         "btn_profile": "👤 പ്രൊഫൈൽ",
         "btn_other": "📣 മറ്റ് സേവനങ്ങൾ",
-        "btn_12pillars": "🏛️ 12 പില്ലേഴ്സ് കാഴ്ച",
-        "btn_pay": "🛒 ഷോപ്പ്",
+        "btn_pay": "🧺 ഷോപ്പ്",
         "btn_help": "💬 സഹായവും പ്രതികരണവും",
         "btn_translate": "🌐 Translate [ENG]",
         "btn_close_translation": "❌ Close Translation",
-        "btn_privacy": "🔒 സ്വകാര്യത & ഡാറ്റ (DPDPA)",
-        "btn_delete": "🗑️ എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക (DPDPA)",
+        "btn_privacy": "🔒 സ്വകാര്യത & ഡാറ്റ",
+        "btn_delete": "🗑️ എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക",
         "btn_confirm_delete": "⚠️ ശാശ്വത നീക്കം സ്ഥിരീകരിക്കുക",
         "btn_edit_name": "✏️ പേര് മാറ്റുക",
         "btn_edit_dob": "🎂 ജനനത്തീയതി മാറ്റുക",
@@ -557,9 +562,9 @@ WELCOME_COPY = {
         "dpdpa_body": (
             "• <b>സൂക്ഷിക്കുന്ന വിവരങ്ങൾ:</b> പേര്, ഭാഷ, ജനനത്തീയതി, പ്രദേശം/നഗരം, രാശി, നിങ്ങളുടെ സഹായ സന്ദേശങ്ങൾ.\n"
             "• <b>ഉദ്ദേശ്യം:</b> രാവിലെ 04:30 AM IST AURA കാർഡ് വ്യക്തിഗതമാക്കുന്നതിനും സഹായത്തിനും.\n"
-            "• <b>നിങ്ങളുടെ അവകാശങ്ങൾ:</b> പ്രൊഫൈലിൽ മാറ്റാം അല്ലെങ്കിൽ <b>എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക (DPDPA)</b> / /delete_data വഴി പൂർണ്ണമായി നീക്കം ചെയ്യാം."
+            "• <b>നിങ്ങളുടെ അവകാശങ്ങൾ:</b> പ്രൊഫൈലിൽ മാറ്റാം അല്ലെങ്കിൽ <b>എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക</b> / /delete_data വഴി പൂർണ്ണമായി നീക്കം ചെയ്യാം."
         ),
-        "confirm_delete_body": "⚠️ <b>ഡാറ്റ നീക്കം സ്ഥിരീകരണം (DPDPA 2023):</b>\nനിങ്ങളുടെ പ്രൊഫൈൽ, മുൻഗണനകൾ, രേഖകൾ എന്നിവ ശാശ്വതമായി നീക്കം ചെയ്യപ്പെടും.",
+        "confirm_delete_body": "⚠️ <b>ഡാറ്റ നീക്കം സ്ഥിരീകരണം (DPDPA 2023):</b>\nനിങ്ങളുടെ പ്രൊഫైൽ, മുൻഗണനകൾ, രേഖകൾ എന്നിവ ശാശ്വതമായി നീക്കം ചെയ്യപ്പെടും.",
         "erased_msg": "🗑️ DPDPA 2023 പ്രകാരം നിങ്ങളുടെ ഡാറ്റ പൂർണ്ണമായി നീക്കം ചെയ്തു. വീണ്ടും തുടങ്ങാൻ /start അമർത്തുക.",
         "saved_msg": "✅ അപ്ഡേറ്റ് ചെയ്തു: <b>{val}</b>",
     },
@@ -567,6 +572,7 @@ WELCOME_COPY = {
 
 DB_POOL: Optional[asyncpg.Pool] = None
 CACHED_WELCOME_VIDEO_ID: Optional[str] = os.environ.get("WELCOME_VIDEO_FILE_ID", "").strip() or None
+CACHED_DEITY_PHOTO_IDS: dict[str, str] = {}
 
 
 def get_card_header(lang: Optional[str] = "en") -> str:
@@ -620,6 +626,36 @@ def normalize_city_key(raw_city: Optional[str]) -> str:
     city_part = raw_city.split(",")[-1].strip().lower() if raw_city else "chennai"
     cleaned = re.sub(r"[^a-z0-9]+", "_", city_part).strip("_")
     return cleaned or "chennai"
+
+
+def resolve_deity_image_path(target_date: Optional[date] = None) -> Optional[Path]:
+    ref_date = target_date or datetime.now(IST).date()
+    weekday = ref_date.weekday()
+    if not DEITIES_DIR.is_dir():
+        return None
+
+    for fname in DAY_DEITY_FILENAMES.get(weekday, []):
+        candidate = DEITIES_DIR / fname
+        if candidate.is_file():
+            return candidate
+
+    day_prefixes = {
+        0: "mon_",
+        1: "tue_",
+        2: "wed_",
+        3: "thu_",
+        4: "fri_",
+        5: "sat_",
+        6: "sun_",
+    }
+    prefix = day_prefixes.get(weekday, "")
+    image_exts = {".png", ".jpg", ".jpeg", ".webp"}
+    files = sorted([p for p in DEITIES_DIR.iterdir() if p.is_file() and p.suffix.lower() in image_exts])
+    if prefix:
+        for p in files:
+            if p.name.lower().startswith(prefix):
+                return p
+    return files[0] if files else None
 
 
 # ---------------------------------------------------------------------------
@@ -751,13 +787,14 @@ async def upsert_subscriber_profile(
                 """
                 INSERT INTO subscribers (
                     telegram_id, first_name, preferred_language,
-                    dob, city, rasi, is_active
+                    dob, locality, city, rasi, is_active
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
                 ON CONFLICT (telegram_id) DO UPDATE SET
                     first_name = EXCLUDED.first_name,
                     preferred_language = EXCLUDED.preferred_language,
                     dob = EXCLUDED.dob,
+                    locality = EXCLUDED.locality,
                     city = EXCLUDED.city,
                     rasi = EXCLUDED.rasi,
                     is_active = TRUE;
@@ -766,6 +803,7 @@ async def upsert_subscriber_profile(
                 first_name,
                 lang,
                 dob,
+                locality,
                 city_part,
                 rasi,
             )
@@ -916,6 +954,69 @@ async def safe_edit_or_reply(
             reply_markup=reply_markup,
         )
         track_onboarding_msg(context, sent.message_id)
+
+
+async def send_card_with_deity_image(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    text: str,
+    reply_markup: Optional[InlineKeyboardMarkup],
+    target_date: date,
+) -> None:
+    deity_path = resolve_deity_image_path(target_date)
+    chat_id = update.effective_chat.id if update.effective_chat else None
+    query = update.callback_query
+
+    if not deity_path or not chat_id:
+        await safe_edit_or_reply(update, context, text, reply_markup=reply_markup)
+        return
+
+    cache_key = deity_path.name
+    try:
+        if query and query.message:
+            try:
+                await query.message.delete()
+            except Exception:
+                pass
+
+        cached_file_id = CACHED_DEITY_PHOTO_IDS.get(cache_key)
+        if len(text) <= 1024:
+            if cached_file_id:
+                await context.bot.send_photo(
+                    chat_id=chat_id,
+                    photo=cached_file_id,
+                    caption=text,
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=reply_markup,
+                )
+            else:
+                with open(deity_path, "rb") as pf:
+                    sent_photo = await context.bot.send_photo(
+                        chat_id=chat_id,
+                        photo=pf,
+                        caption=text,
+                        parse_mode=ParseMode.HTML,
+                        reply_markup=reply_markup,
+                    )
+                if sent_photo.photo:
+                    CACHED_DEITY_PHOTO_IDS[cache_key] = sent_photo.photo[-1].file_id
+        else:
+            if cached_file_id:
+                await context.bot.send_photo(chat_id=chat_id, photo=cached_file_id)
+            else:
+                with open(deity_path, "rb") as pf:
+                    sent_photo = await context.bot.send_photo(chat_id=chat_id, photo=pf)
+                if sent_photo.photo:
+                    CACHED_DEITY_PHOTO_IDS[cache_key] = sent_photo.photo[-1].file_id
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=text,
+                parse_mode=ParseMode.HTML,
+                reply_markup=reply_markup,
+            )
+    except Exception as exc:
+        logger.warning("Deity photo send fallback (%s): %s", deity_path, exc)
+        await safe_edit_or_reply(update, context, text, reply_markup=reply_markup)
 
 
 # ---------------------------------------------------------------------------
@@ -1265,13 +1366,12 @@ async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
         lang_label = LANGUAGES.get(lang, "English")
         loc_val = (
             sub.get("locality")
-            or sub.get("city")
             or context.user_data.get("locality")
+            or sub.get("city")
             or "Chennai"
         )
         rasi_code = sub.get("rasi") or "mesham"
         rasi_display = get_rasi_display(rasi_code, lang)
-        pillars_status = "ON" if context.user_data.get("12pillars_view", False) else "OFF"
 
         text = (
             f"{hdr}"
@@ -1280,8 +1380,7 @@ async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
             f"• <b>{c['lbl_dob']}:</b> {dob_val}\n"
             f"• <b>{c['lbl_lang']}:</b> {lang_label}\n"
             f"• <b>{c['lbl_loc']}:</b> {loc_val}\n"
-            f"• <b>{c['lbl_rasi']}:</b> {rasi_display}\n"
-            f"• <b>12 Pillars Mode:</b> {pillars_status}"
+            f"• <b>{c['lbl_rasi']}:</b> {rasi_display}"
         )
         kb = InlineKeyboardMarkup(
             [
@@ -1295,7 +1394,6 @@ async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 ],
                 [
                     InlineKeyboardButton(c["btn_edit_rasi"], callback_data="editfield:rasi"),
-                    InlineKeyboardButton(f"{c['btn_12pillars']} ({pillars_status})", callback_data="menu:12pillars_toggle"),
                 ],
                 [
                     InlineKeyboardButton(c["btn_privacy"], callback_data="panel:dpdpa"),
@@ -1328,21 +1426,11 @@ async def open_other_services_panel(update: Update, context: ContextTypes.DEFAUL
     c = copy_for(lang)
     hdr = get_card_header(lang)
 
-    pillars_mode = bool(context.user_data.get("12pillars_view", False))
-    mode_status = "ON" if pillars_mode else "OFF"
-    text = f"{hdr}{c['other_title']}\n\n{c['other_body']}\n\n• <b>12 Pillars Mode:</b> {mode_status}"
+    text = f"{hdr}{c['other_title']}\n\n{c['other_body']}"
     kb = InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton(f"{c['btn_12pillars']} ({mode_status})", callback_data="menu:12pillars_toggle")],
-            [InlineKeyboardButton(c["back_card"], callback_data="back:card")],
-        ]
+        [[InlineKeyboardButton(c["back_card"], callback_data="back:card")]]
     )
     await safe_edit_or_reply(update, context, text, reply_markup=kb)
-
-
-async def toggle_12pillars_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    context.user_data["12pillars_view"] = not bool(context.user_data.get("12pillars_view", False))
-    await open_profile_panel(update, context)
 
 
 async def open_help_feedback_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -1734,16 +1822,18 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
 
     lang = sub.get("preferred_language") or context.user_data.get("lang") or "en"
     rasi = (sub.get("rasi") or "mesham").lower()
-    city = normalize_city_key(sub.get("city") or "chennai")
+    raw_loc = sub.get("locality") or sub.get("city") or context.user_data.get("locality") or "chennai"
+    city = normalize_city_key(raw_loc)
 
     cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
     message_text = _build_card_message_from_cache(cache, lang, rasi, city, today_ist)
 
-    await safe_edit_or_reply(
+    await send_card_with_deity_image(
         update,
         context,
         message_text,
         reply_markup=build_daily_action_keyboard(telegram_id, lang, str(today_ist)),
+        target_date=today_ist,
     )
 
 
@@ -1793,7 +1883,8 @@ async def translate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
         logger.warning("Translate lookup fallback: %s", exc)
 
     rasi = (sub.get("rasi") or "mesham").lower()
-    city = normalize_city_key(sub.get("city") or "chennai")
+    raw_loc = sub.get("locality") or sub.get("city") or context.user_data.get("locality") or "chennai"
+    city = normalize_city_key(raw_loc)
     cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
 
     en_text = _build_card_message_from_cache(cache, "en", rasi, city, edition_date)
@@ -1921,7 +2012,6 @@ def build_application() -> Application:
     # Priority group=-1 ensures panel/action buttons always respond even mid-conversation
     app.add_handler(CallbackQueryHandler(open_profile_panel, pattern=r"^(panel|menu):(profile|settings)$"), group=-1)
     app.add_handler(CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"), group=-1)
-    app.add_handler(CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"), group=-1)
     app.add_handler(CallbackQueryHandler(open_help_feedback_panel, pattern=r"^menu:help_feedback$"), group=-1)
     app.add_handler(CallbackQueryHandler(open_dpdpa_panel, pattern=r"^panel:dpdpa$"), group=-1)
     app.add_handler(CallbackQueryHandler(confirm_delete_callback, pattern=r"^action:confirm_delete$"), group=-1)
