@@ -1,6 +1,8 @@
 import os
 import re
 import json
+import time
+import signal
 import asyncio
 import logging
 from pathlib import Path
@@ -55,7 +57,7 @@ IST = timezone(timedelta(hours=5, minutes=30))
 LANG, DOB, LOCATION, RASI, EDIT_VALUE, FEEDBACK_TEXT = range(6)
 
 CARD_HEADER = (
-    "<b>ॐ  AURA  |  Daily Morning Grace &amp; Divine Blessings  ॐ</b>\n"
+    "<b>ॐ AURA | Daily Morning Grace &amp; Divine Blessings ॐ</b>\n"
     "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
 )
 
@@ -209,7 +211,7 @@ WELCOME_COPY = {
         "lbl_dob": "Date of Birth",
         "lbl_loc": "Locality / City",
         "lbl_rasi": "Zodiac / Rasi",
-        "lbl_time": "<b>Daily Delivery:</b> 04:30 AM IST",
+        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
         "btn_sample": "📨 Send Today's Card Now",
         "btn_profile": "👤 Profile",
         "btn_other": "📣 Other Services",
@@ -271,7 +273,7 @@ WELCOME_COPY = {
         "lbl_dob": "பிறந்த தேதி",
         "lbl_loc": "பகுதி / நகரம்",
         "lbl_rasi": "ராசி",
-        "lbl_time": "<b>Daily Delivery:</b> 04:30 AM IST",
+        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
         "btn_sample": "📨 இன்றைய அட்டையை அனுப்புக",
         "btn_profile": "👤 சுயவிவரம்",
         "btn_other": "📣 மற்ற சேவைகள்",
@@ -333,7 +335,7 @@ WELCOME_COPY = {
         "lbl_dob": "जन्म तिथि",
         "lbl_loc": "क्षेत्र / शहर",
         "lbl_rasi": "राशि",
-        "lbl_time": "<b>Daily Delivery:</b> 04:30 AM IST",
+        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
         "btn_sample": "📨 आज का कार्ड अभी भेजें",
         "btn_profile": "👤 प्रोफ़ाइल",
         "btn_other": "📣 अन्य सेवाएं",
@@ -395,7 +397,7 @@ WELCOME_COPY = {
         "lbl_dob": "పుట్టిన తేదీ",
         "lbl_loc": "ప్రాంతం / నగరం",
         "lbl_rasi": "రాశి",
-        "lbl_time": "<b>Daily Delivery:</b> 04:30 AM IST",
+        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
         "btn_sample": "📨 నేటి కార్డ్ ఇప్పుడే పంపండి",
         "btn_profile": "👤 ప్రొఫైల్",
         "btn_other": "📣 ఇతర సేవలు",
@@ -457,7 +459,7 @@ WELCOME_COPY = {
         "lbl_dob": "ಜನ್ಮ ದಿನಾಂಕ",
         "lbl_loc": "ಪ್ರದೇಶ / ನಗರ",
         "lbl_rasi": "ರಾಶಿ",
-        "lbl_time": "<b>Daily Delivery:</b> 04:30 AM IST",
+        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
         "btn_sample": "📨 ಇಂದಿನ ಕಾರ್ಡ್ ಈಗ ಕಳುಹಿಸಿ",
         "btn_profile": "👤 ಪ್ರೊಫೈಲ್",
         "btn_other": "📣 ಇತರೆ ಸೇವೆಗಳು",
@@ -519,7 +521,7 @@ WELCOME_COPY = {
         "lbl_dob": "ജനനത്തീയതി",
         "lbl_loc": "പ്രദേശം / നഗരം",
         "lbl_rasi": "രാശി",
-        "lbl_time": "<b>Daily Delivery:</b> 04:30 AM IST",
+        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
         "btn_sample": "📨 ഇന്നത്തെ കാർഡ് ഇപ്പോൾ അയയ്ക്കുക",
         "btn_profile": "👤 പ്രൊഫൈൽ",
         "btn_other": "📣 മറ്റ് സേവനങ്ങൾ",
@@ -590,8 +592,8 @@ def get_rasi_display(rasi_code: Optional[str], lang: str = "en") -> str:
     return code.title()
 
 
-def normalize_city_key(raw_loc: Optional[str]) -> str:
-    city_part = raw_loc.split(",")[-1].strip().lower() if raw_loc else "chennai"
+def normalize_city_key(raw_city: Optional[str]) -> str:
+    city_part = raw_city.split(",")[-1].strip().lower() if raw_city else "chennai"
     cleaned = re.sub(r"[^a-z0-9]+", "_", city_part).strip("_")
     return cleaned or "chennai"
 
@@ -654,6 +656,16 @@ async def ensure_subscribers_schema() -> None:
             preferred_language VARCHAR(8),
             message_text TEXT NOT NULL,
             created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS message_ratings (
+            id SERIAL PRIMARY KEY,
+            telegram_id BIGINT NOT NULL,
+            edition_date DATE NOT NULL,
+            rating SMALLINT NOT NULL,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            UNIQUE (telegram_id, edition_date)
         );
         """,
     ]
@@ -777,7 +789,8 @@ def parse_payload_dict(raw_payload) -> dict:
         return raw_payload
     if isinstance(raw_payload, str):
         try:
-            return json.loads(raw_payload)
+            parsed = json.loads(raw_payload)
+            return parsed if isinstance(parsed, dict) else {}
         except Exception:
             return {}
     return {}
@@ -850,8 +863,6 @@ async def safe_edit_or_reply(
             if "Message is not modified" in str(exc):
                 return
             logger.debug("safe_edit_or_reply fallback to send_message: %s", exc)
-        except Exception as exc:
-            logger.debug("safe_edit_or_reply generic fallback: %s", exc)
 
     if update.effective_chat:
         sent = await context.bot.send_message(
@@ -975,6 +986,7 @@ def build_daily_action_keyboard(telegram_id: int, lang: str, edition_date: str) 
 async def send_welcome_video_top(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     global CACHED_WELCOME_VIDEO_ID
     chat_id = update.effective_chat.id
+    started_at = time.monotonic()
     try:
         if CACHED_WELCOME_VIDEO_ID:
             vid = await context.bot.send_video(
@@ -987,6 +999,7 @@ async def send_welcome_video_top(update: Update, context: ContextTypes.DEFAULT_T
                 write_timeout=90,
             )
             track_onboarding_msg(context, vid.message_id)
+            logger.info("Welcome video sent via cached file_id in %.2fs", time.monotonic() - started_at)
             return
         if WELCOME_VIDEO_PATH.is_file():
             with open(WELCOME_VIDEO_PATH, "rb") as vf:
@@ -1002,37 +1015,27 @@ async def send_welcome_video_top(update: Update, context: ContextTypes.DEFAULT_T
             track_onboarding_msg(context, vid.message_id)
             if vid.video and vid.video.file_id:
                 CACHED_WELCOME_VIDEO_ID = vid.video.file_id
-                logger.info("Cached welcome video file_id for fast future sends.")
+            logger.info("Welcome video uploaded in %.2fs", time.monotonic() - started_at)
+        else:
+            logger.warning("WELCOME_VIDEO_PATH not found at %s; skipping video.", WELCOME_VIDEO_PATH)
     except Exception as exc:
-        logger.warning("Welcome video skipped: %s", exc)
+        logger.warning("Welcome video skipped after %.2fs: %s", time.monotonic() - started_at, exc)
 
 
 # ---------------------------------------------------------------------------
-# Onboarding Handlers (With Stage Status Feedback During Video/Startup)
+# Onboarding Handlers
 # ---------------------------------------------------------------------------
 async def start_onboarding(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_chat.id
     await cleanup_previous_messages(context, chat_id)
+    context.user_data.pop("editing_field", None)
+    context.user_data.pop("awaiting_feedback", None)
     context.user_data.clear()
 
     if update.message:
         track_onboarding_msg(context, update.message.message_id)
 
-    status_msg = await update.effective_message.reply_text(
-        f"{CARD_HEADER}⏳ <b>Step 1/2:</b> Warming up morning grace &amp; welcome video…",
-        parse_mode=ParseMode.HTML,
-    )
-    track_onboarding_msg(context, status_msg.message_id)
-
     await send_welcome_video_top(update, context)
-
-    try:
-        await status_msg.edit_text(
-            f"{CARD_HEADER}✨ <b>Step 2/2:</b> Preparing language choices…",
-            parse_mode=ParseMode.HTML,
-        )
-    except Exception:
-        pass
 
     sent = await update.effective_message.reply_text(
         build_language_prompt_text(),
@@ -1040,12 +1043,6 @@ async def start_onboarding(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         reply_markup=build_language_keyboard("lang"),
     )
     track_onboarding_msg(context, sent.message_id)
-
-    try:
-        await status_msg.delete()
-    except Exception:
-        pass
-
     return LANG
 
 
@@ -1260,6 +1257,11 @@ async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await safe_edit_or_reply(update, context, text, reply_markup=kb)
 
 
+async def open_profile_panel_end_conv(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await open_profile_panel(update, context)
+    return ConversationHandler.END
+
+
 async def open_other_services_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     if query:
@@ -1288,7 +1290,7 @@ async def toggle_12pillars_callback(update: Update, context: ContextTypes.DEFAUL
     await open_profile_panel(update, context)
 
 
-async def open_help_feedback_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def open_help_feedback_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     if query:
         await query.answer()
@@ -1302,6 +1304,7 @@ async def open_help_feedback_panel(update: Update, context: ContextTypes.DEFAULT
     text = f"{CARD_HEADER}{c['help_title']}\n\n{c['help_prompt']}"
     kb = InlineKeyboardMarkup([[InlineKeyboardButton(c["back_card"], callback_data="back:card")]])
     await safe_edit_or_reply(update, context, text, reply_markup=kb)
+    return FEEDBACK_TEXT
 
 
 async def save_help_feedback_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -1398,7 +1401,7 @@ async def confirm_delete_callback(update: Update, context: ContextTypes.DEFAULT_
     await safe_edit_or_reply(update, context, f"{CARD_HEADER}{c['confirm_delete_body']}", reply_markup=kb)
 
 
-async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     if query:
         await query.answer()
@@ -1414,13 +1417,13 @@ async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         rows = build_language_keyboard("editval_lang").inline_keyboard
         kb = InlineKeyboardMarkup(list(rows) + [[InlineKeyboardButton(c["back_profile"], callback_data="back:profile")]])
         await safe_edit_or_reply(update, context, build_language_prompt_text(), reply_markup=kb)
-        return
+        return EDIT_VALUE
 
     if field == "rasi":
         rows = build_rasi_keyboard(lang=lang, prefix="editval_rasi", include_back=False).inline_keyboard
         kb = InlineKeyboardMarkup(list(rows) + [[InlineKeyboardButton(c["back_profile"], callback_data="back:profile")]])
         await safe_edit_or_reply(update, context, f"{CARD_HEADER}{c['step3']}", reply_markup=kb)
-        return
+        return EDIT_VALUE
 
     prompts = {
         "first_name": f"{CARD_HEADER}<b>{c['btn_edit_name']}</b>:",
@@ -1434,12 +1437,12 @@ async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         prompts.get(field, f"{CARD_HEADER}Enter new value:"),
         reply_markup=kb,
     )
+    return EDIT_VALUE
 
 
-async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
-    if query:
-        await query.answer()
+    await query.answer()
     prefix, val = query.data.split(":", 1)
     telegram_id = query.from_user.id
 
@@ -1467,6 +1470,7 @@ async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         f"{CARD_HEADER}{c['saved_msg'].format(val=saved_label)}",
         reply_markup=kb,
     )
+    return ConversationHandler.END
 
 
 async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -1590,7 +1594,7 @@ async def back_navigation_callback(update: Update, context: ContextTypes.DEFAULT
 
 
 # ---------------------------------------------------------------------------
-# Instant Sample Card, Translate & Data Erasure Handlers
+# Instant Sample Card, Rating, Translate & Data Erasure Handlers
 # ---------------------------------------------------------------------------
 def _build_card_message_from_cache(
     cache: dict,
@@ -1666,8 +1670,7 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
 
     lang = (sub["preferred_language"] if sub and sub["preferred_language"] else None) or context.user_data.get("lang") or "en"
     rasi = ((sub["rasi"] if sub and sub["rasi"] else None) or "mesham").lower()
-    raw_loc = (sub["locality"] if sub and sub["locality"] else None) or (sub["city"] if sub and sub["city"] else None) or "chennai"
-    city = normalize_city_key(raw_loc)
+    city = normalize_city_key(sub["city"] if sub and sub["city"] else "chennai")
 
     cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
     message_text = _build_card_message_from_cache(cache, lang, rasi, city, today_ist)
@@ -1678,6 +1681,30 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
         message_text,
         reply_markup=build_daily_action_keyboard(telegram_id, lang, str(today_ist)),
     )
+
+
+async def rating_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+    try:
+        _, edition_date_str, score_str = query.data.split(":", 2)
+        score = int(score_str)
+        edition_date = date.fromisoformat(edition_date_str)
+        pool = await get_db_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO message_ratings (telegram_id, edition_date, rating)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (telegram_id, edition_date)
+                DO UPDATE SET rating = EXCLUDED.rating;
+                """,
+                update.effective_user.id,
+                edition_date,
+                score,
+            )
+    except Exception as exc:
+        logger.warning("Rating save skipped: %s", exc)
 
 
 async def translate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1701,8 +1728,7 @@ async def translate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
         logger.warning("Translate lookup fallback: %s", exc)
 
     rasi = ((sub["rasi"] if sub and sub["rasi"] else None) or "mesham").lower()
-    raw_loc = (sub["locality"] if sub and sub["locality"] else None) or (sub["city"] if sub and sub["city"] else None) or "chennai"
-    city = normalize_city_key(raw_loc)
+    city = normalize_city_key(sub["city"] if sub and sub["city"] else "chennai")
     cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
 
     en_text = _build_card_message_from_cache(cache, "en", rasi, city, edition_date)
@@ -1786,22 +1812,6 @@ def build_application() -> Application:
         .build()
     )
 
-    # Top-priority global handlers (group=-1) so Profile, Other Services,
-    # DPDPA, Edits, Translate, and Sample Card work on EVERY card regardless
-    # of ConversationHandler state.
-    app.add_handler(CallbackQueryHandler(open_profile_panel, pattern=r"^panel:(profile|settings)$"), group=-1)
-    app.add_handler(CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"), group=-1)
-    app.add_handler(CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"), group=-1)
-    app.add_handler(CallbackQueryHandler(open_help_feedback_panel, pattern=r"^menu:help_feedback$"), group=-1)
-    app.add_handler(CallbackQueryHandler(open_dpdpa_panel, pattern=r"^panel:dpdpa$"), group=-1)
-    app.add_handler(CallbackQueryHandler(confirm_delete_callback, pattern=r"^action:confirm_delete$"), group=-1)
-    app.add_handler(CallbackQueryHandler(delete_data_callback, pattern=r"^action:delete_data$"), group=-1)
-    app.add_handler(CallbackQueryHandler(start_edit_field, pattern=r"^editfield:"), group=-1)
-    app.add_handler(CallbackQueryHandler(finish_edit_callback, pattern=r"^editval_(lang|rasi):"), group=-1)
-    app.add_handler(CallbackQueryHandler(send_sample_card_callback, pattern=r"^send_sample_now$"), group=-1)
-    app.add_handler(CallbackQueryHandler(translate_callback, pattern=r"^translate:"), group=-1)
-    app.add_handler(CallbackQueryHandler(close_translation_callback, pattern=r"^close_translation$"), group=-1)
-
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start_onboarding)],
         states={
@@ -1820,6 +1830,15 @@ def build_application() -> Application:
                 CallbackQueryHandler(set_rasi_callback, pattern=r"^rasi:"),
                 CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"),
             ],
+            EDIT_VALUE: [
+                CallbackQueryHandler(finish_edit_callback, pattern=r"^editval_(lang|rasi):"),
+                CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_free_text_input),
+            ],
+            FEEDBACK_TEXT: [
+                CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, save_help_feedback_message),
+            ],
         },
         fallbacks=[
             CommandHandler("start", start_onboarding),
@@ -1829,21 +1848,35 @@ def build_application() -> Application:
         per_message=False,
     )
 
-    app.add_handler(conv)
-    app.add_handler(CommandHandler("profile", open_profile_panel))
-    app.add_handler(CommandHandler("delete_data", delete_data_command))
-    app.add_handler(CommandHandler("stop", delete_data_command))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_free_text_input))
-    app.add_handler(CallbackQueryHandler(set_language_callback, pattern=r"^lang:"))
-    app.add_handler(CallbackQueryHandler(set_rasi_callback, pattern=r"^rasi:"))
-    app.add_handler(CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"))
+    # Priority group=-1 ensures panel/action buttons always respond even mid-conversation
+    app.add_handler(CallbackQueryHandler(open_profile_panel, pattern=r"^(panel|menu):(profile|settings)$"), group=-1)
+    app.add_handler(CallbackQueryHandler(open_other_services_panel, pattern=r"^menu:other_services$"), group=-1)
+    app.add_handler(CallbackQueryHandler(toggle_12pillars_callback, pattern=r"^menu:12pillars_toggle$"), group=-1)
+    app.add_handler(CallbackQueryHandler(open_help_feedback_panel, pattern=r"^menu:help_feedback$"), group=-1)
+    app.add_handler(CallbackQueryHandler(open_dpdpa_panel, pattern=r"^panel:dpdpa$"), group=-1)
+    app.add_handler(CallbackQueryHandler(confirm_delete_callback, pattern=r"^action:confirm_delete$"), group=-1)
+    app.add_handler(CallbackQueryHandler(delete_data_callback, pattern=r"^action:delete_data$"), group=-1)
+    app.add_handler(CallbackQueryHandler(send_sample_card_callback, pattern=r"^send_sample_now$"), group=-1)
+    app.add_handler(CallbackQueryHandler(rating_callback, pattern=r"^rate:"), group=-1)
+    app.add_handler(CallbackQueryHandler(translate_callback, pattern=r"^translate:"), group=-1)
+    app.add_handler(CallbackQueryHandler(close_translation_callback, pattern=r"^close_translation$"), group=-1)
+
+    # Primary conversation & fallback handlers in group=0
+    app.add_handler(conv, group=0)
+    app.add_handler(CallbackQueryHandler(start_edit_field, pattern=r"^editfield:"), group=0)
+    app.add_handler(CallbackQueryHandler(finish_edit_callback, pattern=r"^editval_(lang|rasi):"), group=0)
+    app.add_handler(CommandHandler("delete_data", delete_data_command), group=0)
+    app.add_handler(CommandHandler("stop", delete_data_command), group=0)
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_free_text_input), group=0)
+    app.add_handler(CallbackQueryHandler(set_language_callback, pattern=r"^lang:"), group=0)
+    app.add_handler(CallbackQueryHandler(set_rasi_callback, pattern=r"^rasi:"), group=0)
+    app.add_handler(CallbackQueryHandler(back_navigation_callback, pattern=r"^back:"), group=0)
     return app
 
 
 async def main() -> None:
     application = build_application()
     await application.initialize()
-    await application.bot.delete_webhook(drop_pending_updates=True)
     await application.start()
     await application.updater.start_polling(
         drop_pending_updates=True,
@@ -1858,7 +1891,36 @@ async def main() -> None:
     await site.start()
     logger.info("AURA bot polling + health server active on port %s", PORT)
 
-    await asyncio.Event().wait()
+    stop_event = asyncio.Event()
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        try:
+            loop.add_signal_handler(sig, stop_event.set)
+        except NotImplementedError:
+            pass
+
+    try:
+        await stop_event.wait()
+    finally:
+        logger.info("Shutting down AURA bot cleanly...")
+        try:
+            if application.updater and application.updater.running:
+                await application.updater.stop()
+        except Exception as exc:
+            logger.warning("Updater stop notice: %s", exc)
+        try:
+            if application.running:
+                await application.stop()
+            await application.shutdown()
+        except Exception as exc:
+            logger.warning("Application shutdown notice: %s", exc)
+        try:
+            await runner.cleanup()
+        except Exception as exc:
+            logger.warning("Web runner cleanup notice: %s", exc)
+        if DB_POOL and not DB_POOL._closed:
+            await DB_POOL.close()
+        logger.info("AURA bot shutdown complete.")
 
 
 if __name__ == "__main__":
