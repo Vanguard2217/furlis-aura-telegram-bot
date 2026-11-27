@@ -562,9 +562,9 @@ WELCOME_COPY = {
         "dpdpa_body": (
             "• <b>സൂക്ഷിക്കുന്ന വിവരങ്ങൾ:</b> പേര്, ഭാഷ, ജനനത്തീയതി, പ്രദേശം/നഗരം, രാശി, നിങ്ങളുടെ സഹായ സന്ദേശങ്ങൾ.\n"
             "• <b>ഉദ്ദേശ്യം:</b> രാവിലെ 04:30 AM IST AURA കാർഡ് വ്യക്തിഗതമാക്കുന്നതിനും സഹായത്തിനും.\n"
-            "• <b>നിങ്ങളുടെ അവകാശങ്ങൾ:</b> പ്രൊഫൈലിൽ മാറ്റാം അല്ലെങ്കിൽ <b>എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക</b> / /delete_data വഴി പൂർണ്ണമായി നീക്കം ചെയ്യാം."
+            "• <b>നിങ്ങളുടെ അവകാശങ്ങൾ:</b> പ്രൊഫైലിൽ മാറ്റാം അല്ലെങ്കിൽ <b>എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക</b> / /delete_data വഴി പൂർണ്ണമായി നീക്കം ചെയ്യാം."
         ),
-        "confirm_delete_body": "⚠️ <b>ഡാറ്റ നീക്കം സ്ഥിരീകരണം (DPDPA 2023):</b>\nനിങ്ങളുടെ പ്രൊഫైൽ, മുൻഗണനകൾ, രേഖകൾ എന്നിവ ശാശ്വതമായി നീക്കം ചെയ്യപ്പെടും.",
+        "confirm_delete_body": "⚠️ <b>ഡാറ്റ നീക്കം സ്ഥിരീകരണം (DPDPA 2023):</b>\nനിങ്ങളുടെ പ്രൊഫೈൽ, മുൻഗണനകൾ, രേഖകൾ എന്നിവ ശാശ്വതമായി നീക്കം ചെയ്യപ്പെടും.",
         "erased_msg": "🗑️ DPDPA 2023 പ്രകാരം നിങ്ങളുടെ ഡാറ്റ പൂർണ്ണമായി നീക്കം ചെയ്തു. വീണ്ടും തുടങ്ങാൻ /start അമർത്തുക.",
         "saved_msg": "✅ അപ്ഡേറ്റ് ചെയ്തു: <b>{val}</b>",
     },
@@ -573,6 +573,7 @@ WELCOME_COPY = {
 DB_POOL: Optional[asyncpg.Pool] = None
 CACHED_WELCOME_VIDEO_ID: Optional[str] = os.environ.get("WELCOME_VIDEO_FILE_ID", "").strip() or None
 CACHED_DEITY_PHOTO_IDS: dict[str, str] = {}
+HAS_LOCALITY_COLUMN: Optional[bool] = None
 
 
 def get_card_header(lang: Optional[str] = "en") -> str:
@@ -668,6 +669,41 @@ async def get_db_pool() -> asyncpg.Pool:
     return DB_POOL
 
 
+async def _ensure_locality_column(conn: asyncpg.Connection) -> bool:
+    global HAS_LOCALITY_COLUMN
+    try:
+        await conn.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS locality TEXT;")
+        await conn.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS city TEXT;")
+        col_exists = await conn.fetchval(
+            """
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = 'subscribers'
+                  AND column_name = 'locality'
+            );
+            """
+        )
+        HAS_LOCALITY_COLUMN = bool(col_exists)
+        return HAS_LOCALITY_COLUMN
+    except Exception as exc:
+        logger.warning("Could not verify/add locality column automatically: %s", exc)
+        col_exists = await conn.fetchval(
+            """
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = 'subscribers'
+                  AND column_name = 'locality'
+            );
+            """
+        )
+        HAS_LOCALITY_COLUMN = bool(col_exists)
+        return HAS_LOCALITY_COLUMN
+
+
 async def ensure_subscribers_schema() -> None:
     ddl_statements = [
         """
@@ -734,9 +770,85 @@ async def ensure_subscribers_schema() -> None:
         async with pool.acquire() as conn:
             for stmt in ddl_statements:
                 await conn.execute(stmt)
+            await _ensure_locality_column(conn)
         logger.info("Database schema verified successfully.")
     except Exception as exc:
         logger.warning("Schema check notice: %s", exc)
+
+
+async def _execute_upsert_with_locality(
+    conn: asyncpg.Connection,
+    telegram_id: int,
+    first_name: str,
+    username: str,
+    lang: str,
+    dob: str,
+    locality: str,
+    city_part: str,
+    rasi: str,
+) -> None:
+    await conn.execute(
+        """
+        INSERT INTO subscribers (
+            telegram_id, first_name, username, preferred_language,
+            dob, locality, city, rasi, frequency, is_active,
+            consent_given_at, updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 1, TRUE, NOW(), NOW())
+        ON CONFLICT (telegram_id) DO UPDATE SET
+            first_name = EXCLUDED.first_name,
+            username = EXCLUDED.username,
+            preferred_language = EXCLUDED.preferred_language,
+            dob = EXCLUDED.dob,
+            locality = EXCLUDED.locality,
+            city = EXCLUDED.city,
+            rasi = EXCLUDED.rasi,
+            frequency = 1,
+            is_active = TRUE,
+            updated_at = NOW();
+        """,
+        telegram_id,
+        first_name,
+        username,
+        lang,
+        dob,
+        locality,
+        city_part,
+        rasi,
+    )
+
+
+async def _execute_upsert_city_only(
+    conn: asyncpg.Connection,
+    telegram_id: int,
+    first_name: str,
+    lang: str,
+    dob: str,
+    city_part: str,
+    rasi: str,
+) -> None:
+    await conn.execute(
+        """
+        INSERT INTO subscribers (
+            telegram_id, first_name, preferred_language,
+            dob, city, rasi, is_active
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+        ON CONFLICT (telegram_id) DO UPDATE SET
+            first_name = EXCLUDED.first_name,
+            preferred_language = EXCLUDED.preferred_language,
+            dob = EXCLUDED.dob,
+            city = EXCLUDED.city,
+            rasi = EXCLUDED.rasi,
+            is_active = TRUE;
+        """,
+        telegram_id,
+        first_name,
+        lang,
+        dob,
+        city_part,
+        rasi,
+    )
 
 
 async def upsert_subscriber_profile(
@@ -748,30 +860,16 @@ async def upsert_subscriber_profile(
     locality: str,
     rasi: str,
 ) -> None:
+    global HAS_LOCALITY_COLUMN
     city_part = locality.split(",")[-1].strip() if "," in locality else locality.strip()
     pool = await get_db_pool()
     async with pool.acquire() as conn:
+        if HAS_LOCALITY_COLUMN is False:
+            await _ensure_locality_column(conn)
+
         try:
-            await conn.execute(
-                """
-                INSERT INTO subscribers (
-                    telegram_id, first_name, username, preferred_language,
-                    dob, locality, city, rasi, frequency, is_active,
-                    consent_given_at, updated_at
-                )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 1, TRUE, NOW(), NOW())
-                ON CONFLICT (telegram_id) DO UPDATE SET
-                    first_name = EXCLUDED.first_name,
-                    username = EXCLUDED.username,
-                    preferred_language = EXCLUDED.preferred_language,
-                    dob = EXCLUDED.dob,
-                    locality = EXCLUDED.locality,
-                    city = EXCLUDED.city,
-                    rasi = EXCLUDED.rasi,
-                    frequency = 1,
-                    is_active = TRUE,
-                    updated_at = NOW();
-                """,
+            await _execute_upsert_with_locality(
+                conn,
                 telegram_id,
                 first_name,
                 username,
@@ -781,35 +879,47 @@ async def upsert_subscriber_profile(
                 city_part,
                 rasi,
             )
+            HAS_LOCALITY_COLUMN = True
+        except asyncpg.exceptions.UndefinedColumnError:
+            logger.warning("UndefinedColumnError on upsert; attempting self-healing ALTER TABLE.")
+            has_col = await _ensure_locality_column(conn)
+            if has_col:
+                await _execute_upsert_with_locality(
+                    conn,
+                    telegram_id,
+                    first_name,
+                    username,
+                    lang,
+                    dob,
+                    locality,
+                    city_part,
+                    rasi,
+                )
+            else:
+                await _execute_upsert_city_only(
+                    conn,
+                    telegram_id,
+                    first_name,
+                    lang,
+                    dob,
+                    city_part,
+                    rasi,
+                )
         except Exception as full_err:
             logger.warning("Full upsert fallback triggered: %s", full_err)
-            await conn.execute(
-                """
-                INSERT INTO subscribers (
-                    telegram_id, first_name, preferred_language,
-                    dob, locality, city, rasi, is_active
-                )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
-                ON CONFLICT (telegram_id) DO UPDATE SET
-                    first_name = EXCLUDED.first_name,
-                    preferred_language = EXCLUDED.preferred_language,
-                    dob = EXCLUDED.dob,
-                    locality = EXCLUDED.locality,
-                    city = EXCLUDED.city,
-                    rasi = EXCLUDED.rasi,
-                    is_active = TRUE;
-                """,
+            await _execute_upsert_city_only(
+                conn,
                 telegram_id,
                 first_name,
                 lang,
                 dob,
-                locality,
                 city_part,
                 rasi,
             )
 
 
 async def update_single_field(telegram_id: int, field: str, value: str) -> None:
+    global HAS_LOCALITY_COLUMN
     pool = await get_db_pool()
     async with pool.acquire() as conn:
         if field == "preferred_language":
@@ -832,12 +942,29 @@ async def update_single_field(telegram_id: int, field: str, value: str) -> None:
             )
         elif field == "locality":
             city_part = value.split(",")[-1].strip() if "," in value else value.strip()
-            await conn.execute(
-                "UPDATE subscribers SET locality = $1, city = $2, updated_at = NOW() WHERE telegram_id = $3;",
-                value,
-                city_part,
-                telegram_id,
-            )
+            try:
+                await conn.execute(
+                    "UPDATE subscribers SET locality = $1, city = $2, updated_at = NOW() WHERE telegram_id = $3;",
+                    value,
+                    city_part,
+                    telegram_id,
+                )
+                HAS_LOCALITY_COLUMN = True
+            except asyncpg.exceptions.UndefinedColumnError:
+                has_col = await _ensure_locality_column(conn)
+                if has_col:
+                    await conn.execute(
+                        "UPDATE subscribers SET locality = $1, city = $2, updated_at = NOW() WHERE telegram_id = $3;",
+                        value,
+                        city_part,
+                        telegram_id,
+                    )
+                else:
+                    await conn.execute(
+                        "UPDATE subscribers SET city = $1, updated_at = NOW() WHERE telegram_id = $2;",
+                        city_part,
+                        telegram_id,
+                    )
         elif field == "rasi":
             await conn.execute(
                 "UPDATE subscribers SET rasi = $1, updated_at = NOW() WHERE telegram_id = $2;",
