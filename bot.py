@@ -57,10 +57,18 @@ IST = timezone(timedelta(hours=5, minutes=30))
 # Conversation states
 LANG, DOB, LOCATION, RASI, EDIT_VALUE, FEEDBACK_TEXT = range(6)
 
-CARD_HEADER = (
-    "<b>ॐ AURA | Daily Morning Grace &amp; Divine Blessings ॐ</b>\n"
-    "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-)
+DIVIDER_LINE = "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+
+CARD_HEADERS = {
+    "en": f"<b>ॐ AURA | Daily Morning Grace &amp; Divine Blessings ॐ</b>\n{DIVIDER_LINE}",
+    "ta": f"<b>ॐ AURA | காலை அருளும் தெய்வீக ஆசீர்வாதங்களும் ॐ</b>\n{DIVIDER_LINE}",
+    "hi": f"<b>ॐ AURA | प्रातः की कृपा और दिव्य आशीर्वाद ॐ</b>\n{DIVIDER_LINE}",
+    "te": f"<b>ॐ AURA | ఉదయ కృప మరియు దివ్య ఆశీర్వాదాలు ॐ</b>\n{DIVIDER_LINE}",
+    "kn": f"<b>ॐ AURA | ಮುಂಜಾನೆಯ ಕೃಪೆ ಮತ್ತು ದಿವ್ಯ ಆಶೀರ್ವಾದಗಳು ॐ</b>\n{DIVIDER_LINE}",
+    "ml": f"<b>ॐ AURA | പ്രഭാത കൃപയും ദിവ്യ അനുഗ്രഹങ്ങളും ॐ</b>\n{DIVIDER_LINE}",
+}
+
+CARD_HEADER = CARD_HEADERS["en"]
 
 LANGUAGES = {
     "en": "English",
@@ -274,12 +282,12 @@ WELCOME_COPY = {
         "lbl_dob": "பிறந்த தேதி",
         "lbl_loc": "பகுதி / நகரம்",
         "lbl_rasi": "ராசி",
-        "lbl_time": "<b>Daily Delivery:</b> <b>04:30 AM IST</b>",
+        "lbl_time": "<b>தினசரி தகவல் பெரும் நேரம்:</b> <b>04:30 AM IST</b>",
         "btn_sample": "📨 இன்றைய அட்டையை அனுப்புக",
         "btn_profile": "👤 சுயவிவரம்",
         "btn_other": "📣 மற்ற சேவைகள்",
         "btn_12pillars": "🏛️ 12 தூண்கள் பார்வை",
-        "btn_pay": "🛒 Shop",
+        "btn_pay": "🛒 கடை",
         "btn_help": "💬 உதவி & கருத்து",
         "btn_translate": "🌐 Translate [ENG]",
         "btn_close_translation": "❌ Close Translation",
@@ -341,7 +349,7 @@ WELCOME_COPY = {
         "btn_profile": "👤 प्रोफ़ाइल",
         "btn_other": "📣 अन्य सेवाएं",
         "btn_12pillars": "🏛️ 12 पिलर्स दृश्य",
-        "btn_pay": "🛒 Shop",
+        "btn_pay": "🛒 शॉप",
         "btn_help": "💬 सहायता व प्रतिक्रिया",
         "btn_translate": "🌐 Translate [ENG]",
         "btn_close_translation": "❌ Close Translation",
@@ -403,7 +411,7 @@ WELCOME_COPY = {
         "btn_profile": "👤 ప్రొఫైల్",
         "btn_other": "📣 ఇతర సేవలు",
         "btn_12pillars": "🏛️ 12 పిల్లర్స్ వీక్షణ",
-        "btn_pay": "🛒 Shop",
+        "btn_pay": "🛒 షాప్",
         "btn_help": "💬 సహాయం & అభిప్రాయం",
         "btn_translate": "🌐 Translate [ENG]",
         "btn_close_translation": "❌ Close Translation",
@@ -465,7 +473,7 @@ WELCOME_COPY = {
         "btn_profile": "👤 ಪ್ರೊಫೈಲ್",
         "btn_other": "📣 ಇತರೆ ಸೇವೆಗಳು",
         "btn_12pillars": "🏛️ 12 ಪಿಲ್ಲರ್ಸ್ ವೀಕ್ಷಣೆ",
-        "btn_pay": "🛒 Shop",
+        "btn_pay": "🛒 ಶಾಪ್",
         "btn_help": "💬 ಬೆಂಬಲ & ಪ್ರತಿಕ್ರಿಯೆ",
         "btn_translate": "🌐 Translate [ENG]",
         "btn_close_translation": "❌ Close Translation",
@@ -527,7 +535,7 @@ WELCOME_COPY = {
         "btn_profile": "👤 പ്രൊഫൈൽ",
         "btn_other": "📣 മറ്റ് സേവനങ്ങൾ",
         "btn_12pillars": "🏛️ 12 പില്ലേഴ്സ് കാഴ്ച",
-        "btn_pay": "🛒 Shop",
+        "btn_pay": "🛒 ഷോപ്പ്",
         "btn_help": "💬 സഹായവും പ്രതികരണവും",
         "btn_translate": "🌐 Translate [ENG]",
         "btn_close_translation": "❌ Close Translation",
@@ -559,6 +567,21 @@ WELCOME_COPY = {
 
 DB_POOL: Optional[asyncpg.Pool] = None
 CACHED_WELCOME_VIDEO_ID: Optional[str] = os.environ.get("WELCOME_VIDEO_FILE_ID", "").strip() or None
+
+
+def get_card_header(lang: Optional[str] = "en") -> str:
+    return CARD_HEADERS.get(lang or "en") or CARD_HEADERS["en"]
+
+
+def record_to_dict(row) -> dict:
+    if row is None:
+        return {}
+    if isinstance(row, dict):
+        return row
+    try:
+        return dict(row)
+    except Exception:
+        return {k: row[k] for k in row.keys()} if hasattr(row, "keys") else {}
 
 
 def copy_for(lang: Optional[str]) -> dict:
@@ -916,9 +939,9 @@ def build_language_keyboard(lang_prefix: str = "lang") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(rows)
 
 
-def build_language_prompt_text() -> str:
+def build_language_prompt_text(lang: str = "en") -> str:
     return (
-        f"{CARD_HEADER}"
+        f"{get_card_header(lang)}"
         "<b>Select</b> your <b>Preferred Language</b> to begin"
     )
 
@@ -932,7 +955,7 @@ def build_welcome_dob_text(first_name: str, lang: str = "en") -> str:
     silver_rate = get_silver_rate_label(lang)
     safe_name = first_name or "Friend"
     return (
-        f"{CARD_HEADER}"
+        f"{get_card_header(lang)}"
         f"{c['greeting'].format(name=safe_name)}\n\n"
         f"{c['schedule']}\n\n"
         f"{c['b1'].format(blessing_with=blessing_with)}\n\n"
@@ -949,7 +972,7 @@ def build_location_step_text(lang: str, dob: str) -> str:
     c = copy_for(lang)
     lang_label = LANGUAGES.get(lang, "English")
     return (
-        f"{CARD_HEADER}"
+        f"{get_card_header(lang)}"
         f"✓ <b>{c['lbl_lang']}:</b> {lang_label}\n\n"
         f"✓ <b>{c['lbl_dob']}:</b> {dob}\n\n"
         f"{c['step2']}"
@@ -960,7 +983,7 @@ def build_rasi_step_text(lang: str, dob: str, locality: str) -> str:
     c = copy_for(lang)
     lang_label = LANGUAGES.get(lang, "English")
     return (
-        f"{CARD_HEADER}"
+        f"{get_card_header(lang)}"
         f"✓ <b>{c['lbl_lang']}:</b> {lang_label}\n\n"
         f"✓ <b>{c['lbl_dob']}:</b> {dob}\n\n"
         f"✓ <b>{c['lbl_loc']}:</b> {locality}\n\n"
@@ -1059,7 +1082,7 @@ async def start_onboarding(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     await send_welcome_video_top(update, context)
 
     sent = await update.effective_message.reply_text(
-        build_language_prompt_text(),
+        build_language_prompt_text("en"),
         parse_mode=ParseMode.HTML,
         reply_markup=build_language_keyboard("lang"),
     )
@@ -1089,10 +1112,11 @@ async def set_dob_message(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     track_onboarding_msg(context, update.message.message_id)
     lang = context.user_data.get("lang", "en")
     c = copy_for(lang)
+    hdr = get_card_header(lang)
 
     if not re.match(r"^\d{2}[-/]\d{2}[-/]\d{4}$", text):
         warn = await update.message.reply_text(
-            f"{CARD_HEADER}{c['invalid_dob']}",
+            f"{hdr}{c['invalid_dob']}",
             parse_mode=ParseMode.HTML,
         )
         track_onboarding_msg(context, warn.message_id)
@@ -1118,10 +1142,11 @@ async def set_location_message(update: Update, context: ContextTypes.DEFAULT_TYP
     track_onboarding_msg(context, update.message.message_id)
     lang = context.user_data.get("lang", "en")
     c = copy_for(lang)
+    hdr = get_card_header(lang)
 
     if len(locality) < 2:
         warn = await update.message.reply_text(
-            f"{CARD_HEADER}{c['invalid_loc']}",
+            f"{hdr}{c['invalid_loc']}",
             parse_mode=ParseMode.HTML,
         )
         track_onboarding_msg(context, warn.message_id)
@@ -1143,6 +1168,9 @@ async def set_rasi_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     query = update.callback_query
     await query.answer()
 
+    lang = context.user_data.get("lang", "en")
+    hdr = get_card_header(lang)
+
     try:
         rasi_code = query.data.split(":", 1)[1]
         user = update.effective_user
@@ -1150,7 +1178,6 @@ async def set_rasi_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         first_name = user.first_name or ""
         username = user.username or ""
 
-        lang = context.user_data.get("lang", "en")
         c = copy_for(lang)
         lang_label = LANGUAGES.get(lang, "English")
         dob = context.user_data.get("dob", "Not set")
@@ -1174,7 +1201,7 @@ async def set_rasi_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         )
 
         confirmation_text = (
-            f"{CARD_HEADER}"
+            f"{hdr}"
             f"{c['confirmed_title']}\n\n"
             f"✓ <b>{c['lbl_lang']}:</b> {lang_label}\n"
             f"✓ <b>{c['lbl_dob']}:</b> {dob}\n"
@@ -1195,7 +1222,7 @@ async def set_rasi_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         await safe_edit_or_reply(
             update,
             context,
-            f"{CARD_HEADER}⚠️ We hit a temporary snag saving your Rasi. Please tap /start to try again.",
+            f"{hdr}⚠️ We hit a temporary snag saving your Rasi. Please tap /start to try again.",
         )
     return ConversationHandler.END
 
@@ -1204,15 +1231,17 @@ async def set_rasi_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 # Merged Profile & Preferences, Other Services, In-Telegram Feedback & DPDPA
 # ---------------------------------------------------------------------------
 async def _get_user_lang_and_row(telegram_id: int, fallback_lang: str = "en"):
+    sub_dict = {}
     try:
         pool = await get_db_pool()
         async with pool.acquire() as conn:
-            sub = await conn.fetchrow("SELECT * FROM subscribers WHERE telegram_id = $1;", telegram_id)
+            row = await conn.fetchrow("SELECT * FROM subscribers WHERE telegram_id = $1;", telegram_id)
+            sub_dict = record_to_dict(row)
     except Exception as exc:
         logger.warning("DB read in panel skipped: %s", exc)
-        sub = None
-    lang = (sub["preferred_language"] if sub and sub["preferred_language"] else None) or fallback_lang or "en"
-    return lang, sub
+        sub_dict = {}
+    lang = sub_dict.get("preferred_language") or fallback_lang or "en"
+    return lang, sub_dict
 
 
 async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1229,22 +1258,23 @@ async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
         lang, sub = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
         c = copy_for(lang)
+        hdr = get_card_header(lang)
 
-        name_val = (sub["first_name"] if sub and sub["first_name"] else None) or user.first_name or "Friend"
-        dob_val = (sub["dob"] if sub and sub["dob"] else None) or context.user_data.get("dob") or "Not set"
+        name_val = sub.get("first_name") or user.first_name or "Friend"
+        dob_val = sub.get("dob") or context.user_data.get("dob") or "Not set"
         lang_label = LANGUAGES.get(lang, "English")
         loc_val = (
-            (sub["locality"] if sub and sub["locality"] else None)
-            or (sub["city"] if sub and sub["city"] else None)
+            sub.get("locality")
+            or sub.get("city")
             or context.user_data.get("locality")
             or "Chennai"
         )
-        rasi_code = (sub["rasi"] if sub and sub["rasi"] else None) or "mesham"
+        rasi_code = sub.get("rasi") or "mesham"
         rasi_display = get_rasi_display(rasi_code, lang)
         pillars_status = "ON" if context.user_data.get("12pillars_view", False) else "OFF"
 
         text = (
-            f"{CARD_HEADER}"
+            f"{hdr}"
             f"{c['profile_title']}\n\n"
             f"• <b>{c['lbl_name']}:</b> {name_val}\n"
             f"• <b>{c['lbl_dob']}:</b> {dob_val}\n"
@@ -1296,10 +1326,11 @@ async def open_other_services_panel(update: Update, context: ContextTypes.DEFAUL
     telegram_id = query.from_user.id if query else update.effective_user.id
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
+    hdr = get_card_header(lang)
 
     pillars_mode = bool(context.user_data.get("12pillars_view", False))
     mode_status = "ON" if pillars_mode else "OFF"
-    text = f"{CARD_HEADER}{c['other_title']}\n\n{c['other_body']}\n\n• <b>12 Pillars Mode:</b> {mode_status}"
+    text = f"{hdr}{c['other_title']}\n\n{c['other_body']}\n\n• <b>12 Pillars Mode:</b> {mode_status}"
     kb = InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(f"{c['btn_12pillars']} ({mode_status})", callback_data="menu:12pillars_toggle")],
@@ -1324,8 +1355,9 @@ async def open_help_feedback_panel(update: Update, context: ContextTypes.DEFAULT
     telegram_id = query.from_user.id if query else update.effective_user.id
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
+    hdr = get_card_header(lang)
 
-    text = f"{CARD_HEADER}{c['help_title']}\n\n{c['help_prompt']}"
+    text = f"{hdr}{c['help_title']}\n\n{c['help_prompt']}"
     kb = InlineKeyboardMarkup([[InlineKeyboardButton(c["back_card"], callback_data="back:card")]])
     await safe_edit_or_reply(update, context, text, reply_markup=kb)
     return FEEDBACK_TEXT
@@ -1339,11 +1371,12 @@ async def save_help_feedback_message(update: Update, context: ContextTypes.DEFAU
 
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
+    hdr = get_card_header(lang)
 
     if not feedback_body:
         kb = InlineKeyboardMarkup([[InlineKeyboardButton(c["back_card"], callback_data="back:card")]])
         await update.message.reply_text(
-            f"{CARD_HEADER}{c['help_prompt']}",
+            f"{hdr}{c['help_prompt']}",
             parse_mode=ParseMode.HTML,
             reply_markup=kb,
         )
@@ -1383,7 +1416,7 @@ async def save_help_feedback_message(update: Update, context: ContextTypes.DEFAU
     context.user_data.pop("awaiting_feedback", None)
     kb = InlineKeyboardMarkup([[InlineKeyboardButton(c["back_card"], callback_data="back:card")]])
     await update.message.reply_text(
-        f"{CARD_HEADER}{c['help_received']}",
+        f"{hdr}{c['help_received']}",
         parse_mode=ParseMode.HTML,
         reply_markup=kb,
     )
@@ -1397,8 +1430,9 @@ async def open_dpdpa_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     telegram_id = query.from_user.id if query else update.effective_user.id
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
+    hdr = get_card_header(lang)
 
-    text = f"{CARD_HEADER}{c['dpdpa_title']}\n\n{c['dpdpa_body']}"
+    text = f"{hdr}{c['dpdpa_title']}\n\n{c['dpdpa_body']}"
     kb = InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(c["btn_delete"], callback_data="action:confirm_delete")],
@@ -1415,6 +1449,7 @@ async def confirm_delete_callback(update: Update, context: ContextTypes.DEFAULT_
     telegram_id = query.from_user.id if query else update.effective_user.id
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
+    hdr = get_card_header(lang)
 
     kb = InlineKeyboardMarkup(
         [
@@ -1422,7 +1457,7 @@ async def confirm_delete_callback(update: Update, context: ContextTypes.DEFAULT_
             [InlineKeyboardButton(c["back_profile"], callback_data="back:profile")],
         ]
     )
-    await safe_edit_or_reply(update, context, f"{CARD_HEADER}{c['confirm_delete_body']}", reply_markup=kb)
+    await safe_edit_or_reply(update, context, f"{hdr}{c['confirm_delete_body']}", reply_markup=kb)
 
 
 async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -1436,29 +1471,30 @@ async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     telegram_id = query.from_user.id if query else update.effective_user.id
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
+    hdr = get_card_header(lang)
 
     if field == "preferred_language":
         rows = build_language_keyboard("editval_lang").inline_keyboard
         kb = InlineKeyboardMarkup(list(rows) + [[InlineKeyboardButton(c["back_profile"], callback_data="back:profile")]])
-        await safe_edit_or_reply(update, context, build_language_prompt_text(), reply_markup=kb)
+        await safe_edit_or_reply(update, context, build_language_prompt_text(lang), reply_markup=kb)
         return EDIT_VALUE
 
     if field == "rasi":
         rows = build_rasi_keyboard(lang=lang, prefix="editval_rasi", include_back=False).inline_keyboard
         kb = InlineKeyboardMarkup(list(rows) + [[InlineKeyboardButton(c["back_profile"], callback_data="back:profile")]])
-        await safe_edit_or_reply(update, context, f"{CARD_HEADER}{c['step3']}", reply_markup=kb)
+        await safe_edit_or_reply(update, context, f"{hdr}{c['step3']}", reply_markup=kb)
         return EDIT_VALUE
 
     prompts = {
-        "first_name": f"{CARD_HEADER}<b>{c['btn_edit_name']}</b>:",
-        "dob": f"{CARD_HEADER}{c['step1']}",
-        "locality": f"{CARD_HEADER}{c['step2']}",
+        "first_name": f"{hdr}<b>{c['btn_edit_name']}</b>:",
+        "dob": f"{hdr}{c['step1']}",
+        "locality": f"{hdr}{c['step2']}",
     }
     kb = InlineKeyboardMarkup([[InlineKeyboardButton(c["back_profile"], callback_data="back:profile")]])
     await safe_edit_or_reply(
         update,
         context,
-        prompts.get(field, f"{CARD_HEADER}Enter new value:"),
+        prompts.get(field, f"{hdr}Enter new value:"),
         reply_markup=kb,
     )
     return EDIT_VALUE
@@ -1482,6 +1518,7 @@ async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 
     context.user_data.pop("editing_field", None)
     c = copy_for(lang_out)
+    hdr = get_card_header(lang_out)
     kb = InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(c["btn_profile"], callback_data="panel:profile")],
@@ -1491,7 +1528,7 @@ async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     await safe_edit_or_reply(
         update,
         context,
-        f"{CARD_HEADER}{c['saved_msg'].format(val=saved_label)}",
+        f"{hdr}{c['saved_msg'].format(val=saved_label)}",
         reply_markup=kb,
     )
     return ConversationHandler.END
@@ -1510,12 +1547,13 @@ async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_T
 
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
+    hdr = get_card_header(lang)
     retry_kb = InlineKeyboardMarkup([[InlineKeyboardButton(c["back_profile"], callback_data="back:profile")]])
 
     if field == "dob":
         if not re.match(r"^\d{2}[-/]\d{2}[-/]\d{4}$", raw):
             await update.message.reply_text(
-                f"{CARD_HEADER}{c['invalid_dob']}",
+                f"{hdr}{c['invalid_dob']}",
                 parse_mode=ParseMode.HTML,
                 reply_markup=retry_kb,
             )
@@ -1525,7 +1563,7 @@ async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_T
     elif field == "locality":
         if len(raw) < 2:
             await update.message.reply_text(
-                f"{CARD_HEADER}{c['invalid_loc']}",
+                f"{hdr}{c['invalid_loc']}",
                 parse_mode=ParseMode.HTML,
                 reply_markup=retry_kb,
             )
@@ -1545,7 +1583,7 @@ async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_T
         ]
     )
     await update.message.reply_text(
-        f"{CARD_HEADER}{c['saved_msg'].format(val=clean_val)}",
+        f"{hdr}{c['saved_msg'].format(val=clean_val)}",
         parse_mode=ParseMode.HTML,
         reply_markup=kb,
     )
@@ -1583,7 +1621,7 @@ async def back_navigation_callback(update: Update, context: ContextTypes.DEFAULT
         await safe_edit_or_reply(
             update,
             context,
-            build_language_prompt_text(),
+            build_language_prompt_text(lang),
             reply_markup=build_language_keyboard("lang"),
         )
         return LANG
@@ -1630,6 +1668,7 @@ def _build_card_message_from_cache(
     wow = get_wow_label(lang)
     quote = get_quote_label(lang)
     defaults = LOCALIZED_CARD_DEFAULTS.get(lang) or LOCALIZED_CARD_DEFAULTS["en"]
+    hdr = get_card_header(lang)
 
     deity_dict = cache.get(("DEITY_DAY", "TODAY")) or {}
     deity_block = deity_dict.get(lang) or defaults["deity"]
@@ -1655,7 +1694,7 @@ def _build_card_message_from_cache(
     )
 
     return (
-        f"{CARD_HEADER}"
+        f"{hdr}"
         f"{deity_block}\n\n"
         f"{wow_block}\n\n"
         f"{ausp_block}\n\n"
@@ -1675,12 +1714,13 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
     telegram_id = update.effective_user.id
     today_ist = datetime.now(IST).date()
 
-    sub = None
+    sub = {}
     rows = []
     try:
         pool = await get_db_pool()
         async with pool.acquire() as conn:
-            sub = await conn.fetchrow("SELECT * FROM subscribers WHERE telegram_id = $1;", telegram_id)
+            row = await conn.fetchrow("SELECT * FROM subscribers WHERE telegram_id = $1;", telegram_id)
+            sub = record_to_dict(row)
             rows = await conn.fetch(
                 "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache WHERE edition_date = $1;",
                 today_ist,
@@ -1692,9 +1732,9 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
     except Exception as exc:
         logger.warning("Cache/DB lookup fallback in send_sample_card_callback: %s", exc)
 
-    lang = (sub["preferred_language"] if sub and sub["preferred_language"] else None) or context.user_data.get("lang") or "en"
-    rasi = ((sub["rasi"] if sub and sub["rasi"] else None) or "mesham").lower()
-    city = normalize_city_key(sub["city"] if sub and sub["city"] else "chennai")
+    lang = sub.get("preferred_language") or context.user_data.get("lang") or "en"
+    rasi = (sub.get("rasi") or "mesham").lower()
+    city = normalize_city_key(sub.get("city") or "chennai")
 
     cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
     message_text = _build_card_message_from_cache(cache, lang, rasi, city, today_ist)
@@ -1738,12 +1778,13 @@ async def translate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
     edition_date = date.fromisoformat(edition_date_str)
     telegram_id = update.effective_user.id
 
-    sub = None
+    sub = {}
     rows = []
     try:
         pool = await get_db_pool()
         async with pool.acquire() as conn:
-            sub = await conn.fetchrow("SELECT * FROM subscribers WHERE telegram_id = $1;", telegram_id)
+            row = await conn.fetchrow("SELECT * FROM subscribers WHERE telegram_id = $1;", telegram_id)
+            sub = record_to_dict(row)
             rows = await conn.fetch(
                 "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache WHERE edition_date = $1;",
                 edition_date,
@@ -1751,8 +1792,8 @@ async def translate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
     except Exception as exc:
         logger.warning("Translate lookup fallback: %s", exc)
 
-    rasi = ((sub["rasi"] if sub and sub["rasi"] else None) or "mesham").lower()
-    city = normalize_city_key(sub["city"] if sub and sub["city"] else "chennai")
+    rasi = (sub.get("rasi") or "mesham").lower()
+    city = normalize_city_key(sub.get("city") or "chennai")
     cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
 
     en_text = _build_card_message_from_cache(cache, "en", rasi, city, edition_date)
@@ -1789,7 +1830,8 @@ async def delete_data_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     context.user_data.clear()
     c = copy_for(lang)
-    await update.message.reply_text(f"{CARD_HEADER}{c['erased_msg']}", parse_mode=ParseMode.HTML)
+    hdr = get_card_header(lang)
+    await update.message.reply_text(f"{hdr}{c['erased_msg']}", parse_mode=ParseMode.HTML)
 
 
 async def delete_data_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1811,7 +1853,8 @@ async def delete_data_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 
     context.user_data.clear()
     c = copy_for(lang)
-    await safe_edit_or_reply(update, context, f"{CARD_HEADER}{c['erased_msg']}")
+    hdr = get_card_header(lang)
+    await safe_edit_or_reply(update, context, f"{hdr}{c['erased_msg']}")
 
 
 # ---------------------------------------------------------------------------
