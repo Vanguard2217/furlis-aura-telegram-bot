@@ -26,6 +26,7 @@ from telegram.ext import (
     CallbackQueryHandler,
     MessageHandler,
     ConversationHandler,
+    TypeHandler,
     ContextTypes,
     filters,
 )
@@ -195,23 +196,23 @@ WELCOME_COPY = {
         "invalid_dob": "Please enter a valid Date of Birth in <code>DD-MM-YYYY</code> format (e.g., <code>15-08-1985</code>):",
         "step2": (
             "<b>Step 2 of 3</b> — Enter your Locality &amp; City (or just your City):\n"
-            "<i>Example: <code>Ambattur, Chennai</code> or <code>Adyar, Chennai</code> (or <code>Chennai</code>).\n"
+            "<i>Example: <code>Bandra, Mumbai</code> or <code>Connaught Place, Delhi</code> or <code>Indiranagar, Bangalore</code> or <code>Adyar, Chennai</code> (<code>Mumbai</code> or <code>Delhi</code> or <code>Bangalore</code> or <code>Chennai</code>).\n"
             "Why? Adding your locality gives sharper local weather &amp; rain updates.</i>"
         ),
-        "invalid_loc": "Please enter your Locality &amp; City (e.g., <code>Ambattur, Chennai</code> or <code>Adyar, Chennai</code>):",
+        "invalid_loc": "Please enter your Locality &amp; City (e.g., <code>Bandra, Mumbai</code>, <code>Connaught Place, Delhi</code>, <code>Indiranagar, Bangalore</code>, or <code>Adyar, Chennai</code>):",
         "step3": "<b>Step 3 of 3</b> — Select your Zodiac / Rasi:",
-        "back_lang": "← Back to Language",
-        "back_dob": "← Back to Date of Birth",
-        "back_loc": "← Back to Locality / City",
-        "back_card": "← Back to Card",
-        "back_profile": "← Back to Profile",
+        "back_lang": "⬅️ Back to Language",
+        "back_dob": "⬅️ Back to Date of Birth",
+        "back_loc": "⬅️ Back to Locality / City",
+        "back_card": "⬅️ Back to Card",
+        "back_profile": "⬅️ Back to Profile",
         "confirmed_title": "🙏 <b>Subscription Confirmed — Ashirvad Active</b>",
         "lbl_name": "Name",
         "lbl_lang": "Language",
         "lbl_dob": "Date of Birth",
         "lbl_loc": "Locality / City",
         "lbl_rasi": "Zodiac / Rasi",
-        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
+        "lbl_time": "<b>Daily Delivery:</b> <b>04:30 AM IST</b>",
         "btn_sample": "📨 Send Today's Card Now",
         "btn_profile": "👤 Profile",
         "btn_other": "📣 Other Services",
@@ -219,7 +220,7 @@ WELCOME_COPY = {
         "btn_pay": "🛒 Shop",
         "btn_help": "💬 Help & Feedback",
         "btn_translate": "🌐 Translate [ENG]",
-        "btn_close_translation": "✕ Close Translation",
+        "btn_close_translation": "❌ Close Translation",
         "btn_privacy": "🔒 Privacy & Data (DPDPA)",
         "btn_delete": "🗑️ Delete My Data (DPDPA)",
         "btn_confirm_delete": "⚠️ Confirm Permanent Erasure",
@@ -257,23 +258,23 @@ WELCOME_COPY = {
         "invalid_dob": "சரியான பிறந்த தேதியை <code>DD-MM-YYYY</code> வடிவில் உள்ளிடவும் (உதா: <code>15-08-1985</code>):",
         "step2": (
             "<b>படி 2 / 3</b> — உங்கள் பகுதி மற்றும் நகரத்தை உள்ளிடவும் (அல்லது நகரம் மட்டும்):\n"
-            "<i>உதாரணம்: <code>Ambattur, Chennai</code> அல்லது <code>Adyar, Chennai</code> (அல்லது <code>Chennai</code>).\n"
+            "<i>உதாரணம்: <code>பாந்த்ரா, மும்பை</code> அல்லது <code>கன்னாட் பிளேஸ், டெல்லி</code> அல்லது <code>இந்திரா நகர், பெங்களூரு</code> அல்லது <code>அடையாறு, சென்னை</code> (<code>மும்பை</code> அல்லது <code>டெல்லி</code> அல்லது <code>பெங்களூரு</code> அல்லது <code>சென்னை</code>).\n"
             "ஏன்? பகுதியைச் சேர்த்தால் அருகிலுள்ள மழை மற்றும் வானிலை தகவல் துல்லியமாக இருக்கும்.</i>"
         ),
-        "invalid_loc": "உங்கள் பகுதி மற்றும் நகரத்தை உள்ளிடவும் (உதா: <code>Ambattur, Chennai</code> அல்லது <code>Adyar, Chennai</code>):",
+        "invalid_loc": "உங்கள் பகுதி மற்றும் நகரத்தை உள்ளிடவும் (உதா: <code>பாந்த்ரா, மும்பை</code>, <code>கன்னாட் பிளேஸ், டெல்லி</code>, <code>இந்திரா நகர், பெங்களூரு</code>, அல்லது <code>அடையாறு, சென்னை</code>):",
         "step3": "<b>படி 3 / 3</b> — உங்கள் ராசியைத் தேர்ந்தெடுக்கவும்:",
-        "back_lang": "← மொழிக்குத் திரும்புக",
-        "back_dob": "← பிறந்த தேதிக்குத் திரும்புக",
-        "back_loc": "← பகுதி / நகரத்திற்குத் திரும்புக",
-        "back_card": "← அட்டைக்குத் திரும்புக",
-        "back_profile": "← சுயவிவரத்திற்குத் திரும்புக",
+        "back_lang": "⬅️ மொழிக்குத் திரும்புக",
+        "back_dob": "⬅️ பிறந்த தேதிக்குத் திரும்புக",
+        "back_loc": "⬅️ பகுதி / நகரத்திற்குத் திரும்புக",
+        "back_card": "⬅️ அட்டைக்குத் திரும்புக",
+        "back_profile": "⬅️ சுயவிவரத்திற்குத் திரும்புக",
         "confirmed_title": "🙏 <b>பதிவு உறுதி செய்யப்பட்டது — ஆசீர்வாதம் செயலில் உள்ளது</b>",
         "lbl_name": "பெயர்",
         "lbl_lang": "மொழி",
         "lbl_dob": "பிறந்த தேதி",
         "lbl_loc": "பகுதி / நகரம்",
         "lbl_rasi": "ராசி",
-        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
+        "lbl_time": "<b>Daily Delivery:</b> <b>04:30 AM IST</b>",
         "btn_sample": "📨 இன்றைய அட்டையை அனுப்புக",
         "btn_profile": "👤 சுயவிவரம்",
         "btn_other": "📣 மற்ற சேவைகள்",
@@ -281,7 +282,7 @@ WELCOME_COPY = {
         "btn_pay": "🛒 Shop",
         "btn_help": "💬 உதவி & கருத்து",
         "btn_translate": "🌐 Translate [ENG]",
-        "btn_close_translation": "✕ Close Translation",
+        "btn_close_translation": "❌ Close Translation",
         "btn_privacy": "🔒 தனியுரிமை & தரவு (DPDPA)",
         "btn_delete": "🗑️ என் தரவை நீக்கு (DPDPA)",
         "btn_confirm_delete": "⚠️ நிரந்தர நீக்கத்தை உறுதி செய்க",
@@ -319,23 +320,23 @@ WELCOME_COPY = {
         "invalid_dob": "कृपया <code>DD-MM-YYYY</code> प्रारूप में मान्य जन्म तिथि दर्ज करें (उदा: <code>15-08-1985</code>):",
         "step2": (
             "<b>चरण 2 / 3</b> — अपना क्षेत्र और शहर दर्ज करें (या केवल शहर):\n"
-            "<i>उदाहरण: <code>Ambattur, Chennai</code> या <code>Adyar, Chennai</code> (या <code>Chennai</code>).\n"
-            "क्यों? क्षेत्र जोड़ने से आपके इलाके के अनुसार मौसम की जानकारी अधिक सटीक मिलती है।</i>"
+            "<i>उदाहरण: <code>बांद्रा, मुंबई</code> या <code>कनॉट प्लेस, दिल्ली</code> या <code>इंदिरानगर, बेंगलुरु</code> या <code>अड्यार, चेन्नई</code> (<code>मुंबई</code> या <code>दिल्ली</code> या <code>बेंगलुरु</code> या <code>चेन्नई</code>).\n"
+            "क्यों? क्षेत्र जोड़ने से आपके इलाके के अनुसार मौसम और बारिश की जानकारी अधिक सटीक मिलती है।</i>"
         ),
-        "invalid_loc": "कृपया अपना क्षेत्र और शहर दर्ज करें (उदा: <code>Ambattur, Chennai</code> या <code>Adyar, Chennai</code>):",
+        "invalid_loc": "कृपया अपना क्षेत्र और शहर दर्ज करें (उदा: <code>बांद्रा, मुंबई</code>, <code>कनॉट प्लेस, दिल्ली</code>, <code>इंदिरानगर, बेंगलुरु</code>, या <code>अड्यार, चेन्नई</code>):",
         "step3": "<b>चरण 3 / 3</b> — अपनी राशि चुनें:",
-        "back_lang": "← भाषा पर वापस जाएं",
-        "back_dob": "← जन्म तिथि पर वापस जाएं",
-        "back_loc": "← क्षेत्र / शहर पर वापस जाएं",
-        "back_card": "← कार्ड पर वापस जाएं",
-        "back_profile": "← प्रोफ़ाइल पर वापस जाएं",
+        "back_lang": "⬅️ भाषा पर वापस जाएं",
+        "back_dob": "⬅️ जन्म तिथि पर वापस जाएं",
+        "back_loc": "⬅️ क्षेत्र / शहर पर वापस जाएं",
+        "back_card": "⬅️ कार्ड पर वापस जाएं",
+        "back_profile": "⬅️ प्रोफ़ाइल पर वापस जाएं",
         "confirmed_title": "🙏 <b>सदस्यता पुष्टि — आशीर्वाद सक्रिय</b>",
         "lbl_name": "नाम",
         "lbl_lang": "भाषा",
         "lbl_dob": "जन्म तिथि",
         "lbl_loc": "क्षेत्र / शहर",
         "lbl_rasi": "राशि",
-        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
+        "lbl_time": "<b>Daily Delivery:</b> <b>04:30 AM IST</b>",
         "btn_sample": "📨 आज का कार्ड अभी भेजें",
         "btn_profile": "👤 प्रोफ़ाइल",
         "btn_other": "📣 अन्य सेवाएं",
@@ -343,7 +344,7 @@ WELCOME_COPY = {
         "btn_pay": "🛒 Shop",
         "btn_help": "💬 सहायता व प्रतिक्रिया",
         "btn_translate": "🌐 Translate [ENG]",
-        "btn_close_translation": "✕ Close Translation",
+        "btn_close_translation": "❌ Close Translation",
         "btn_privacy": "🔒 गोपनीयता व डेटा (DPDPA)",
         "btn_delete": "🗑️ मेरा डेटा हटाएं (DPDPA)",
         "btn_confirm_delete": "⚠️ स्थायी रूप से हटाने की पुष्टि करें",
@@ -381,23 +382,23 @@ WELCOME_COPY = {
         "invalid_dob": "దయచేసి <code>DD-MM-YYYY</code> రూపంలో సరైన పుట్టిన తేదీని నమోదు చేయండి (ఉదా: <code>15-08-1985</code>):",
         "step2": (
             "<b>దశ 2 / 3</b> — మీ ప్రాంతం మరియు నగరాన్ని నమోదు చేయండి (లేదా నగరం మాత్రమే):\n"
-            "<i>ఉదాహరణ: <code>Ambattur, Chennai</code> లేదా <code>Adyar, Chennai</code> (లేదా <code>Chennai</code>).\n"
+            "<i>ఉదాహరణ: <code>బాంద్రా, ముంబై</code> లేదా <code>కన్నాట్ ప్లేస్, ఢిల్లీ</code> లేదా <code>ఇందిరానగర్, బెంగళూరు</code> లేదా <code>అడయార్, చెన్నై</code> (<code>ముంబై</code> లేదా <code>ఢిల్లీ</code> లేదా <code>బెంగళూరు</code> లేదా <code>చెన్నై</code>).\n"
             "ఎందుకు? ప్రాంతం చేరిస్తే స్థానిక వాతావరణ &amp; వర్ష సమాచారం మరింత ఖచ్చితంగా ఉంటుంది.</i>"
         ),
-        "invalid_loc": "దయచేసి మీ ప్రాంతం మరియు నగరాన్ని నమోదు చేయండి (ఉదా: <code>Ambattur, Chennai</code> లేదా <code>Adyar, Chennai</code>):",
+        "invalid_loc": "దయచేసి మీ ప్రాంతం మరియు నగరాన్ని నమోదు చేయండి (ఉదా: <code>బాంద్రా, ముంబై</code>, <code>కన్నాట్ ప్లేస్, ఢిల్లీ</code>, <code>ఇందిరానగర్, బెంగళూరు</code>, లేదా <code>అడయార్, చెన్నై</code>):",
         "step3": "<b>దశ 3 / 3</b> — మీ రాశిని ఎంచుకోండి:",
-        "back_lang": "← భాషకు తిరిగి వెళ్ళండి",
-        "back_dob": "← పుట్టిన తేదీకి తిరిగి వెళ్ళండి",
-        "back_loc": "← ప్రాంతం / నగరానికి తిరిగి వెళ్ళండి",
-        "back_card": "← కార్డ్‌కి తిరిగి వెళ్ళండి",
-        "back_profile": "← ప్రొఫైల్‌కి తిరిగి వెళ్ళండి",
+        "back_lang": "⬅️ భాషకు తిరిగి వెళ్ళండి",
+        "back_dob": "⬅️ పుట్టిన తేదీకి తిరిగి వెళ్ళండి",
+        "back_loc": "⬅️ ప్రాంతం / నగరానికి తిరిగి వెళ్ళండి",
+        "back_card": "⬅️ కార్డ్‌కి తిరిగి వెళ్ళండి",
+        "back_profile": "⬅️ ప్రొఫైల్‌కి తిరిగి వెళ్ళండి",
         "confirmed_title": "🙏 <b>సబ్‌స్క్రిప్షన్ నిర్ధారించబడింది — ఆశీర్వాదం యాక్టివ్</b>",
         "lbl_name": "పేరు",
         "lbl_lang": "భాష",
         "lbl_dob": "పుట్టిన తేదీ",
         "lbl_loc": "ప్రాంతం / నగరం",
         "lbl_rasi": "రాశి",
-        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
+        "lbl_time": "<b>Daily Delivery:</b> <b>04:30 AM IST</b>",
         "btn_sample": "📨 నేటి కార్డ్ ఇప్పుడే పంపండి",
         "btn_profile": "👤 ప్రొఫైల్",
         "btn_other": "📣 ఇతర సేవలు",
@@ -405,7 +406,7 @@ WELCOME_COPY = {
         "btn_pay": "🛒 Shop",
         "btn_help": "💬 సహాయం & అభిప్రాయం",
         "btn_translate": "🌐 Translate [ENG]",
-        "btn_close_translation": "✕ Close Translation",
+        "btn_close_translation": "❌ Close Translation",
         "btn_privacy": "🔒 గోప్యత & డేటా (DPDPA)",
         "btn_delete": "🗑️ నా డేటా తొలగించండి (DPDPA)",
         "btn_confirm_delete": "⚠️ శాశ్వత తొలగింపును నిర్ధారించండి",
@@ -443,23 +444,23 @@ WELCOME_COPY = {
         "invalid_dob": "ದಯವಿಟ್ಟು <code>DD-MM-YYYY</code> ನಮೂನೆಯಲ್ಲಿ ಸರಿಯಾದ ಜನ್ಮ ದಿನಾಂಕವನ್ನು ನಮೂದಿಸಿ (ಉದಾ: <code>15-08-1985</code>):",
         "step2": (
             "<b>ಹಂತ 2 / 3</b> — ನಿಮ್ಮ ಪ್ರದೇಶ ಮತ್ತು ನಗರವನ್ನು ನಮೂದಿಸಿ (ಅಥವಾ ನಗರ ಮಾತ್ರ):\n"
-            "<i>ಉದಾಹರಣೆ: <code>Ambattur, Chennai</code> ಅಥವಾ <code>Adyar, Chennai</code> (ಅಥವಾ <code>Chennai</code>).\n"
+            "<i>ಉದಾಹರಣೆ: <code>ಬಾಂದ್ರಾ, ಮುಂಬೈ</code> ಅಥವಾ <code>ಕನ್ನಾಟ್ ಪ್ಲೇಸ್, ದೆಹಲಿ</code> ಅಥವಾ <code>ಇಂದಿರಾನಗರ, ಬೆಂಗಳೂರು</code> ಅಥವಾ <code>ಅಡ್ಯಾರ್, ಚೆನ್ನೈ</code> (<code>ಮುಂಬೈ</code> ಅಥವಾ <code>ದೆಹಲಿ</code> ಅಥವಾ <code>ಬೆಂಗಳೂರು</code> ಅಥವಾ <code>ಚೆನ್ನೈ</code>).\n"
             "ಏಕೆ? ಪ್ರದೇಶ ಸೇರಿಸಿದರೆ ಸ್ಥಳೀಯ ಹವಾಮಾನ ಮತ್ತು ಮಳೆ ಮಾಹಿತಿ ಹೆಚ್ಚು ನಿಖರವಾಗಿರುತ್ತದೆ.</i>"
         ),
-        "invalid_loc": "ದಯವಿಟ್ಟು ನಿಮ್ಮ ಪ್ರದೇಶ ಮತ್ತು ನಗರವನ್ನು ನಮೂದಿಸಿ (ಉದಾ: <code>Ambattur, Chennai</code> ಅಥವಾ <code>Adyar, Chennai</code>):",
+        "invalid_loc": "ದಯವಿಟ್ಟು ನಿಮ್ಮ ಪ್ರದೇಶ ಮತ್ತು ನಗರವನ್ನು ನಮೂದಿಸಿ (ಉದಾ: <code>ಬಾಂದ್ರಾ, ಮುಂಬೈ</code>, <code>ಕನ್ನಾಟ್ ಪ್ಲೇಸ್, ದೆಹಲಿ</code>, <code>ಇಂದಿರಾನಗರ, ಬೆಂಗಳೂರು</code>, ಅಥವಾ <code>ಅಡ್ಯಾರ್, ಚೆನ್ನೈ</code>):",
         "step3": "<b>ಹಂತ 3 / 3</b> — ನಿಮ್ಮ ರಾಶಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ:",
-        "back_lang": "← ಭಾಷೆಗೆ ಹಿಂತಿರುಗಿ",
-        "back_dob": "← ಜನ್ಮ ದಿನಾಂಕಕ್ಕೆ ಹಿಂತಿರುಗಿ",
-        "back_loc": "← ಪ್ರದೇಶ / ನಗರಕ್ಕೆ ಹಿಂತಿರುಗಿ",
-        "back_card": "← ಕಾರ್ಡ್‌ಗೆ ಹಿಂತಿರುಗಿ",
-        "back_profile": "← ಪ್ರೊಫೈಲ್‌ಗೆ ಹಿಂತಿರುಗಿ",
+        "back_lang": "⬅️ ಭಾಷೆಗೆ ಹಿಂತಿರುಗಿ",
+        "back_dob": "⬅️ ಜನ್ಮ ದಿನಾಂಕಕ್ಕೆ ಹಿಂತಿರುಗಿ",
+        "back_loc": "⬅️ ಪ್ರದೇಶ / ನಗರಕ್ಕೆ ಹಿಂತಿರುಗಿ",
+        "back_card": "⬅️ ಕಾರ್ಡ್‌ಗೆ ಹಿಂತಿರುಗಿ",
+        "back_profile": "⬅️ ಪ್ರೊಫೈಲ್‌ಗೆ ಹಿಂತಿರುಗಿ",
         "confirmed_title": "🙏 <b>ಚಂದಾದಾರಿಕೆ ದೃಢೀಕೃತ — ಆಶೀರ್ವಾದ ಸಕ್ರಿಯ</b>",
         "lbl_name": "ಹೆಸರು",
         "lbl_lang": "ಭಾಷೆ",
         "lbl_dob": "ಜನ್ಮ ದಿನಾಂಕ",
         "lbl_loc": "ಪ್ರದೇಶ / ನಗರ",
         "lbl_rasi": "ರಾಶಿ",
-        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
+        "lbl_time": "<b>Daily Delivery:</b> <b>04:30 AM IST</b>",
         "btn_sample": "📨 ಇಂದಿನ ಕಾರ್ಡ್ ಈಗ ಕಳುಹಿಸಿ",
         "btn_profile": "👤 ಪ್ರೊಫೈಲ್",
         "btn_other": "📣 ಇತರೆ ಸೇವೆಗಳು",
@@ -467,7 +468,7 @@ WELCOME_COPY = {
         "btn_pay": "🛒 Shop",
         "btn_help": "💬 ಬೆಂಬಲ & ಪ್ರತಿಕ್ರಿಯೆ",
         "btn_translate": "🌐 Translate [ENG]",
-        "btn_close_translation": "✕ Close Translation",
+        "btn_close_translation": "❌ Close Translation",
         "btn_privacy": "🔒 ಗೌಪ್ಯತೆ ಮತ್ತು ಡೇಟಾ (DPDPA)",
         "btn_delete": "🗑️ ನನ್ನ ಡೇಟಾ ಅಳಿಸಿ (DPDPA)",
         "btn_confirm_delete": "⚠️ ಶಾಶ್ವತ ಅಳಿಸುವಿಕೆಯನ್ನು ದೃಢೀಕರಿಸಿ",
@@ -505,23 +506,23 @@ WELCOME_COPY = {
         "invalid_dob": "ദയവായി <code>DD-MM-YYYY</code> മാതൃകയിൽ ശരിയായ ജനനത്തീയതി നൽകുക (ഉദാ: <code>15-08-1985</code>):",
         "step2": (
             "<b>ഘട്ടം 2 / 3</b> — നിങ്ങളുടെ പ്രദേശവും നഗരവും നൽകുക (അല്ലെങ്കിൽ നഗരം മാത്രം):\n"
-            "<i>ഉദാഹരണം: <code>Ambattur, Chennai</code> അല്ലെങ്കിൽ <code>Adyar, Chennai</code> (അല്ലെങ്കിൽ <code>Chennai</code>).\n"
+            "<i>ഉദാഹരണം: <code>ബാന്ദ്ര, മുംബൈ</code> അല്ലെങ്കിൽ <code>കൊണാട്ട് പ്ലേസ്, ഡൽഹി</code> അല്ലെങ്കിൽ <code>ഇന്ദിരാനഗർ, ബെംഗളൂരു</code> അല്ലെങ്കിൽ <code>അഡയാർ, ചെന്നൈ</code> (<code>മുംബൈ</code> അല്ലെങ്കിൽ <code>ഡൽഹി</code> അല്ലെങ്കിൽ <code>ബെംഗളൂരു</code> അല്ലെങ്കിൽ <code>ചെന്നൈ</code>).\n"
             "എന്തുകൊണ്ട്? പ്രദേശം ചേർത്താൽ പ്രാദേശിക കാലാവസ്ഥയും മഴ വിവരവും കൂടുതൽ കൃത്യമാകും.</i>"
         ),
-        "invalid_loc": "ദയവായി നിങ്ങളുടെ പ്രദേശവും നഗരവും നൽകുക (ഉദാ: <code>Ambattur, Chennai</code> അല്ലെങ്കിൽ <code>Adyar, Chennai</code>):",
+        "invalid_loc": "ദയവായി നിങ്ങളുടെ പ്രദേശവും നഗരവും നൽകുക (ഉദാ: <code>ബാന്ദ്ര, മുംബൈ</code>, <code>കൊണാട്ട് പ്ലേസ്, ഡൽഹി</code>, <code>ഇന്ദിരാനഗർ, ബെംഗളൂരു</code>, അല്ലെങ്കിൽ <code>അഡയാർ, ചെന്നൈ</code>):",
         "step3": "<b>ഘട്ടം 3 / 3</b> — നിങ്ങളുടെ രാശി തിരഞ്ഞെടുക്കുക:",
-        "back_lang": "← ഭാഷയിലേക്ക് മടങ്ങുക",
-        "back_dob": "← ജനനത്തീയതിയിലേക്ക് മടങ്ങുക",
-        "back_loc": "← പ്രദേശം / നഗരത്തിലേക്ക് മടങ്ങുക",
-        "back_card": "← കാർഡിലേക്ക് മടങ്ങുക",
-        "back_profile": "← പ്രൊഫൈലിലേക്ക് മടങ്ങുക",
+        "back_lang": "⬅️ ഭാഷയിലേക്ക് മടങ്ങുക",
+        "back_dob": "⬅️ ജനനത്തീയതിയിലേക്ക് മടങ്ങുക",
+        "back_loc": "⬅️ പ്രദേശം / നഗരത്തിലേക്ക് മടങ്ങുക",
+        "back_card": "⬅️ കാർഡിലേക്ക് മടങ്ങുക",
+        "back_profile": "⬅️ പ്രൊഫൈലിലേക്ക് മടങ്ങുക",
         "confirmed_title": "🙏 <b>സബ്സ്ക്രിപ്ഷൻ സ്ഥിരീകരിച്ചു — ആശീർവാദം സജീവം</b>",
         "lbl_name": "പേര്",
         "lbl_lang": "ഭാഷ",
         "lbl_dob": "ജനനത്തീയതി",
         "lbl_loc": "പ്രദേശം / നഗരം",
         "lbl_rasi": "രാശി",
-        "lbl_time": "Daily Delivery: <b>04:30 AM IST</b>",
+        "lbl_time": "<b>Daily Delivery:</b> <b>04:30 AM IST</b>",
         "btn_sample": "📨 ഇന്നത്തെ കാർഡ് ഇപ്പോൾ അയയ്ക്കുക",
         "btn_profile": "👤 പ്രൊഫൈൽ",
         "btn_other": "📣 മറ്റ് സേവനങ്ങൾ",
@@ -529,7 +530,7 @@ WELCOME_COPY = {
         "btn_pay": "🛒 Shop",
         "btn_help": "💬 സഹായവും പ്രതികരണവും",
         "btn_translate": "🌐 Translate [ENG]",
-        "btn_close_translation": "✕ Close Translation",
+        "btn_close_translation": "❌ Close Translation",
         "btn_privacy": "🔒 സ്വകാര്യത & ഡാറ്റ (DPDPA)",
         "btn_delete": "🗑️ എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക (DPDPA)",
         "btn_confirm_delete": "⚠️ ശാശ്വത നീക്കം സ്ഥിരീകരിക്കുക",
@@ -794,6 +795,26 @@ def parse_payload_dict(raw_payload) -> dict:
         except Exception:
             return {}
     return {}
+
+
+# ---------------------------------------------------------------------------
+# Diagnostic Update Trace (Proves Incoming Callback Delivery in Logs)
+# ---------------------------------------------------------------------------
+async def log_incoming_update_trace(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    uid = update.effective_user.id if update.effective_user else None
+    if update.callback_query:
+        logger.info(
+            "RAW_UPDATE_TRACE type=callback_query uid=%s data=%r msg_id=%s",
+            uid,
+            update.callback_query.data,
+            update.callback_query.message.message_id if update.callback_query.message else None,
+        )
+    elif update.message:
+        logger.info(
+            "RAW_UPDATE_TRACE type=message uid=%s text=%r",
+            uid,
+            (update.message.text or "")[:60],
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -1195,66 +1216,69 @@ async def _get_user_lang_and_row(telegram_id: int, fallback_lang: str = "en"):
 
 
 async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    query = update.callback_query
-    if query:
-        await query.answer()
-    context.user_data.pop("editing_field", None)
-    context.user_data.pop("awaiting_feedback", None)
+    try:
+        query = update.callback_query
+        if query:
+            await query.answer()
+        context.user_data.pop("editing_field", None)
+        context.user_data.pop("awaiting_feedback", None)
 
-    user = query.from_user if query else update.effective_user
-    telegram_id = user.id
-    logger.info("PANEL_PROFILE_OPENED uid=%s", telegram_id)
+        user = query.from_user if query else update.effective_user
+        telegram_id = user.id
+        logger.info("PANEL_PROFILE_OPENED uid=%s", telegram_id)
 
-    lang, sub = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
-    c = copy_for(lang)
+        lang, sub = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
+        c = copy_for(lang)
 
-    name_val = (sub["first_name"] if sub and sub["first_name"] else None) or user.first_name or "Friend"
-    dob_val = (sub["dob"] if sub and sub["dob"] else None) or context.user_data.get("dob") or "Not set"
-    lang_label = LANGUAGES.get(lang, "English")
-    loc_val = (
-        (sub["locality"] if sub and sub["locality"] else None)
-        or (sub["city"] if sub and sub["city"] else None)
-        or context.user_data.get("locality")
-        or "Chennai"
-    )
-    rasi_code = (sub["rasi"] if sub and sub["rasi"] else None) or "mesham"
-    rasi_display = get_rasi_display(rasi_code, lang)
-    pillars_status = "ON" if context.user_data.get("12pillars_view", False) else "OFF"
+        name_val = (sub["first_name"] if sub and sub["first_name"] else None) or user.first_name or "Friend"
+        dob_val = (sub["dob"] if sub and sub["dob"] else None) or context.user_data.get("dob") or "Not set"
+        lang_label = LANGUAGES.get(lang, "English")
+        loc_val = (
+            (sub["locality"] if sub and sub["locality"] else None)
+            or (sub["city"] if sub and sub["city"] else None)
+            or context.user_data.get("locality")
+            or "Chennai"
+        )
+        rasi_code = (sub["rasi"] if sub and sub["rasi"] else None) or "mesham"
+        rasi_display = get_rasi_display(rasi_code, lang)
+        pillars_status = "ON" if context.user_data.get("12pillars_view", False) else "OFF"
 
-    text = (
-        f"{CARD_HEADER}"
-        f"{c['profile_title']}\n\n"
-        f"• <b>{c['lbl_name']}:</b> {name_val}\n"
-        f"• <b>{c['lbl_dob']}:</b> {dob_val}\n"
-        f"• <b>{c['lbl_lang']}:</b> {lang_label}\n"
-        f"• <b>{c['lbl_loc']}:</b> {loc_val}\n"
-        f"• <b>{c['lbl_rasi']}:</b> {rasi_display}\n"
-        f"• <b>12 Pillars Mode:</b> {pillars_status}"
-    )
-    kb = InlineKeyboardMarkup(
-        [
+        text = (
+            f"{CARD_HEADER}"
+            f"{c['profile_title']}\n\n"
+            f"• <b>{c['lbl_name']}:</b> {name_val}\n"
+            f"• <b>{c['lbl_dob']}:</b> {dob_val}\n"
+            f"• <b>{c['lbl_lang']}:</b> {lang_label}\n"
+            f"• <b>{c['lbl_loc']}:</b> {loc_val}\n"
+            f"• <b>{c['lbl_rasi']}:</b> {rasi_display}\n"
+            f"• <b>12 Pillars Mode:</b> {pillars_status}"
+        )
+        kb = InlineKeyboardMarkup(
             [
-                InlineKeyboardButton(c["btn_edit_name"], callback_data="editfield:first_name"),
-                InlineKeyboardButton(c["btn_edit_dob"], callback_data="editfield:dob"),
-            ],
-            [
-                InlineKeyboardButton(c["btn_edit_lang"], callback_data="editfield:preferred_language"),
-                InlineKeyboardButton(c["btn_edit_loc"], callback_data="editfield:locality"),
-            ],
-            [
-                InlineKeyboardButton(c["btn_edit_rasi"], callback_data="editfield:rasi"),
-                InlineKeyboardButton(f"{c['btn_12pillars']} ({pillars_status})", callback_data="menu:12pillars_toggle"),
-            ],
-            [
-                InlineKeyboardButton(c["btn_privacy"], callback_data="panel:dpdpa"),
-                InlineKeyboardButton(c["btn_delete"], callback_data="action:confirm_delete"),
-            ],
-            [
-                InlineKeyboardButton(c["back_card"], callback_data="back:card"),
-            ],
-        ]
-    )
-    await safe_edit_or_reply(update, context, text, reply_markup=kb)
+                [
+                    InlineKeyboardButton(c["btn_edit_name"], callback_data="editfield:first_name"),
+                    InlineKeyboardButton(c["btn_edit_dob"], callback_data="editfield:dob"),
+                ],
+                [
+                    InlineKeyboardButton(c["btn_edit_lang"], callback_data="editfield:preferred_language"),
+                    InlineKeyboardButton(c["btn_edit_loc"], callback_data="editfield:locality"),
+                ],
+                [
+                    InlineKeyboardButton(c["btn_edit_rasi"], callback_data="editfield:rasi"),
+                    InlineKeyboardButton(f"{c['btn_12pillars']} ({pillars_status})", callback_data="menu:12pillars_toggle"),
+                ],
+                [
+                    InlineKeyboardButton(c["btn_privacy"], callback_data="panel:dpdpa"),
+                    InlineKeyboardButton(c["btn_delete"], callback_data="action:confirm_delete"),
+                ],
+                [
+                    InlineKeyboardButton(c["back_card"], callback_data="back:card"),
+                ],
+            ]
+        )
+        await safe_edit_or_reply(update, context, text, reply_markup=kb)
+    except Exception as exc:
+        logger.exception("Error in open_profile_panel: %s", exc)
 
 
 async def open_profile_panel_end_conv(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -1733,7 +1757,7 @@ async def translate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     en_text = _build_card_message_from_cache(cache, "en", rasi, city, edition_date)
     close_kb = InlineKeyboardMarkup(
-        [[InlineKeyboardButton("✕ Close Translation", callback_data="close_translation")]]
+        [[InlineKeyboardButton("❌ Close Translation", callback_data="close_translation")]]
     )
     await query.message.reply_text(en_text, parse_mode=ParseMode.HTML, reply_markup=close_kb)
 
@@ -1812,6 +1836,9 @@ def build_application() -> Application:
         .build()
     )
 
+    # Diagnostic update trace in group=-2 so every incoming callback/message is logged first
+    app.add_handler(TypeHandler(Update, log_incoming_update_trace), group=-2)
+
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start_onboarding)],
         states={
@@ -1877,6 +1904,7 @@ def build_application() -> Application:
 async def main() -> None:
     application = build_application()
     await application.initialize()
+    await application.bot.delete_webhook(drop_pending_updates=True)
     await application.start()
     await application.updater.start_polling(
         drop_pending_updates=True,
