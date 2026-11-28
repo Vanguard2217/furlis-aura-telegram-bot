@@ -996,7 +996,7 @@ def track_onboarding_msg(context: ContextTypes.DEFAULT_TYPE, msg_id: Optional[in
 
 
 def track_ephemeral_edit_msg(context: ContextTypes.DEFAULT_TYPE, msg_id: Optional[int]) -> None:
-    """Tracks transient edit prompts/confirmations so Option A cleans them up cleanly."""
+    """Tracks transient edit prompts/confirmations so cleanup removes them cleanly."""
     if not msg_id:
         return
     ids = context.user_data.setdefault("ephemeral_edit_msg_ids", [])
@@ -1643,7 +1643,7 @@ async def _refresh_card_after_profile_change(
     ephemeral_msg_ids: Optional[list[Optional[int]]] = None,
 ) -> None:
     """Re-delivers the card (and clears old cards + transient confirmation trails)
-    when Language, Locality/City, or Rasi changes."""
+    when profile fields (Language, Locality/City, Rasi, Name, or DOB) change."""
     today_ist = datetime.now(IST).date()
     sub = {}
     rows = []
@@ -1681,7 +1681,7 @@ async def _refresh_card_after_profile_change(
         cache=cache,
         context=context,
     )
-    # Option A: remove transient ✅ Updated / edit prompt trail once the new card arrives
+    # Remove transient ✅ Updated / edit prompt trail once the new card arrives
     await cleanup_ephemeral_edit_messages(
         bot=context.bot,
         chat_id=chat_id,
@@ -1986,7 +1986,6 @@ async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         preserve_source_message=True,
         track_as_ephemeral_edit=True,
     )
-    # Option A: Refresh card with updated Language or Rasi and remove ✅ Updated trail
     await _refresh_card_after_profile_change(
         update,
         context,
@@ -2058,26 +2057,15 @@ async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_T
     )
     track_ephemeral_edit_msg(context, confirm_msg.message_id)
 
-    # Refresh card when Locality/City changes and remove ✅ Updated confirmation trail
-    if field == "locality":
-        await _refresh_card_after_profile_change(
-            update,
-            context,
-            telegram_id,
-            ephemeral_msg_ids=[confirm_msg.message_id],
-        )
-    else:
-        # For Name or DOB edits, keep the newest confirmation cleanly without old trails
-        prior_ids = [
-            mid for mid in context.user_data.get("ephemeral_edit_msg_ids", [])
-            if mid != confirm_msg.message_id
-        ]
-        for mid in prior_ids:
-            try:
-                await context.bot.delete_message(chat_id=chat_id, message_id=mid)
-            except Exception:
-                pass
-        context.user_data["ephemeral_edit_msg_ids"] = [confirm_msg.message_id]
+    # Align Name, DOB, and Locality with Language & Rasi: refresh card and clear ephemeral trail
+    await _refresh_card_after_profile_change(
+        update,
+        context,
+        telegram_id,
+        ephemeral_msg_ids=[confirm_msg.message_id],
+    )
+    if chat_id:
+        await cleanup_ephemeral_edit_messages(context.bot, chat_id=chat_id, context=context)
 
     return ConversationHandler.END
 
