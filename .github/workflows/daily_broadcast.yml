@@ -12,12 +12,13 @@ jobs:
     timeout-minutes: 55
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set Up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+          cache: "pip"
 
       - name: Install Dependencies
         run: pip install -r requirements.txt
@@ -33,6 +34,4 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           UPI_GATEWAY_CHECKOUT_URL: ${{ secrets.UPI_GATEWAY_CHECKOUT_URL }}
-          SUPPORT_FORM_URL: ${{ secrets.SUPPORT_FORM_URL }}
-          SUPPORT_FORM_URLS_JSON: ${{ secrets.SUPPORT_FORM_URLS_JSON }}
         run: python broadcast_daily.py
