@@ -16,7 +16,7 @@ logger = logging.getLogger("broadcast_daily")
 
 BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 DATABASE_URL = os.environ["DATABASE_URL"]
-UPI_CHECKOUT_BASE_URL = os.environ.get("UPI_GATEWAY_CHECKOUT_URL", "https://example.com/upi")
+UPI_CHECKOUT_BASE_URL = os.environ.get("UPI_GATEWAY_CHECKOUT_URL", "https://example.com/upi").strip()
 IST = timezone(timedelta(hours=5, minutes=30))
 TELEGRAM_API_BASE = f"https://api.telegram.org/bot{BOT_TOKEN}"
 BATCH_CONCURRENCY = 25
@@ -246,7 +246,8 @@ def parse_payload(raw_payload) -> dict:
 
 def build_inline_keyboard_dict(edition_date: str, telegram_id: int, lang: str) -> dict:
     L = lbl(lang)
-    upi_url = f"{UPI_CHECKOUT_BASE_URL}?uid={telegram_id}&ref={edition_date}"
+    sep = "&" if "?" in UPI_CHECKOUT_BASE_URL else "?"
+    upi_url = f"{UPI_CHECKOUT_BASE_URL}{sep}uid={telegram_id}&ref={edition_date}"
     rows = [
         [
             {"text": L["btn_profile"], "callback_data": "panel:profile"},
@@ -293,21 +294,50 @@ def render_message(
         "✨ <b>WoW [Words of Wisdom]:</b>", f"🌟 <b>{quote}:</b>"
     )
 
-    body = (
-        f"<b>{AURA_HEADER}</b>\n"
-        f"{DIVIDER}\n\n"
-        f"{deity_block}\n\n"
-        f"{wow_block}\n\n"
-        f"{ausp_block}\n\n"
-        f"{gold_block}\n\n"
-        f"{weather_block}\n\n"
-        f"{quote_block}"
-    )
+    blocks = [
+        f"<b>{AURA_HEADER}</b>\n{DIVIDER}",
+        deity_block,
+        wow_block,
+        ausp_block,
+        gold_block,
+        weather_block,
+        quote_block,
+    ]
 
     max_len = 4096 - len(SHORT_DISCLAIMER) - 4
+    body = "\n\n".join(blocks)
+    while len(body) > max_len and len(blocks) > 2:
+        blocks.pop()
+        body = "\n\n".join(blocks)
+
     if len(body) > max_len:
-        body = body[: max_len - 3].rsplit(" ", 1)[0] + "..."
+        safe_plain = re.sub(r"<[^>]+>", "", body)
+        body = safe_plain[: max_len - 3].rsplit(" ", 1)[0] + "..."
+
     return f"{body}\n\n{SHORT_DISCLAIMER}"
+
+
+async def ensure_subscribers_schema(pool: asyncpg.Pool) -> None:
+    await pool.execute(
+        """
+        CREATE TABLE IF NOT EXISTS subscribers (
+            telegram_id BIGINT PRIMARY KEY,
+            preferred_language VARCHAR(16) DEFAULT 'en',
+            locality TEXT,
+            city TEXT,
+            rasi VARCHAR(32) DEFAULT 'mesham',
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        """
+    )
+    await pool.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS preferred_language VARCHAR(16) DEFAULT 'en';")
+    await pool.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS locality TEXT;")
+    await pool.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS city TEXT;")
+    await pool.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS rasi VARCHAR(32) DEFAULT 'mesham';")
+    await pool.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;")
+    await pool.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();")
 
 
 async def send_to_subscriber(
@@ -319,6 +349,8 @@ async def send_to_subscriber(
 ) -> bool:
     uid = sub["telegram_id"]
     lang = (sub["preferred_language"] or "en").lower()
+    if lang not in CARD_LABELS:
+        lang = "en"
     raw_loc = (sub["locality"] or sub["city"] or "Chennai").strip()
     city_key = normalize_city_key(raw_loc)
     rasi_key = (sub["rasi"] or "mesham").strip().lower()
@@ -342,32 +374,38 @@ async def send_to_subscriber(
     )
     reply_markup = build_inline_keyboard_dict(edition_date, uid, lang)
 
-    try:
-        async with session.post(
-            f"{TELEGRAM_API_BASE}/sendMessage",
-            json={
-                "chat_id": uid,
-                "text": text,
-                "parse_mode": "HTML",
-                "reply_markup": reply_markup,
-            },
-            timeout=15,
-        ) as resp:
-            if resp.status == 200:
-                return True
-            if resp.status == 403:
-                await pool.execute(
-                    "UPDATE subscribers SET is_active = FALSE, updated_at = NOW() WHERE telegram_id = $1;",
-                    uid,
-                )
-            elif resp.status == 429:
-                body = await resp.json()
-                await asyncio.sleep(int(body.get("parameters", {}).get("retry_after", 3)))
-            else:
+    for attempt in range(2):
+        try:
+            async with session.post(
+                f"{TELEGRAM_API_BASE}/sendMessage",
+                json={
+                    "chat_id": uid,
+                    "text": text,
+                    "parse_mode": "HTML",
+                    "reply_markup": reply_markup,
+                },
+                timeout=aiohttp.ClientTimeout(total=15),
+            ) as resp:
+                if resp.status == 200:
+                    return True
+                if resp.status == 403:
+                    await pool.execute(
+                        "UPDATE subscribers SET is_active = FALSE, updated_at = NOW() WHERE telegram_id = $1;",
+                        uid,
+                    )
+                    return False
+                if resp.status == 429 and attempt == 0:
+                    body = await resp.json()
+                    retry_after = int(body.get("parameters", {}).get("retry_after", 3))
+                    await asyncio.sleep(min(retry_after, 30))
+                    continue
                 err_txt = await resp.text()
                 logger.warning("Telegram sendMessage failed for uid=%s (status=%s): %s", uid, resp.status, err_txt)
-    except Exception as exc:
-        logger.warning("Broadcast error for uid=%s: %s", uid, exc)
+                return False
+        except Exception as exc:
+            logger.warning("Broadcast error for uid=%s (attempt=%d): %s", uid, attempt + 1, exc)
+            if attempt == 0:
+                await asyncio.sleep(1.5)
     return False
 
 
@@ -378,14 +416,29 @@ async def run_broadcast() -> None:
 
     pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=5)
     try:
-        rows = await pool.fetch(
-            "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache WHERE edition_date = $1;",
-            today_ist,
+        await ensure_subscribers_schema(pool)
+
+        table_exists = await pool.fetchval(
+            """
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = 'public' AND table_name = 'daily_shared_cache'
+            );
+            """
         )
-        cache_map = {
-            (r["bucket_type"], r["bucket_key"]): parse_payload(r["payload"])
-            for r in rows
-        }
+        cache_map = {}
+        if table_exists:
+            rows = await pool.fetch(
+                "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache WHERE edition_date = $1;",
+                today_ist,
+            )
+            cache_map = {
+                (r["bucket_type"], r["bucket_key"]): parse_payload(r["payload"])
+                for r in rows
+            }
+        else:
+            logger.warning("daily_shared_cache table not found; broadcasting with localized fallbacks.")
 
         subs = await pool.fetch(
             "SELECT telegram_id, preferred_language, locality, city, rasi FROM subscribers WHERE is_active = TRUE;"
