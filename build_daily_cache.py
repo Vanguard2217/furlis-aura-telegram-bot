@@ -544,7 +544,11 @@ async def main() -> None:
 
     auspicious_default, weather_default = build_default_city_payloads()
 
-    conn = await asyncpg.connect(dsn=DATABASE_URL)
+    conn = await asyncpg.connect(
+        dsn=DATABASE_URL,
+        statement_cache_size=0,
+        command_timeout=30,
+    )
     try:
         await ensure_daily_shared_cache_schema(conn)
         active_cities = await fetch_active_city_keys(conn)
