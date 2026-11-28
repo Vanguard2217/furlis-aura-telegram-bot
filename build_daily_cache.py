@@ -1,11 +1,12 @@
 import os
+import re
 import csv
 import io
 import json
 import asyncio
 import logging
 from datetime import datetime, date, timezone, timedelta
-from typing import Dict, List
+from typing import Dict, List, Set
 
 import aiohttp
 import asyncpg
@@ -23,6 +24,13 @@ IST = timezone(timedelta(hours=5, minutes=30))
 EPOCH_ANCHOR_DATE = date(2026, 11, 25)
 
 LANGS = ["en", "ta", "hi", "te", "kn", "ml"]
+
+
+def normalize_city_key(raw_loc: str) -> str:
+    city_part = raw_loc.split(",")[-1].strip().lower() if raw_loc else "chennai"
+    cleaned = re.sub(r"[^a-z0-9]+", "_", city_part).strip("_")
+    return cleaned or "chennai"
+
 
 # ---------------------------------------------------------------------------
 # 1. Built-in 7-Day Deity Mantra Cycle (Repeats Weekly MON -> SUN)
@@ -229,8 +237,27 @@ WOW_LOCALIZED_BODIES: Dict[str, str] = {
     ),
 }
 
+AUSPICIOUS_HEADERS = {
+    "en": "⏰ <b>Auspicious Timing [Plan Your Decisions]:</b>",
+    "ta": "⏰ <b>நல்ல நேரம் [உங்கள் முடிவுகளைத் திட்டமிடுங்கள்]:</b>",
+    "hi": "⏰ <b>शुभ समय [अपने निर्णयों की योजना बनाएं]:</b>",
+    "te": "⏰ <b>శుభ సమయం [మీ నిర్ణయాలను ప్రణాళిక చేయండి]:</b>",
+    "kn": "⏰ <b>ಶುಭ ಸಮಯ [ನಿಮ್ಮ ನಿರ್ಧಾರಗಳನ್ನು ಯೋಜಿಸಿ]:</b>",
+    "ml": "⏰ <b>ശുഭ സമയം [തീരുമാനങ്ങൾ ആസൂത്രണം ചെയ്യുക]:</b>",
+}
+
+WEATHER_HEADERS = {
+    "en": "🌦 <b>Weather [Plan Your Day]:</b>",
+    "ta": "🌤 <b>வானிலை [உங்கள் நாளைத் திட்டமிடுங்கள்]:</b>",
+    "hi": "🌦 <b>मौसम [दिन की योजना]:</b>",
+    "te": "🌦 <b>వాతావరణం [రోజు ప్రణాళిక]:</b>",
+    "kn": "🌦 <b>ಹವಾಮಾನ [ದಿನದ ಯೋಜನೆ]:</b>",
+    "ml": "🌦 <b>കാലാവസ്ഥ [ദിവസ ആസൂത്രണം]:</b>",
+}
+
+
 # ---------------------------------------------------------------------------
-# 3. Gold & Silver Rates ([As of DATE])
+# 3. Gold & Silver Rates ([As of DATE]) — Sheet Override + Safe Fallback
 # ---------------------------------------------------------------------------
 def compute_bullion_as_of_date(now_ist: datetime) -> str:
     d = now_ist.date()
@@ -241,11 +268,20 @@ def compute_bullion_as_of_date(now_ist: datetime) -> str:
     return d.strftime("%d %b %Y")
 
 
-def build_bullion_payload(now_ist: datetime) -> Dict[str, str]:
+async def build_bullion_payload(session: aiohttp.ClientSession, now_ist: datetime) -> Dict[str, str]:
     as_of_str = compute_bullion_as_of_date(now_ist)
     g22 = "₹7,140/g"
     g24 = "₹7,789/g"
     silver = "₹91.50/g"
+
+    sheet_rows = await fetch_sheet_rows(session, "Bullion_Rates")
+    if sheet_rows:
+        latest = sheet_rows[-1]
+        g22 = (latest.get("gold_22k") or g22).strip()
+        g24 = (latest.get("gold_24k") or g24).strip()
+        silver = (latest.get("silver") or silver).strip()
+        if (latest.get("as_of_date") or "").strip():
+            as_of_str = latest["as_of_date"].strip()
 
     return {
         "en": f"🟡 <b>Gold Rate ⚪️ Silver Rate [As of {as_of_str}]:</b>\n22K: {g22} | 24K: {g24} | ⚪️ Silver: {silver}",
@@ -275,15 +311,19 @@ async def fetch_sheet_rows(session: aiohttp.ClientSession, tab_name: str) -> Lis
         return []
 
 
-async def select_today_deity(session: aiohttp.ClientSession, today_ist: date) -> Dict[str, str]:
+async def select_today_deity(
+    sheet_rows: List[Dict[str, str]], today_ist: date
+) -> Dict[str, str]:
     day_code = WEEKDAY_CODES[today_ist.weekday()]
-    sheet_rows = await fetch_sheet_rows(session, "Rasi_Deity_Templates")
     for row in sheet_rows:
         if (row.get("template_type") or "").strip().upper() == "DEITY_DAY" and (
             row.get("key_code") or row.get("lookup_key") or ""
         ).strip().upper() == day_code:
             return {
-                lang: f"🪔 <b>{row.get(f'title_{lang}') or row.get('title_en') or row.get('display_name_en') or 'Daily Blessing'}:</b>\n{row.get(f'body_{lang}') or row.get(f'three_words_or_slogan_{lang}') or row.get('body_en') or row.get('three_words_or_slogan_en') or ''}"
+                lang: (
+                    f"🪔 <b>{row.get(f'title_{lang}') or row.get('title_en') or row.get('display_name_en') or 'Daily Blessing'}:</b>\n"
+                    f"{row.get(f'body_{lang}') or row.get(f'three_words_or_slogan_{lang}') or row.get('body_en') or row.get('three_words_or_slogan_en') or ''}"
+                )
                 for lang in LANGS
             }
     return BUILT_IN_DEITY_7DAY[day_code]
@@ -317,14 +357,167 @@ async def select_today_scripture(session: aiohttp.ClientSession, today_ist: date
     }
 
 
-def build_wow_defaults() -> Dict[str, Dict[str, str]]:
+def build_wow_map(sheet_rows: List[Dict[str, str]]) -> Dict[str, Dict[str, str]]:
+    sheet_rasi_lookup: Dict[str, Dict[str, str]] = {}
+    for row in sheet_rows:
+        if (row.get("template_type") or "").strip().upper() == "RASI":
+            key = (row.get("key_code") or row.get("lookup_key") or "").strip().lower()
+            if key:
+                sheet_rasi_lookup[key] = row
+
     out: Dict[str, Dict[str, str]] = {}
     for rasi, rasi_labels in RASI_DISPLAY_NAMES.items():
-        out[rasi] = {
-            lang: f"{WOW_HEADERS[lang]}\n{WOW_LOCALIZED_BODIES[lang].format(rasi=rasi_labels[lang])}"
-            for lang in LANGS
-        }
+        if rasi in sheet_rasi_lookup:
+            row = sheet_rasi_lookup[rasi]
+            out[rasi] = {
+                lang: (
+                    f"{WOW_HEADERS[lang]}\n"
+                    f"{(row.get(f'body_{lang}') or row.get(f'three_words_or_slogan_{lang}') or row.get('body_en') or WOW_LOCALIZED_BODIES[lang].format(rasi=rasi_labels[lang])).strip()}"
+                )
+                for lang in LANGS
+            }
+        else:
+            out[rasi] = {
+                lang: f"{WOW_HEADERS[lang]}\n{WOW_LOCALIZED_BODIES[lang].format(rasi=rasi_labels[lang])}"
+                for lang in LANGS
+            }
     return out
+
+
+def build_default_city_payloads() -> tuple[Dict[str, str], Dict[str, str]]:
+    auspicious_default = {
+        "en": (
+            f"{AUSPICIOUS_HEADERS['en']}\n"
+            "• Nalla Neram: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
+            "• Rahukalam: 12:00 PM – 01:30 PM"
+        ),
+        "ta": (
+            f"{AUSPICIOUS_HEADERS['ta']}\n"
+            "• நல்ல நேரம்: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
+            "• ராகு காலம்: 12:00 PM – 01:30 PM"
+        ),
+        "hi": (
+            f"{AUSPICIOUS_HEADERS['hi']}\n"
+            "• शुभ मुहूर्त: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
+            "• राहुकाल: 12:00 PM – 01:30 PM"
+        ),
+        "te": (
+            f"{AUSPICIOUS_HEADERS['te']}\n"
+            "• శుభ సమయం: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
+            "• రాహుకాలం: 12:00 PM – 01:30 PM"
+        ),
+        "kn": (
+            f"{AUSPICIOUS_HEADERS['kn']}\n"
+            "• ಶುಭ ಸಮಯ: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
+            "• ರಾಹುಕಾಲ: 12:00 PM – 01:30 PM"
+        ),
+        "ml": (
+            f"{AUSPICIOUS_HEADERS['ml']}\n"
+            "• ശുഭ സമയം: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
+            "• രാഹുകാലം: 12:00 PM – 01:30 PM"
+        ),
+    }
+    weather_default = {
+        "en": f"{WEATHER_HEADERS['en']}\n27°C • Partly cloudy morning, light coastal breeze",
+        "ta": f"{WEATHER_HEADERS['ta']}\n27°C • லேசான மேகமூட்டத்துடன் இனிமையான காலை தென்றல்",
+        "hi": f"{WEATHER_HEADERS['hi']}\n27°C • हल्के बादल और सुहावनी सुबह की हवा",
+        "te": f"{WEATHER_HEADERS['te']}\n27°C • పాక్షిక మేఘావృతమైన ఉదయం, తేలికపాటి గాలి",
+        "kn": f"{WEATHER_HEADERS['kn']}\n27°C • ಭಾಗಶಃ ಮೋಡ ಕವಿದ ಮುಂಜಾನೆ, ತಂಪಾದ ಗಾಳಿ",
+        "ml": f"{WEATHER_HEADERS['ml']}\n27°C • ഭാഗികമായി മേഘാവൃതമായ പ്രഭാതം, ഇളം കാറ്റ്",
+    }
+    return auspicious_default, weather_default
+
+
+# ---------------------------------------------------------------------------
+# 5. Self-Healing Supabase Schema Guard for daily_shared_cache
+# ---------------------------------------------------------------------------
+async def ensure_daily_shared_cache_schema(conn: asyncpg.Connection) -> None:
+    expected_cols = {"edition_date", "bucket_type", "bucket_key", "payload", "created_at"}
+    existing_rows = await conn.fetch(
+        """
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'daily_shared_cache';
+        """
+    )
+    existing_cols = {r["column_name"] for r in existing_rows}
+
+    pk_cols_rows = await conn.fetch(
+        """
+        SELECT kcu.column_name
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+          ON tc.constraint_name = kcu.constraint_name
+         AND tc.table_schema = kcu.table_schema
+        WHERE tc.table_schema = 'public'
+          AND tc.table_name = 'daily_shared_cache'
+          AND tc.constraint_type = 'PRIMARY KEY';
+        """
+    )
+    pk_cols = {r["column_name"] for r in pk_cols_rows}
+    expected_pk = {"edition_date", "bucket_type", "bucket_key"}
+
+    if existing_cols and (not expected_cols.issubset(existing_cols) or pk_cols != expected_pk):
+        logger.warning(
+            "Schema mismatch detected on daily_shared_cache (cols=%s, pk=%s). Recreating cache table cleanly...",
+            sorted(existing_cols),
+            sorted(pk_cols),
+        )
+        await conn.execute("DROP TABLE IF EXISTS daily_shared_cache;")
+
+    await conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS daily_shared_cache (
+            edition_date DATE NOT NULL,
+            bucket_type VARCHAR(32) NOT NULL,
+            bucket_key VARCHAR(128) NOT NULL,
+            payload JSONB NOT NULL,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            PRIMARY KEY (edition_date, bucket_type, bucket_key)
+        );
+        """
+    )
+
+
+async def fetch_active_city_keys(conn: asyncpg.Connection) -> Set[str]:
+    city_keys: Set[str] = {"chennai"}
+    sub_table_exists = await conn.fetchval(
+        """
+        SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_name = 'subscribers'
+        );
+        """
+    )
+    if not sub_table_exists:
+        return city_keys
+
+    sub_cols = {
+        r["column_name"]
+        for r in await conn.fetch(
+            """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'subscribers';
+            """
+        )
+    }
+    select_parts = []
+    if "locality" in sub_cols:
+        select_parts.append("locality")
+    if "city" in sub_cols:
+        select_parts.append("city")
+    if not select_parts:
+        return city_keys
+
+    where_clause = "WHERE is_active = TRUE" if "is_active" in sub_cols else ""
+    rows = await conn.fetch(f"SELECT {', '.join(select_parts)} FROM subscribers {where_clause};")
+    for r in rows:
+        raw_loc = (r.get("locality") or r.get("city") or "").strip()
+        if raw_loc:
+            city_keys.add(normalize_city_key(raw_loc))
+    return city_keys
 
 
 # ---------------------------------------------------------------------------
@@ -336,77 +529,54 @@ async def main() -> None:
     logger.info("Building daily_shared_cache for %s IST", today_ist)
 
     async with aiohttp.ClientSession() as session:
-        deity_payload = await select_today_deity(session, today_ist)
+        template_rows = await fetch_sheet_rows(session, "Rasi_Deity_Templates")
+        deity_payload = await select_today_deity(template_rows, today_ist)
         quote_payload = await select_today_scripture(session, today_ist)
+        bullion_payload = await build_bullion_payload(session, now_ist)
+        wow_map = build_wow_map(template_rows)
+        city_sheet_rows = await fetch_sheet_rows(session, "City_Panchang_Weather")
 
-    bullion_payload = build_bullion_payload(now_ist)
-    wow_map = build_wow_defaults()
+    city_sheet_lookup: Dict[str, Dict[str, str]] = {}
+    for row in city_sheet_rows:
+        ck = normalize_city_key(row.get("city_key") or row.get("city") or "")
+        if ck:
+            city_sheet_lookup[ck] = row
 
-    auspicious_chennai = {
-        "en": (
-            "⏰ <b>Auspicious Timing [Plan Your Decisions]:</b>\n"
-            "• Nalla Neram: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
-            "• Rahukalam: 12:00 PM – 01:30 PM"
-        ),
-        "ta": (
-            "⏰ <b>நல்ல நேரம் [உங்கள் முடிவுகளைத் திட்டமிடுங்கள்]:</b>\n"
-            "• நல்ல நேரம்: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
-            "• ராகு காலம்: 12:00 PM – 01:30 PM"
-        ),
-        "hi": (
-            "⏰ <b>शुभ समय [अपने निर्णयों की योजना बनाएं]:</b>\n"
-            "• शुभ मुहूर्त: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
-            "• राहुकाल: 12:00 PM – 01:30 PM"
-        ),
-        "te": (
-            "⏰ <b>శుభ సమయం [మీ నిర్ణయాలను ప్రణాళిక చేయండి]:</b>\n"
-            "• శుభ సమయం: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
-            "• రాహుకాలం: 12:00 PM – 01:30 PM"
-        ),
-        "kn": (
-            "⏰ <b>ಶುಭ ಸಮಯ [ನಿಮ್ಮ ನಿರ್ಧಾರಗಳನ್ನು ಯೋಜಿಸಿ]:</b>\n"
-            "• ಶುಭ ಸಮಯ: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
-            "• ರಾಹುಕಾಲ: 12:00 PM – 01:30 PM"
-        ),
-        "ml": (
-            "⏰ <b>ശുഭ സമയം [തീരുമാനങ്ങൾ ആസൂത്രണം ചെയ്യുക]:</b>\n"
-            "• ശുഭ സമയം: 07:45 AM – 08:45 AM | 04:45 PM – 05:45 PM\n"
-            "• രാഹുകാലം: 12:00 PM – 01:30 PM"
-        ),
-    }
-    weather_chennai = {
-        "en": "🌦 <b>Weather [Plan Your Day]:</b>\n27°C • Partly cloudy morning, light coastal breeze",
-        "ta": "🌤 <b>வானிலை [உங்கள் நாளைத் திட்டமிடுங்கள்]:</b>\n27°C • லேசான மேகமூட்டத்துடன் இனிமையான காலை தென்றல்",
-        "hi": "🌦 <b>मौसम [दिन की योजना]:</b>\n27°C • हल्के बादल और सुहावनी सुबह की हवा",
-        "te": "🌦 <b>వాతావరణం [రోజు ప్రణాళిక]:</b>\n27°C • పాక్షిక మేఘావృతమైన ఉదయం, తేలికపాటి గాలి",
-        "kn": "🌦 <b>ಹವಾಮಾನ [ದಿನದ ಯೋಜನೆ]:</b>\n27°C • ಭಾಗಶಃ ಮೋಡ ಕವಿದ ಮುಂಜಾನೆ, ತಂಪಾದ ಗಾಳಿ",
-        "ml": "🌦 <b>കാലാവസ്ഥ [ദിവസ ആസൂത്രണം]:</b>\n27°C • ഭാഗികമായി മേഘാവൃതമായ പ്രഭാതം, ഇളം കാറ്റ്",
-    }
-
-    records = [
-        (today_ist, "DEITY_DAY", "TODAY", json.dumps(deity_payload)),
-        (today_ist, "QUOTE", "TODAY", json.dumps(quote_payload)),
-        (today_ist, "GOLD_INR", "INDIA", json.dumps(bullion_payload)),
-        (today_ist, "AUSPICIOUS", "chennai", json.dumps(auspicious_chennai)),
-        (today_ist, "WEATHER", "chennai", json.dumps(weather_chennai)),
-    ]
-    for rasi_key, payload in wow_map.items():
-        records.append((today_ist, "RASI", rasi_key, json.dumps(payload)))
+    auspicious_default, weather_default = build_default_city_payloads()
 
     conn = await asyncpg.connect(dsn=DATABASE_URL)
     try:
-        await conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS daily_shared_cache (
-                edition_date DATE NOT NULL,
-                bucket_type VARCHAR(32) NOT NULL,
-                bucket_key VARCHAR(128) NOT NULL,
-                payload JSONB NOT NULL,
-                created_at TIMESTAMPTZ DEFAULT NOW(),
-                PRIMARY KEY (edition_date, bucket_type, bucket_key)
-            );
-            """
-        )
+        await ensure_daily_shared_cache_schema(conn)
+        active_cities = await fetch_active_city_keys(conn)
+        all_cities = active_cities.union(city_sheet_lookup.keys())
+
+        records = [
+            (today_ist, "DEITY_DAY", "TODAY", json.dumps(deity_payload)),
+            (today_ist, "QUOTE", "TODAY", json.dumps(quote_payload)),
+            (today_ist, "GOLD_INR", "INDIA", json.dumps(bullion_payload)),
+        ]
+
+        for ck in sorted(all_cities):
+            if ck in city_sheet_lookup:
+                crow = city_sheet_lookup[ck]
+                ausp_payload = {
+                    lang: f"{AUSPICIOUS_HEADERS[lang]}\n{(crow.get(f'auspicious_{lang}') or crow.get('auspicious_en') or auspicious_default[lang].split(chr(10), 1)[1]).strip()}"
+                    for lang in LANGS
+                }
+                weath_payload = {
+                    lang: f"{WEATHER_HEADERS[lang]}\n{(crow.get(f'weather_{lang}') or crow.get('weather_en') or weather_default[lang].split(chr(10), 1)[1]).strip()}"
+                    for lang in LANGS
+                }
+            else:
+                ausp_payload = auspicious_default
+                weath_payload = weather_default
+
+            records.append((today_ist, "AUSPICIOUS", ck, json.dumps(ausp_payload)))
+            records.append((today_ist, "WEATHER", ck, json.dumps(weath_payload)))
+
+        for rasi_key, payload in wow_map.items():
+            records.append((today_ist, "RASI", rasi_key, json.dumps(payload)))
+
         for edition_dt, b_type, b_key, payload_json in records:
             await conn.execute(
                 """
