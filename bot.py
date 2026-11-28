@@ -565,7 +565,7 @@ WELCOME_COPY = {
             "• <b>ഉദ്ദേശ്യം:</b> രാവിലെ 04:30 AM IST AURA കാർഡ് വ്യക്തിഗതമാക്കുന്നതിനും സഹായത്തിനും.\n"
             "• <b>നിങ്ങളുടെ അവകാശങ്ങൾ:</b> പ്രൊഫൈലിൽ മാറ്റാം അല്ലെങ്കിൽ <b>എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക</b> / /delete_data വഴി പൂർണ്ണമായി നീക്കം ചെയ്യാം."
         ),
-        "confirm_delete_body": "⚠️ <b>ഡാറ്റ നീക്കം സ്ഥിരീകരണം (DPDPA 2023):</b>\nനിങ്ങളുടെ പ്രൊഫൈൽ, മുൻഗണനകൾ, രേഖകൾ എന്നിവ ശാശ്വതമായി നീക്കം ചെയ്യപ്പെടും.",
+        "confirm_delete_body": "⚠️ <b>ഡാറ്റ നീക്കം സ്ഥിരീകരണം (DPDPA 2023):</b>\nനിങ്ങളുടെ പ്രൊഫೈൽ, മുൻഗണനകൾ, രേഖകൾ എന്നിവ ശാശ്വതമായി നീക്കം ചെയ്യപ്പെടും.",
         "erased_msg": "🗑️ DPDPA 2023 പ്രകാരം നിങ്ങളുടെ ഡാറ്റ പൂർണ്ണമായി നീക്കം ചെയ്തു. വീണ്ടും തുടങ്ങാൻ /start അമർത്തുക.",
         "saved_msg": "✅ അപ്ഡേറ്റ് ചെയ്തു: <b>{val}</b>",
     },
@@ -995,6 +995,42 @@ def track_onboarding_msg(context: ContextTypes.DEFAULT_TYPE, msg_id: Optional[in
         ids.append(msg_id)
 
 
+def track_ephemeral_edit_msg(context: ContextTypes.DEFAULT_TYPE, msg_id: Optional[int]) -> None:
+    """Tracks transient edit prompts/confirmations so Option A cleans them up cleanly."""
+    if not msg_id:
+        return
+    ids = context.user_data.setdefault("ephemeral_edit_msg_ids", [])
+    if msg_id not in ids:
+        ids.append(msg_id)
+
+
+async def cleanup_ephemeral_edit_messages(
+    bot,
+    chat_id: int,
+    context: Optional[ContextTypes.DEFAULT_TYPE] = None,
+    extra_msg_ids: Optional[list[Optional[int]]] = None,
+) -> None:
+    """Deletes transient ✅ Updated / edit prompt messages so they don't leave trails."""
+    ids: list[int] = []
+    if context is not None:
+        for mid in context.user_data.get("ephemeral_edit_msg_ids", []):
+            if mid and mid not in ids:
+                ids.append(mid)
+    if extra_msg_ids:
+        for mid in extra_msg_ids:
+            if mid and mid not in ids:
+                ids.append(mid)
+
+    for mid in ids:
+        try:
+            await bot.delete_message(chat_id=chat_id, message_id=mid)
+        except Exception:
+            pass
+
+    if context is not None:
+        context.user_data.pop("ephemeral_edit_msg_ids", None)
+
+
 def _record_card_message_id(
     chat_id: int,
     msg_id: Optional[int],
@@ -1063,7 +1099,8 @@ async def safe_edit_or_reply(
     text: str,
     reply_markup: Optional[InlineKeyboardMarkup] = None,
     preserve_source_message: bool = False,
-) -> None:
+    track_as_ephemeral_edit: bool = False,
+) -> Optional[int]:
     """Edits a text message in-place when possible; if the source is a photo/card and
     preserve_source_message=True, sends a new panel message without deleting the card."""
     query = update.callback_query
@@ -1088,16 +1125,23 @@ async def safe_edit_or_reply(
                     reply_markup=reply_markup,
                 )
                 track_onboarding_msg(context, sent.message_id)
+                if track_as_ephemeral_edit:
+                    track_ephemeral_edit_msg(context, sent.message_id)
+                return sent.message_id
             else:
                 await query.edit_message_text(
                     text=text,
                     parse_mode=ParseMode.HTML,
                     reply_markup=reply_markup,
                 )
-            return
+                if track_as_ephemeral_edit:
+                    track_ephemeral_edit_msg(context, msg.message_id)
+                return msg.message_id
         except BadRequest as exc:
             if "Message is not modified" in str(exc):
-                return
+                if track_as_ephemeral_edit:
+                    track_ephemeral_edit_msg(context, msg.message_id)
+                return msg.message_id
             logger.debug("safe_edit_or_reply fallback to send_message: %s", exc)
 
     if update.effective_chat:
@@ -1108,6 +1152,10 @@ async def safe_edit_or_reply(
             reply_markup=reply_markup,
         )
         track_onboarding_msg(context, sent.message_id)
+        if track_as_ephemeral_edit:
+            track_ephemeral_edit_msg(context, sent.message_id)
+        return sent.message_id
+    return None
 
 
 async def deliver_card_to_chat(
@@ -1202,18 +1250,13 @@ async def send_card_with_deity_image(
     target_date: date,
 ) -> None:
     chat_id = update.effective_chat.id if update.effective_chat else None
-    telegram_id = update.effective_user.id if update.effective_user else 0
     query = update.callback_query
     if not chat_id:
         await safe_edit_or_reply(update, context, text, reply_markup=reply_markup)
         return
 
     delete_msg_id = query.message.message_id if (query and query.message) else None
-    lang = context.user_data.get("lang") or "en"
-    rasi = (context.user_data.get("rasi") or "mesham").lower()
-    city = normalize_city_key(context.user_data.get("locality") or "chennai")
 
-    # Re-use deliver_card_to_chat with pre-built text by caching a temporary override
     await clear_previous_cards(context.bot, chat_id=chat_id, keep_msg_id=None, context=context)
     if delete_msg_id:
         try:
@@ -1597,8 +1640,10 @@ async def _refresh_card_after_profile_change(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
     telegram_id: int,
+    ephemeral_msg_ids: Optional[list[Optional[int]]] = None,
 ) -> None:
-    """Re-delivers the card (and clears old cards) when Language, Locality/City, or Rasi changes."""
+    """Re-delivers the card (and clears old cards + transient confirmation trails)
+    when Language, Locality/City, or Rasi changes."""
     today_ist = datetime.now(IST).date()
     sub = {}
     rows = []
@@ -1635,6 +1680,13 @@ async def _refresh_card_after_profile_change(
         target_date=today_ist,
         cache=cache,
         context=context,
+    )
+    # Option A: remove transient ✅ Updated / edit prompt trail once the new card arrives
+    await cleanup_ephemeral_edit_messages(
+        bot=context.bot,
+        chat_id=chat_id,
+        context=context,
+        extra_msg_ids=ephemeral_msg_ids,
     )
 
 
@@ -1847,6 +1899,7 @@ async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     field = query.data.split(":", 1)[1]
     context.user_data.pop("awaiting_feedback", None)
     context.user_data["editing_field"] = field
+    context.user_data.pop("ephemeral_edit_msg_ids", None)
 
     telegram_id = query.from_user.id if query else update.effective_user.id
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
@@ -1856,13 +1909,27 @@ async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if field == "preferred_language":
         rows = build_language_keyboard("editval_lang").inline_keyboard
         kb = InlineKeyboardMarkup(list(rows) + [[InlineKeyboardButton(c["back_profile"], callback_data="back:profile")]])
-        await safe_edit_or_reply(update, context, build_language_prompt_text(lang), reply_markup=kb, preserve_source_message=True)
+        await safe_edit_or_reply(
+            update,
+            context,
+            build_language_prompt_text(lang),
+            reply_markup=kb,
+            preserve_source_message=True,
+            track_as_ephemeral_edit=True,
+        )
         return EDIT_VALUE
 
     if field == "rasi":
         rows = build_rasi_keyboard(lang=lang, prefix="editval_rasi", include_back=False).inline_keyboard
         kb = InlineKeyboardMarkup(list(rows) + [[InlineKeyboardButton(c["back_profile"], callback_data="back:profile")]])
-        await safe_edit_or_reply(update, context, f"{hdr}{c['step3']}", reply_markup=kb, preserve_source_message=True)
+        await safe_edit_or_reply(
+            update,
+            context,
+            f"{hdr}{c['step3']}",
+            reply_markup=kb,
+            preserve_source_message=True,
+            track_as_ephemeral_edit=True,
+        )
         return EDIT_VALUE
 
     prompts = {
@@ -1877,6 +1944,7 @@ async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         prompts.get(field, f"{hdr}Enter new value:"),
         reply_markup=kb,
         preserve_source_message=True,
+        track_as_ephemeral_edit=True,
     )
     return EDIT_VALUE
 
@@ -1888,6 +1956,7 @@ async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     await query.answer()
     prefix, val = query.data.split(":", 1)
     telegram_id = query.from_user.id
+    chat_id = query.message.chat_id if query.message else update.effective_chat.id
 
     if prefix == "editval_lang":
         await update_single_field(telegram_id, "preferred_language", val)
@@ -1909,15 +1978,23 @@ async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             [InlineKeyboardButton(c["back_card"], callback_data="back:card")],
         ]
     )
-    await safe_edit_or_reply(
+    confirm_msg_id = await safe_edit_or_reply(
         update,
         context,
         f"{hdr}{c['saved_msg'].format(val=saved_label)}",
         reply_markup=kb,
         preserve_source_message=True,
+        track_as_ephemeral_edit=True,
     )
-    # Refresh card with the updated Language or Rasi and clean out older cards
-    await _refresh_card_after_profile_change(update, context, telegram_id)
+    # Option A: Refresh card with updated Language or Rasi and remove ✅ Updated trail
+    await _refresh_card_after_profile_change(
+        update,
+        context,
+        telegram_id,
+        ephemeral_msg_ids=[confirm_msg_id],
+    )
+    if chat_id:
+        await cleanup_ephemeral_edit_messages(context.bot, chat_id=chat_id, context=context)
     return ConversationHandler.END
 
 
@@ -1931,6 +2008,8 @@ async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_T
 
     raw = (update.message.text or "").strip()
     telegram_id = update.effective_user.id
+    chat_id = update.effective_chat.id if update.effective_chat else telegram_id
+    track_ephemeral_edit_msg(context, update.message.message_id)
 
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
     c = copy_for(lang)
@@ -1939,26 +2018,29 @@ async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_T
 
     if field == "dob":
         if not re.match(r"^\d{2}[-/]\d{2}[-/]\d{4}$", raw):
-            await update.message.reply_text(
+            warn = await update.message.reply_text(
                 f"{hdr}{c['invalid_dob']}",
                 parse_mode=ParseMode.HTML,
                 reply_markup=retry_kb,
             )
+            track_ephemeral_edit_msg(context, warn.message_id)
             return EDIT_VALUE
         clean_val = raw.replace("/", "-")
         context.user_data["dob"] = clean_val
     elif field == "locality":
         if len(raw) < 2:
-            await update.message.reply_text(
+            warn = await update.message.reply_text(
                 f"{hdr}{c['invalid_loc']}",
                 parse_mode=ParseMode.HTML,
                 reply_markup=retry_kb,
             )
+            track_ephemeral_edit_msg(context, warn.message_id)
             return EDIT_VALUE
         clean_val = raw
         context.user_data["locality"] = clean_val
     else:
         clean_val = raw[:80] or (update.effective_user.first_name or "Friend")
+        context.user_data["first_name"] = clean_val
 
     await update_single_field(telegram_id, field, clean_val)
     context.user_data.pop("editing_field", None)
@@ -1969,14 +2051,34 @@ async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_T
             [InlineKeyboardButton(c["back_card"], callback_data="back:card")],
         ]
     )
-    await update.message.reply_text(
+    confirm_msg = await update.message.reply_text(
         f"{hdr}{c['saved_msg'].format(val=clean_val)}",
         parse_mode=ParseMode.HTML,
         reply_markup=kb,
     )
-    # Refresh card when Locality/City is updated so weather/auspicious timing reflects the new city
+    track_ephemeral_edit_msg(context, confirm_msg.message_id)
+
+    # Refresh card when Locality/City changes and remove ✅ Updated confirmation trail
     if field == "locality":
-        await _refresh_card_after_profile_change(update, context, telegram_id)
+        await _refresh_card_after_profile_change(
+            update,
+            context,
+            telegram_id,
+            ephemeral_msg_ids=[confirm_msg.message_id],
+        )
+    else:
+        # For Name or DOB edits, keep the newest confirmation cleanly without old trails
+        prior_ids = [
+            mid for mid in context.user_data.get("ephemeral_edit_msg_ids", [])
+            if mid != confirm_msg.message_id
+        ]
+        for mid in prior_ids:
+            try:
+                await context.bot.delete_message(chat_id=chat_id, message_id=mid)
+            except Exception:
+                pass
+        context.user_data["ephemeral_edit_msg_ids"] = [confirm_msg.message_id]
+
     return ConversationHandler.END
 
 
@@ -1993,16 +2095,21 @@ async def back_navigation_callback(update: Update, context: ContextTypes.DEFAULT
     context.user_data.pop("editing_field", None)
     context.user_data.pop("awaiting_feedback", None)
 
+    chat_id = query.message.chat_id if query.message else update.effective_chat.id
+    current_msg_id = query.message.message_id if query.message else None
+
     if target in ("profile", "settings"):
+        if chat_id:
+            await cleanup_ephemeral_edit_messages(context.bot, chat_id=chat_id, context=context)
         await open_profile_panel(update, context)
         return ConversationHandler.END
 
     if target == "card":
+        if chat_id:
+            await cleanup_ephemeral_edit_messages(context.bot, chat_id=chat_id, context=context)
         await send_sample_card_callback(update, context)
         return ConversationHandler.END
 
-    chat_id = query.message.chat_id if query.message else update.effective_chat.id
-    current_msg_id = query.message.message_id if query.message else None
     lang = context.user_data.get("lang", "en")
     c = copy_for(lang)
 
