@@ -318,26 +318,27 @@ def render_message(
 
 
 async def ensure_subscribers_schema(pool: asyncpg.Pool) -> None:
-    await pool.execute(
-        """
-        CREATE TABLE IF NOT EXISTS subscribers (
-            telegram_id BIGINT PRIMARY KEY,
-            preferred_language VARCHAR(16) DEFAULT 'en',
-            locality TEXT,
-            city TEXT,
-            rasi VARCHAR(32) DEFAULT 'mesham',
-            is_active BOOLEAN DEFAULT TRUE,
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
-        );
-        """
-    )
-    await pool.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS preferred_language VARCHAR(16) DEFAULT 'en';")
-    await pool.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS locality TEXT;")
-    await pool.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS city TEXT;")
-    await pool.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS rasi VARCHAR(32) DEFAULT 'mesham';")
-    await pool.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;")
-    await pool.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();")
+    async with pool.acquire() as conn:
+        await conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS subscribers (
+                telegram_id BIGINT PRIMARY KEY,
+                preferred_language VARCHAR(16) DEFAULT 'en',
+                locality TEXT,
+                city TEXT,
+                rasi VARCHAR(32) DEFAULT 'mesham',
+                is_active BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                updated_at TIMESTAMPTZ DEFAULT NOW()
+            );
+            """
+        )
+        await conn.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS preferred_language VARCHAR(16) DEFAULT 'en';")
+        await conn.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS locality TEXT;")
+        await conn.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS city TEXT;")
+        await conn.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS rasi VARCHAR(32) DEFAULT 'mesham';")
+        await conn.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;")
+        await conn.execute("ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();")
 
 
 async def send_to_subscriber(
@@ -389,10 +390,11 @@ async def send_to_subscriber(
                 if resp.status == 200:
                     return True
                 if resp.status == 403:
-                    await pool.execute(
-                        "UPDATE subscribers SET is_active = FALSE, updated_at = NOW() WHERE telegram_id = $1;",
-                        uid,
-                    )
+                    async with pool.acquire() as conn:
+                        await conn.execute(
+                            "UPDATE subscribers SET is_active = FALSE, updated_at = NOW() WHERE telegram_id = $1;",
+                            uid,
+                        )
                     return False
                 if resp.status == 429 and attempt == 0:
                     body = await resp.json()
@@ -414,35 +416,42 @@ async def run_broadcast() -> None:
     today_ist = now_ist.date()
     edition_date = today_ist.strftime("%Y-%m-%d")
 
-    pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=5)
+    pool = await asyncpg.create_pool(
+        DATABASE_URL,
+        min_size=1,
+        max_size=5,
+        statement_cache_size=0,
+    )
     try:
         await ensure_subscribers_schema(pool)
 
-        table_exists = await pool.fetchval(
-            """
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.tables
-                WHERE table_schema = 'public' AND table_name = 'daily_shared_cache'
-            );
-            """
-        )
-        cache_map = {}
-        if table_exists:
-            rows = await pool.fetch(
-                "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache WHERE edition_date = $1;",
-                today_ist,
+        async with pool.acquire() as conn:
+            table_exists = await conn.fetchval(
+                """
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM information_schema.tables
+                    WHERE table_schema = 'public' AND table_name = 'daily_shared_cache'
+                );
+                """
             )
-            cache_map = {
-                (r["bucket_type"], r["bucket_key"]): parse_payload(r["payload"])
-                for r in rows
-            }
-        else:
-            logger.warning("daily_shared_cache table not found; broadcasting with localized fallbacks.")
+            cache_map = {}
+            if table_exists:
+                rows = await conn.fetch(
+                    "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache WHERE edition_date = $1;",
+                    today_ist,
+                )
+                cache_map = {
+                    (r["bucket_type"], r["bucket_key"]): parse_payload(r["payload"])
+                    for r in rows
+                }
+            else:
+                logger.warning("daily_shared_cache table not found; broadcasting with localized fallbacks.")
 
-        subs = await pool.fetch(
-            "SELECT telegram_id, preferred_language, locality, city, rasi FROM subscribers WHERE is_active = TRUE;"
-        )
+            subs = await conn.fetch(
+                "SELECT telegram_id, preferred_language, locality, city, rasi FROM subscribers WHERE is_active = TRUE;"
+            )
+
         sent = 0
         async with aiohttp.ClientSession() as session:
             for i in range(0, len(subs), BATCH_CONCURRENCY):
