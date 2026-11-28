@@ -65,6 +65,7 @@ DAY_DEITY_FILENAMES = {
 
 IST = timezone(timedelta(hours=5, minutes=30))
 DAILY_DELIVERY_TIME_IST = dt_time(hour=4, minute=30, tzinfo=IST)
+POST_EDIT_CONFIRM_DELAY_SEC = 1.2
 
 # Conversation states
 LANG, DOB, LOCATION, RASI, EDIT_VALUE, FEEDBACK_TEXT = range(6)
@@ -339,7 +340,7 @@ WELCOME_COPY = {
         "step2": (
             "<b>चरण 2 / 3</b> — अपना क्षेत्र और शहर दर्ज करें (या केवल शहर):\n"
             "<i>उदाहरण: <code>बांद्रा, मुंबई</code> या <code>कनॉट प्लेस, दिल्ली</code> या <code>इंदिरानगर, बेंगलुरु</code> या <code>अड्यार, चेन्नई</code> (<code>मुंबई</code> या <code>दिल्ली</code> या <code>बेंगलुरु</code> या <code>चेन्नई</code>).\n"
-            "क्यों? क्षेत्र जोड़ने से आपके इलाके के अनुसार मौसम और बारिश की जानकारी अधिक सटीक मिलती है।</i>"
+            "क्यों? क्षेत्र जोड़ने से आपके इलाके के अनुसार मौसम और बारिश की जानकारी अधिक सटीक मिलती है.</i>"
         ),
         "invalid_loc": "कृपया अपना क्षेत्र और शहर दर्ज करें (उदा: <code>बांद्रा, मुंबई</code>, <code>कनॉट प्लेस, दिल्ली</code>, <code>इंदिरानगर, बेंगलुरु</code>, या <code>अड्यार, चेन्नई</code>):",
         "step3": "<b>चरण 3 / 3</b> — अपनी राशि चुनें:",
@@ -502,7 +503,7 @@ WELCOME_COPY = {
         "dpdpa_body": (
             "• <b>ಉಳಿಸಲಾದ ಮಾಹಿತಿ:</b> ಹೆಸರು, ಭಾಷೆ, ಜನ್ಮ ದಿನಾಂಕ, ಪ್ರದೇಶ/ನಗರ, ರಾಶಿ ಮತ್ತು ನಿಮ್ಮ ಬೆಂಬಲ ಸಂದೇಶಗಳು.\n"
             "• <b>ಉದ್ದೇಶ:</b> ಬೆಳಿಗ್ಗೆ 04:30 AM IST AURA ಕಾರ್ಡ್ ವೈಯಕ್ತೀಕರಣ ಮತ್ತು ಬೆಂಬಲಕ್ಕಾಗಿ.\n"
-            "• <b>ನಿಮ್ಮ ಹಕ್ಕುಗಳು:</b> ಪ್ರೊಫೈಲ್‌ನಲ್ಲಿ ಬದಲಿಸಿ ಅಥವಾ <b>ನನ್ನ ಡೇಟಾ ಅಳಿಸಿ</b> / /delete_data ಮೂಲಕ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಿ."
+            "• <b>ನಿಮ್ಮ ಹಕ್ಕುಗಳು:</b> ಪ್ರೊಫೈಲ್‌ನಲ್ಲಿ ಬದಲಿಸಿ ಅಥವಾ <b>ನನ್ನ ಡೇಟಾ ಅಳಿಸಿ</b> / /delete_data ಮೂಲಕ ಶಾಶ್ವతంగా ಅಳಿಸಿ."
         ),
         "confirm_delete_body": "⚠️ <b>ಡೇಟಾ ಅಳಿಸುವಿಕೆ ದೃಢೀಕರಣ (DPDPA 2023):</b>\nನಿಮ್ಮ ಪ್ರೊಫೈಲ್, ಆದ್ಯತೆಗಳು ಮತ್ತು ದಾಖಲೆಗಳನ್ನು ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಲಾಗುತ್ತದೆ.",
         "erased_msg": "🗑️ DPDPA 2023 ಪ್ರಕಾರ ನಿಮ್ಮ ಡೇಟಾ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಲಾಗಿದೆ. ಮತ್ತೆ ಆರಂಭಿಸಲು /start ಒತ್ತಿರಿ.",
@@ -565,7 +566,7 @@ WELCOME_COPY = {
             "• <b>ഉദ്ദേശ്യം:</b> രാവിലെ 04:30 AM IST AURA കാർഡ് വ്യക്തിഗതമാക്കുന്നതിനും സഹായത്തിനും.\n"
             "• <b>നിങ്ങളുടെ അവകാശങ്ങൾ:</b> പ്രൊഫൈലിൽ മാറ്റാം അല്ലെങ്കിൽ <b>എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക</b> / /delete_data വഴി പൂർണ്ണമായി നീക്കം ചെയ്യാം."
         ),
-        "confirm_delete_body": "⚠️ <b>ഡാറ്റ നീക്കം സ്ഥിരീകരണം (DPDPA 2023):</b>\nനിങ്ങളുടെ പ്രൊഫೈൽ, മുൻഗണനകൾ, രേഖകൾ എന്നിവ ശാശ്വതമായി നീക്കം ചെയ്യപ്പെടും.",
+        "confirm_delete_body": "⚠️ <b>ഡാറ്റ നീക്കം സ്ഥിരീകരണം (DPDPA 2023):</b>\nനിങ്ങളുടെ പ്രൊഫൈൽ, മുൻഗണനകൾ, രേഖകൾ എന്നിവ ശാശ്വതമായി നീക്കം ചെയ്യപ്പെടും.",
         "erased_msg": "🗑️ DPDPA 2023 പ്രകാരം നിങ്ങളുടെ ഡാറ്റ പൂർണ്ണമായി നീക്കം ചെയ്തു. വീണ്ടും തുടങ്ങാൻ /start അമർത്തുക.",
         "saved_msg": "✅ അപ്ഡേറ്റ് ചെയ്തു: <b>{val}</b>",
     },
@@ -1681,6 +1682,11 @@ async def _refresh_card_after_profile_change(
         cache=cache,
         context=context,
     )
+    context.user_data["profile_dirty"] = False
+
+    if POST_EDIT_CONFIRM_DELAY_SEC > 0:
+        await asyncio.sleep(POST_EDIT_CONFIRM_DELAY_SEC)
+
     # Remove transient ✅ Updated / edit prompt trail once the new card arrives
     await cleanup_ephemeral_edit_messages(
         bot=context.bot,
@@ -1697,6 +1703,7 @@ async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
             await query.answer()
         context.user_data.pop("editing_field", None)
         context.user_data.pop("awaiting_feedback", None)
+        context.user_data["profile_dirty"] = False
 
         user = query.from_user if query else update.effective_user
         telegram_id = user.id
@@ -1761,6 +1768,7 @@ async def open_other_services_panel(update: Update, context: ContextTypes.DEFAUL
         await query.answer()
     context.user_data.pop("editing_field", None)
     context.user_data.pop("awaiting_feedback", None)
+    context.user_data["profile_dirty"] = False
 
     telegram_id = query.from_user.id if query else update.effective_user.id
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
@@ -1781,6 +1789,7 @@ async def open_help_feedback_panel(update: Update, context: ContextTypes.DEFAULT
         await query.answer()
     context.user_data.pop("editing_field", None)
     context.user_data["awaiting_feedback"] = True
+    context.user_data["profile_dirty"] = False
 
     telegram_id = query.from_user.id if query else update.effective_user.id
     lang, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
@@ -1969,20 +1978,17 @@ async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         lang_out, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
         saved_label = get_rasi_display(val, lang_out)
 
+    context.user_data["profile_dirty"] = True
     context.user_data.pop("editing_field", None)
     c = copy_for(lang_out)
     hdr = get_card_header(lang_out)
-    kb = InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton(c["btn_profile"], callback_data="panel:profile")],
-            [InlineKeyboardButton(c["back_card"], callback_data="back:card")],
-        ]
-    )
+
+    # Screenshot 2 style: transient confirmation with NO action buttons underneath
     confirm_msg_id = await safe_edit_or_reply(
         update,
         context,
         f"{hdr}{c['saved_msg'].format(val=saved_label)}",
-        reply_markup=kb,
+        reply_markup=None,
         preserve_source_message=True,
         track_as_ephemeral_edit=True,
     )
@@ -2042,22 +2048,18 @@ async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_T
         context.user_data["first_name"] = clean_val
 
     await update_single_field(telegram_id, field, clean_val)
+    context.user_data["profile_dirty"] = True
     context.user_data.pop("editing_field", None)
 
-    kb = InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton(c["btn_profile"], callback_data="panel:profile")],
-            [InlineKeyboardButton(c["back_card"], callback_data="back:card")],
-        ]
-    )
+    # Screenshot 2 style: transient confirmation with NO action buttons underneath
     confirm_msg = await update.message.reply_text(
         f"{hdr}{c['saved_msg'].format(val=clean_val)}",
         parse_mode=ParseMode.HTML,
-        reply_markup=kb,
+        reply_markup=None,
     )
     track_ephemeral_edit_msg(context, confirm_msg.message_id)
 
-    # Align Name, DOB, and Locality with Language & Rasi: refresh card and clear ephemeral trail
+    # Name, DOB, Locality, Language, and Rasi all trigger card refresh and clear ephemeral trail
     await _refresh_card_after_profile_change(
         update,
         context,
@@ -2093,9 +2095,25 @@ async def back_navigation_callback(update: Update, context: ContextTypes.DEFAULT
         return ConversationHandler.END
 
     if target == "card":
-        if chat_id:
-            await cleanup_ephemeral_edit_messages(context.bot, chat_id=chat_id, context=context)
-        await send_sample_card_callback(update, context)
+        was_dirty = bool(context.user_data.pop("profile_dirty", False))
+        if was_dirty:
+            telegram_id = query.from_user.id if query else update.effective_user.id
+            await _refresh_card_after_profile_change(update, context, telegram_id)
+            if current_msg_id and chat_id:
+                try:
+                    await context.bot.delete_message(chat_id=chat_id, message_id=current_msg_id)
+                except Exception:
+                    pass
+        else:
+            # Read-only navigation: delete only the sub-menu/panel message and leave
+            # the existing daily card untouched without re-querying or regenerating.
+            if chat_id:
+                await cleanup_ephemeral_edit_messages(context.bot, chat_id=chat_id, context=context)
+            if current_msg_id and chat_id:
+                try:
+                    await context.bot.delete_message(chat_id=chat_id, message_id=current_msg_id)
+                except Exception:
+                    pass
         return ConversationHandler.END
 
     lang = context.user_data.get("lang", "en")
@@ -2197,6 +2215,7 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
         await query.answer()
     context.user_data.pop("editing_field", None)
     context.user_data.pop("awaiting_feedback", None)
+    context.user_data["profile_dirty"] = False
 
     telegram_id = update.effective_user.id
     chat_id = update.effective_chat.id if update.effective_chat else telegram_id
