@@ -6,7 +6,7 @@ import signal
 import asyncio
 import logging
 from pathlib import Path
-from datetime import datetime, date, timezone, timedelta
+from datetime import datetime, date, time as dt_time, timezone, timedelta
 from typing import Optional
 
 import asyncpg
@@ -64,6 +64,7 @@ DAY_DEITY_FILENAMES = {
 }
 
 IST = timezone(timedelta(hours=5, minutes=30))
+DAILY_DELIVERY_TIME_IST = dt_time(hour=4, minute=30, tzinfo=IST)
 
 # Conversation states
 LANG, DOB, LOCATION, RASI, EDIT_VALUE, FEEDBACK_TEXT = range(6)
@@ -562,7 +563,7 @@ WELCOME_COPY = {
         "dpdpa_body": (
             "• <b>സൂക്ഷിക്കുന്ന വിവരങ്ങൾ:</b> പേര്, ഭാഷ, ജനനത്തീയതി, പ്രദേശം/നഗരം, രാശി, നിങ്ങളുടെ സഹായ സന്ദേശങ്ങൾ.\n"
             "• <b>ഉദ്ദേശ്യം:</b> രാവിലെ 04:30 AM IST AURA കാർഡ് വ്യക്തിഗതമാക്കുന്നതിനും സഹായത്തിനും.\n"
-            "• <b>നിങ്ങളുടെ അവകാശങ്ങൾ:</b> പ്രൊഫైലിൽ മാറ്റാം അല്ലെങ്കിൽ <b>എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക</b> / /delete_data വഴി പൂർണ്ണമായി നീക്കം ചെയ്യാം."
+            "• <b>നിങ്ങളുടെ അവകാശങ്ങൾ:</b> പ്രൊഫൈലിൽ മാറ്റാം അല്ലെങ്കിൽ <b>എന്റെ ഡാറ്റ നീക്കം ചെയ്യുക</b> / /delete_data വഴി പൂർണ്ണമായി നീക്കം ചെയ്യാം."
         ),
         "confirm_delete_body": "⚠️ <b>ഡാറ്റ നീക്കം സ്ഥിരീകരണം (DPDPA 2023):</b>\nനിങ്ങളുടെ പ്രൊഫൈൽ, മുൻഗണനകൾ, രേഖകൾ എന്നിവ ശാശ്വതമായി നീക്കം ചെയ്യപ്പെടും.",
         "erased_msg": "🗑️ DPDPA 2023 പ്രകാരം നിങ്ങളുടെ ഡാറ്റ പൂർണ്ണമായി നീക്കം ചെയ്തു. വീണ്ടും തുടങ്ങാൻ /start അമർത്തുക.",
@@ -575,6 +576,9 @@ CACHED_WELCOME_VIDEO_ID: Optional[str] = os.environ.get("WELCOME_VIDEO_FILE_ID",
 CACHED_DEITY_PHOTO_IDS: dict[str, str] = {}
 SUBSCRIBERS_COLUMNS: Optional[set[str]] = None
 HAS_LOCALITY_COLUMN: Optional[bool] = None
+
+# Tracks previously sent card message IDs per chat so a new card cleans out older cards
+CHAT_CARD_HISTORY: dict[int, list[int]] = {}
 
 EXPECTED_SUBSCRIBER_DDL_COLUMNS = [
     ("first_name", "TEXT"),
@@ -724,11 +728,6 @@ async def _reconcile_subscribers_columns(conn: asyncpg.Connection, force_refresh
     return cols
 
 
-async def _ensure_locality_column(conn: asyncpg.Connection) -> bool:
-    cols = await _reconcile_subscribers_columns(conn, force_refresh=True)
-    return "locality" in cols
-
-
 async def ensure_subscribers_schema() -> None:
     ddl_statements = [
         """
@@ -776,6 +775,14 @@ async def ensure_subscribers_schema() -> None:
             rating SMALLINT NOT NULL,
             created_at TIMESTAMPTZ DEFAULT NOW(),
             UNIQUE (telegram_id, edition_date)
+        );
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS daily_deliveries (
+            telegram_id BIGINT NOT NULL,
+            edition_date DATE NOT NULL,
+            delivered_at TIMESTAMPTZ DEFAULT NOW(),
+            PRIMARY KEY (telegram_id, edition_date)
         );
         """,
     ]
@@ -978,7 +985,7 @@ async def log_incoming_update_trace(update: Update, context: ContextTypes.DEFAUL
 
 
 # ---------------------------------------------------------------------------
-# Message Tracking, Safe Edit & Cleanup Helpers
+# Message Tracking, Card History Cleanup & Panel Helpers
 # ---------------------------------------------------------------------------
 def track_onboarding_msg(context: ContextTypes.DEFAULT_TYPE, msg_id: Optional[int]) -> None:
     if not msg_id:
@@ -986,6 +993,50 @@ def track_onboarding_msg(context: ContextTypes.DEFAULT_TYPE, msg_id: Optional[in
     ids = context.user_data.setdefault("onboarding_msg_ids", [])
     if msg_id not in ids:
         ids.append(msg_id)
+
+
+def _record_card_message_id(
+    chat_id: int,
+    msg_id: Optional[int],
+    context: Optional[ContextTypes.DEFAULT_TYPE] = None,
+) -> None:
+    if not msg_id:
+        return
+    hist = CHAT_CARD_HISTORY.setdefault(chat_id, [])
+    if msg_id not in hist:
+        hist.append(msg_id)
+    if context is not None:
+        ud_hist = context.user_data.setdefault("card_msg_ids", [])
+        if msg_id not in ud_hist:
+            ud_hist.append(msg_id)
+
+
+async def clear_previous_cards(
+    bot,
+    chat_id: int,
+    keep_msg_id: Optional[int] = None,
+    context: Optional[ContextTypes.DEFAULT_TYPE] = None,
+) -> None:
+    """Deletes previously delivered daily card messages so only the newest card stays visible."""
+    candidate_ids: list[int] = list(CHAT_CARD_HISTORY.get(chat_id, []))
+    if context is not None:
+        for mid in context.user_data.get("card_msg_ids", []):
+            if mid not in candidate_ids:
+                candidate_ids.append(mid)
+
+    remaining: list[int] = []
+    for mid in candidate_ids:
+        if keep_msg_id is not None and mid == keep_msg_id:
+            remaining.append(mid)
+            continue
+        try:
+            await bot.delete_message(chat_id=chat_id, message_id=mid)
+        except Exception:
+            pass
+
+    CHAT_CARD_HISTORY[chat_id] = remaining
+    if context is not None:
+        context.user_data["card_msg_ids"] = list(remaining)
 
 
 async def cleanup_previous_messages(
@@ -1011,7 +1062,10 @@ async def safe_edit_or_reply(
     context: ContextTypes.DEFAULT_TYPE,
     text: str,
     reply_markup: Optional[InlineKeyboardMarkup] = None,
+    preserve_source_message: bool = False,
 ) -> None:
+    """Edits a text message in-place when possible; if the source is a photo/card and
+    preserve_source_message=True, sends a new panel message without deleting the card."""
     query = update.callback_query
     if query and query.message:
         msg = query.message
@@ -1022,10 +1076,11 @@ async def safe_edit_or_reply(
         )
         try:
             if has_media:
-                try:
-                    await msg.delete()
-                except Exception:
-                    pass
+                if not preserve_source_message:
+                    try:
+                        await msg.delete()
+                    except Exception:
+                        pass
                 sent = await context.bot.send_message(
                     chat_id=msg.chat_id,
                     text=text,
@@ -1055,6 +1110,90 @@ async def safe_edit_or_reply(
         track_onboarding_msg(context, sent.message_id)
 
 
+async def deliver_card_to_chat(
+    bot,
+    chat_id: int,
+    telegram_id: int,
+    lang: str,
+    rasi: str,
+    city: str,
+    target_date: date,
+    cache: dict,
+    context: Optional[ContextTypes.DEFAULT_TYPE] = None,
+    delete_triggered_message_id: Optional[int] = None,
+) -> None:
+    """Delivers the daily card with deity image, clears older cards, and tracks the new card."""
+    message_text = _build_card_message_from_cache(cache, lang, rasi, city, target_date)
+    reply_markup = build_daily_action_keyboard(telegram_id, lang, str(target_date))
+    deity_path = resolve_deity_image_path(target_date)
+
+    # Clear older cards first so the chat stays clean with the latest card
+    await clear_previous_cards(bot, chat_id=chat_id, keep_msg_id=None, context=context)
+
+    if delete_triggered_message_id:
+        try:
+            await bot.delete_message(chat_id=chat_id, message_id=delete_triggered_message_id)
+        except Exception:
+            pass
+
+    sent_ids: list[int] = []
+    if deity_path:
+        cache_key = deity_path.name
+        try:
+            cached_file_id = CACHED_DEITY_PHOTO_IDS.get(cache_key)
+            if len(message_text) <= 1024:
+                if cached_file_id:
+                    sent_photo = await bot.send_photo(
+                        chat_id=chat_id,
+                        photo=cached_file_id,
+                        caption=message_text,
+                        parse_mode=ParseMode.HTML,
+                        reply_markup=reply_markup,
+                    )
+                else:
+                    with open(deity_path, "rb") as pf:
+                        sent_photo = await bot.send_photo(
+                            chat_id=chat_id,
+                            photo=pf,
+                            caption=message_text,
+                            parse_mode=ParseMode.HTML,
+                            reply_markup=reply_markup,
+                        )
+                    if sent_photo.photo:
+                        CACHED_DEITY_PHOTO_IDS[cache_key] = sent_photo.photo[-1].file_id
+                sent_ids.append(sent_photo.message_id)
+            else:
+                if cached_file_id:
+                    sent_photo = await bot.send_photo(chat_id=chat_id, photo=cached_file_id)
+                else:
+                    with open(deity_path, "rb") as pf:
+                        sent_photo = await bot.send_photo(chat_id=chat_id, photo=pf)
+                    if sent_photo.photo:
+                        CACHED_DEITY_PHOTO_IDS[cache_key] = sent_photo.photo[-1].file_id
+                sent_ids.append(sent_photo.message_id)
+                sent_msg = await bot.send_message(
+                    chat_id=chat_id,
+                    text=message_text,
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=reply_markup,
+                )
+                sent_ids.append(sent_msg.message_id)
+
+            for mid in sent_ids:
+                _record_card_message_id(chat_id, mid, context=context)
+            return
+        except Exception as exc:
+            logger.warning("Deity photo send fallback (%s): %s", deity_path, exc)
+
+    sent_msg = await bot.send_message(
+        chat_id=chat_id,
+        text=message_text,
+        parse_mode=ParseMode.HTML,
+        reply_markup=reply_markup,
+    )
+    _record_card_message_id(chat_id, sent_msg.message_id, context=context)
+
+
 async def send_card_with_deity_image(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
@@ -1062,60 +1201,63 @@ async def send_card_with_deity_image(
     reply_markup: Optional[InlineKeyboardMarkup],
     target_date: date,
 ) -> None:
-    deity_path = resolve_deity_image_path(target_date)
     chat_id = update.effective_chat.id if update.effective_chat else None
+    telegram_id = update.effective_user.id if update.effective_user else 0
     query = update.callback_query
-
-    if not deity_path or not chat_id:
+    if not chat_id:
         await safe_edit_or_reply(update, context, text, reply_markup=reply_markup)
         return
 
-    cache_key = deity_path.name
-    try:
-        if query and query.message:
-            try:
-                await query.message.delete()
-            except Exception:
-                pass
+    delete_msg_id = query.message.message_id if (query and query.message) else None
+    lang = context.user_data.get("lang") or "en"
+    rasi = (context.user_data.get("rasi") or "mesham").lower()
+    city = normalize_city_key(context.user_data.get("locality") or "chennai")
 
-        cached_file_id = CACHED_DEITY_PHOTO_IDS.get(cache_key)
-        if len(text) <= 1024:
-            if cached_file_id:
-                await context.bot.send_photo(
-                    chat_id=chat_id,
-                    photo=cached_file_id,
-                    caption=text,
-                    parse_mode=ParseMode.HTML,
-                    reply_markup=reply_markup,
-                )
-            else:
-                with open(deity_path, "rb") as pf:
+    # Re-use deliver_card_to_chat with pre-built text by caching a temporary override
+    await clear_previous_cards(context.bot, chat_id=chat_id, keep_msg_id=None, context=context)
+    if delete_msg_id:
+        try:
+            await context.bot.delete_message(chat_id=chat_id, message_id=delete_msg_id)
+        except Exception:
+            pass
+
+    deity_path = resolve_deity_image_path(target_date)
+    if deity_path:
+        cache_key = deity_path.name
+        try:
+            cached_file_id = CACHED_DEITY_PHOTO_IDS.get(cache_key)
+            if len(text) <= 1024:
+                if cached_file_id:
                     sent_photo = await context.bot.send_photo(
                         chat_id=chat_id,
-                        photo=pf,
+                        photo=cached_file_id,
                         caption=text,
                         parse_mode=ParseMode.HTML,
                         reply_markup=reply_markup,
                     )
-                if sent_photo.photo:
-                    CACHED_DEITY_PHOTO_IDS[cache_key] = sent_photo.photo[-1].file_id
-        else:
-            if cached_file_id:
-                await context.bot.send_photo(chat_id=chat_id, photo=cached_file_id)
-            else:
-                with open(deity_path, "rb") as pf:
-                    sent_photo = await context.bot.send_photo(chat_id=chat_id, photo=pf)
-                if sent_photo.photo:
-                    CACHED_DEITY_PHOTO_IDS[cache_key] = sent_photo.photo[-1].file_id
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text=text,
-                parse_mode=ParseMode.HTML,
-                reply_markup=reply_markup,
-            )
-    except Exception as exc:
-        logger.warning("Deity photo send fallback (%s): %s", deity_path, exc)
-        await safe_edit_or_reply(update, context, text, reply_markup=reply_markup)
+                else:
+                    with open(deity_path, "rb") as pf:
+                        sent_photo = await context.bot.send_photo(
+                            chat_id=chat_id,
+                            photo=pf,
+                            caption=text,
+                            parse_mode=ParseMode.HTML,
+                            reply_markup=reply_markup,
+                        )
+                    if sent_photo.photo:
+                        CACHED_DEITY_PHOTO_IDS[cache_key] = sent_photo.photo[-1].file_id
+                _record_card_message_id(chat_id, sent_photo.message_id, context=context)
+                return
+        except Exception as exc:
+            logger.warning("Deity photo send fallback (%s): %s", deity_path, exc)
+
+    sent_msg = await context.bot.send_message(
+        chat_id=chat_id,
+        text=text,
+        parse_mode=ParseMode.HTML,
+        reply_markup=reply_markup,
+    )
+    _record_card_message_id(chat_id, sent_msg.message_id, context=context)
 
 
 # ---------------------------------------------------------------------------
@@ -1451,6 +1593,51 @@ async def _get_user_lang_and_row(telegram_id: int, fallback_lang: str = "en"):
     return lang, sub_dict
 
 
+async def _refresh_card_after_profile_change(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    telegram_id: int,
+) -> None:
+    """Re-delivers the card (and clears old cards) when Language, Locality/City, or Rasi changes."""
+    today_ist = datetime.now(IST).date()
+    sub = {}
+    rows = []
+    try:
+        pool = await get_db_pool()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow("SELECT * FROM subscribers WHERE telegram_id = $1;", telegram_id)
+            sub = record_to_dict(row)
+            rows = await conn.fetch(
+                "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache WHERE edition_date = $1;",
+                today_ist,
+            )
+            if not rows:
+                rows = await conn.fetch(
+                    "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache ORDER BY edition_date DESC LIMIT 30;"
+                )
+    except Exception as exc:
+        logger.warning("Cache/DB lookup on profile card refresh: %s", exc)
+
+    lang = sub.get("preferred_language") or context.user_data.get("lang") or "en"
+    rasi = (sub.get("rasi") or context.user_data.get("rasi") or "mesham").lower()
+    raw_loc = sub.get("locality") or sub.get("city") or context.user_data.get("locality") or "chennai"
+    city = normalize_city_key(raw_loc)
+    cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
+
+    chat_id = update.effective_chat.id if update.effective_chat else telegram_id
+    await deliver_card_to_chat(
+        bot=context.bot,
+        chat_id=chat_id,
+        telegram_id=telegram_id,
+        lang=lang,
+        rasi=rasi,
+        city=city,
+        target_date=today_ist,
+        cache=cache,
+        context=context,
+    )
+
+
 async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         query = update.callback_query
@@ -1510,7 +1697,8 @@ async def open_profile_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 ],
             ]
         )
-        await safe_edit_or_reply(update, context, text, reply_markup=kb)
+        # Keep the card visible in chat instead of deleting it when opening Profile
+        await safe_edit_or_reply(update, context, text, reply_markup=kb, preserve_source_message=True)
     except Exception as exc:
         logger.exception("Error in open_profile_panel: %s", exc)
 
@@ -1531,7 +1719,8 @@ async def open_other_services_panel(update: Update, context: ContextTypes.DEFAUL
     kb = InlineKeyboardMarkup(
         [[InlineKeyboardButton(c["back_card"], callback_data="back:card")]]
     )
-    await safe_edit_or_reply(update, context, text, reply_markup=kb)
+    # Keep the card visible in chat instead of deleting it when opening Other Services
+    await safe_edit_or_reply(update, context, text, reply_markup=kb, preserve_source_message=True)
 
 
 async def open_help_feedback_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -1548,7 +1737,8 @@ async def open_help_feedback_panel(update: Update, context: ContextTypes.DEFAULT
 
     text = f"{hdr}{c['help_title']}\n\n{c['help_prompt']}"
     kb = InlineKeyboardMarkup([[InlineKeyboardButton(c["back_card"], callback_data="back:card")]])
-    await safe_edit_or_reply(update, context, text, reply_markup=kb)
+    # Keep the card visible in chat instead of deleting it when opening Help & Feedback
+    await safe_edit_or_reply(update, context, text, reply_markup=kb, preserve_source_message=True)
     return FEEDBACK_TEXT
 
 
@@ -1628,7 +1818,7 @@ async def open_dpdpa_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             [InlineKeyboardButton(c["back_profile"], callback_data="back:profile")],
         ]
     )
-    await safe_edit_or_reply(update, context, text, reply_markup=kb)
+    await safe_edit_or_reply(update, context, text, reply_markup=kb, preserve_source_message=True)
 
 
 async def confirm_delete_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1646,7 +1836,7 @@ async def confirm_delete_callback(update: Update, context: ContextTypes.DEFAULT_
             [InlineKeyboardButton(c["back_profile"], callback_data="back:profile")],
         ]
     )
-    await safe_edit_or_reply(update, context, f"{hdr}{c['confirm_delete_body']}", reply_markup=kb)
+    await safe_edit_or_reply(update, context, f"{hdr}{c['confirm_delete_body']}", reply_markup=kb, preserve_source_message=True)
 
 
 async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -1666,13 +1856,13 @@ async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if field == "preferred_language":
         rows = build_language_keyboard("editval_lang").inline_keyboard
         kb = InlineKeyboardMarkup(list(rows) + [[InlineKeyboardButton(c["back_profile"], callback_data="back:profile")]])
-        await safe_edit_or_reply(update, context, build_language_prompt_text(lang), reply_markup=kb)
+        await safe_edit_or_reply(update, context, build_language_prompt_text(lang), reply_markup=kb, preserve_source_message=True)
         return EDIT_VALUE
 
     if field == "rasi":
         rows = build_rasi_keyboard(lang=lang, prefix="editval_rasi", include_back=False).inline_keyboard
         kb = InlineKeyboardMarkup(list(rows) + [[InlineKeyboardButton(c["back_profile"], callback_data="back:profile")]])
-        await safe_edit_or_reply(update, context, f"{hdr}{c['step3']}", reply_markup=kb)
+        await safe_edit_or_reply(update, context, f"{hdr}{c['step3']}", reply_markup=kb, preserve_source_message=True)
         return EDIT_VALUE
 
     prompts = {
@@ -1686,6 +1876,7 @@ async def start_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         context,
         prompts.get(field, f"{hdr}Enter new value:"),
         reply_markup=kb,
+        preserve_source_message=True,
     )
     return EDIT_VALUE
 
@@ -1705,6 +1896,7 @@ async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         lang_out = val
     else:
         await update_single_field(telegram_id, "rasi", val)
+        context.user_data["rasi"] = val
         lang_out, _ = await _get_user_lang_and_row(telegram_id, context.user_data.get("lang", "en"))
         saved_label = get_rasi_display(val, lang_out)
 
@@ -1722,7 +1914,10 @@ async def finish_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         context,
         f"{hdr}{c['saved_msg'].format(val=saved_label)}",
         reply_markup=kb,
+        preserve_source_message=True,
     )
+    # Refresh card with the updated Language or Rasi and clean out older cards
+    await _refresh_card_after_profile_change(update, context, telegram_id)
     return ConversationHandler.END
 
 
@@ -1779,6 +1974,9 @@ async def handle_free_text_input(update: Update, context: ContextTypes.DEFAULT_T
         parse_mode=ParseMode.HTML,
         reply_markup=kb,
     )
+    # Refresh card when Locality/City is updated so weather/auspicious timing reflects the new city
+    if field == "locality":
+        await _refresh_card_after_profile_change(update, context, telegram_id)
     return ConversationHandler.END
 
 
@@ -1850,7 +2048,7 @@ async def back_navigation_callback(update: Update, context: ContextTypes.DEFAULT
 
 
 # ---------------------------------------------------------------------------
-# Instant Sample Card, Rating, Translate & Data Erasure Handlers
+# Instant Sample Card, 04:30 AM IST Scheduler, Rating, Translate & Erasure
 # ---------------------------------------------------------------------------
 def _build_card_message_from_cache(
     cache: dict,
@@ -1906,6 +2104,7 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
     context.user_data.pop("awaiting_feedback", None)
 
     telegram_id = update.effective_user.id
+    chat_id = update.effective_chat.id if update.effective_chat else telegram_id
     today_ist = datetime.now(IST).date()
 
     sub = {}
@@ -1930,6 +2129,9 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
     rasi = (sub.get("rasi") or "mesham").lower()
     raw_loc = sub.get("locality") or sub.get("city") or context.user_data.get("locality") or "chennai"
     city = normalize_city_key(raw_loc)
+    context.user_data["lang"] = lang
+    context.user_data["rasi"] = rasi
+    context.user_data["locality"] = raw_loc
 
     cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in rows}
     message_text = _build_card_message_from_cache(cache, lang, rasi, city, today_ist)
@@ -1941,6 +2143,72 @@ async def send_sample_card_callback(update: Update, context: ContextTypes.DEFAUL
         reply_markup=build_daily_action_keyboard(telegram_id, lang, str(today_ist)),
         target_date=today_ist,
     )
+    _record_card_message_id(chat_id, None, context=context)
+
+
+async def scheduled_0430_ist_card_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Runs daily at 04:30 AM IST to deliver today's card and clear out older cards."""
+    today_ist = datetime.now(IST).date()
+    logger.info("Running scheduled 04:30 AM IST daily card job for edition_date=%s", today_ist)
+
+    try:
+        pool = await get_db_pool()
+        async with pool.acquire() as conn:
+            subscribers = await conn.fetch(
+                "SELECT * FROM subscribers WHERE COALESCE(is_active, TRUE) = TRUE;"
+            )
+            cache_rows = await conn.fetch(
+                "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache WHERE edition_date = $1;",
+                today_ist,
+            )
+            if not cache_rows:
+                cache_rows = await conn.fetch(
+                    "SELECT bucket_type, bucket_key, payload FROM daily_shared_cache ORDER BY edition_date DESC LIMIT 30;"
+                )
+    except Exception as exc:
+        logger.exception("Scheduled 04:30 AM IST DB read failed: %s", exc)
+        return
+
+    cache = {(r["bucket_type"], r["bucket_key"]): parse_payload_dict(r["payload"]) for r in cache_rows}
+
+    for row in subscribers:
+        sub = record_to_dict(row)
+        telegram_id = sub.get("telegram_id")
+        if not telegram_id:
+            continue
+
+        try:
+            async with pool.acquire() as conn:
+                inserted = await conn.fetchval(
+                    """
+                    INSERT INTO daily_deliveries (telegram_id, edition_date)
+                    VALUES ($1, $2)
+                    ON CONFLICT (telegram_id, edition_date) DO NOTHING
+                    RETURNING telegram_id;
+                    """,
+                    telegram_id,
+                    today_ist,
+                )
+            if not inserted:
+                continue
+
+            lang = sub.get("preferred_language") or "en"
+            rasi = (sub.get("rasi") or "mesham").lower()
+            raw_loc = sub.get("locality") or sub.get("city") or "chennai"
+            city = normalize_city_key(raw_loc)
+
+            await deliver_card_to_chat(
+                bot=context.bot,
+                chat_id=int(telegram_id),
+                telegram_id=int(telegram_id),
+                lang=lang,
+                rasi=rasi,
+                city=city,
+                target_date=today_ist,
+                cache=cache,
+            )
+        except Exception as exc:
+            logger.warning("Failed to deliver 04:30 AM IST card to uid=%s: %s", telegram_id, exc)
 
 
 async def rating_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -2033,6 +2301,7 @@ async def delete_data_command(update: Update, context: ContextTypes.DEFAULT_TYPE
             await conn.execute("DELETE FROM support_feedback WHERE telegram_id = $1;", telegram_id)
             try:
                 await conn.execute("DELETE FROM message_ratings WHERE telegram_id = $1;", telegram_id)
+                await conn.execute("DELETE FROM daily_deliveries WHERE telegram_id = $1;", telegram_id)
             except Exception:
                 pass
     except Exception as exc:
@@ -2058,6 +2327,7 @@ async def delete_data_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             await conn.execute("DELETE FROM support_feedback WHERE telegram_id = $1;", telegram_id)
             try:
                 await conn.execute("DELETE FROM message_ratings WHERE telegram_id = $1;", telegram_id)
+                await conn.execute("DELETE FROM daily_deliveries WHERE telegram_id = $1;", telegram_id)
             except Exception:
                 pass
     except Exception as exc:
@@ -2078,6 +2348,15 @@ async def health_handler(request: web.Request) -> web.Response:
 
 async def post_init(application: Application) -> None:
     await ensure_subscribers_schema()
+    if application.job_queue:
+        application.job_queue.run_daily(
+            scheduled_0430_ist_card_job,
+            time=DAILY_DELIVERY_TIME_IST,
+            name="aura_daily_0430_ist_card",
+        )
+        logger.info("Scheduled daily 04:30 AM IST card delivery job.")
+    else:
+        logger.warning("JobQueue not available; install python-telegram-bot[job-queue] for 04:30 AM IST schedule.")
 
 
 def build_application() -> Application:
