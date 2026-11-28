@@ -236,7 +236,7 @@ WELCOME_COPY = {
         "btn_sample": "📨 Send Today's Card Now",
         "btn_profile": "👤 Profile",
         "btn_other": "📣 Other Services",
-        "btn_pay": "🧺 Shop",
+        "btn_pay": "🛍 Shop",
         "btn_help": "💬 Help & Feedback",
         "btn_translate": "🌐 Translate [ENG]",
         "btn_close_translation": "❌ Close Translation",
